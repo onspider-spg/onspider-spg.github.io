@@ -1,0 +1,15 @@
+{
+  "name": "SPG App — Siam Palette Group",
+  "short_name": "SPG",
+  "description": "Siam Palette Group Management System",
+  "start_url": "/spg-home/#dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdfaf4",
+  "theme_color": "#d4960a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
