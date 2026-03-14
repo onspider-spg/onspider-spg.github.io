@@ -2,7 +2,7 @@
   "name": "SPG App — Siam Palette Group",
   "short_name": "SPG",
   "description": "Siam Palette Group Management System",
-  "start_url": "/spg-home/#dashboard",
+  "start_url": "/spg/#dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
