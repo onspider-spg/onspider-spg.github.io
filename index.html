@@ -1,12 +1,52 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+<!-- SPG HUB v1.0.0 | 20 MAR 2026 | Siam Palette Group -->
+<!-- One Union System — spghub.app -->
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;url=/spg/#dashboard">
-<link rel="manifest" href="/manifest.json">
-<title>SPG App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#fdfaf4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SPG HUB">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<title>SPG HUB</title>
+<link rel="stylesheet" href="core/styles.css">
 </head>
 <body>
-<script>location.href='/spg/#dashboard';</script>
+  <!-- Global overlay elements -->
+  <div id="toast" class="toast"></div>
+  <div id="loader" class="loader-overlay hidden"><div class="loader-spinner"></div></div>
+  <div id="app"></div>
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="SPG.closeSidebar()"></div>
+  <div id="sidebar-panel" class="sidebar-panel"></div>
+  <div id="dialog-root"></div>
+
+  <!-- Core (load order matters — defer preserves order) -->
+  <script src="core/api.js" defer></script>
+  <script src="core/permission.js" defer></script>
+  <script src="core/components.js" defer></script>
+  <script src="core/app.js" defer></script>
+
+  <!-- Compatibility layer (maps old App/API → SPG.*) -->
+  <script src="core/compat.js" defer></script>
+
+  <!-- Home section (always loaded — contains login + dashboard) -->
+  <script src="sections/home.js" defer></script>
+
+  <!-- Legacy admin scripts (use App/API compat shim) -->
+  <script src="legacy/admin_home.js" defer></script>
+  <script src="legacy/admin_home_v2.js" defer></script>
+  <script src="legacy/master_home.js" defer></script>
+  <script src="legacy/screens3_home.js" defer></script>
+
+  <!-- Sections (lazy-loaded from sidebar/dashboard, but can preload) -->
+  <script src="sections/sales.js" defer></script>
+  <script src="sections/purchase.js" defer></script>
+  <script src="sections/bakery.js" defer></script>
+  <script src="sections/finance.js" defer></script>
+  <script src="sections/hr.js" defer></script>
 </body>
 </html>

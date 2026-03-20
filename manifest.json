@@ -1,8 +1,8 @@
 {
-  "name": "SPG App — Siam Palette Group",
-  "short_name": "SPG",
-  "description": "Siam Palette Group Management System",
-  "start_url": "/spg/#dashboard",
+  "name": "SPG HUB — Siam Palette Group",
+  "short_name": "SPG HUB",
+  "description": "Siam Palette Group — One Union Management System",
+  "start_url": "/#dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

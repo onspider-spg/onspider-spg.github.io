@@ -1,0 +1,758 @@
+/**
+ * SPG HUB v1.0.0 | 20 MAR 2026 | Siam Palette Group
+ * core/app.js — Shell + Router + Section Manager
+ * The heart of the One Union System
+ *
+ * Architecture:
+ *   SPG.go(route, params)       → navigate anywhere
+ *   SPG.section(id, config)     → register a section
+ *   SPG.shell(inner)            → wrap content in shell layout
+ *   SPG.toast/showLoader/etc    → shared utilities
+ *
+ * Route patterns:
+ *   #login, #dashboard, #profile  → root routes (mapped to 'home' section)
+ *   #sales/daily, #purchase/new   → section/route format
+ *   #settings/accounts            → settings section
+ */
+
+(() => {
+  const VERSION = '1.0.0';
+  const esc = SPG.ui.esc;
+
+  // ═══ STATE ═══
+  const state = {
+    session: null,
+    modules: null,         // from init_bundle (sections accessible by this user)
+    homePermission: null,
+    profileComplete: true,
+    profile: null,
+    _bundleLoaded: false,
+    _bundleLoading: false,
+    _profileLoaded: false,
+    sidebarCollapsed: false,
+  };
+
+  // ═══ SECTION REGISTRY ═══
+  // Each section registers itself: SPG.section('sales', { routes, sidebar, ... })
+  const _sections = {};
+  const _loadedScripts = {};
+
+  function registerSection(id, config) {
+    _sections[id] = config;
+  }
+
+  // ═══ ROOT ROUTE → SECTION MAPPING ═══
+  // These routes don't need a section prefix in the hash
+  const ROOT_ROUTES = {
+    'login': 'home', 'register': 'home',
+    'staff-select': 'home', 'store-select': 'home', 'new-staff': 'home',
+    'dashboard': 'home', 'profile': 'home',
+  };
+
+  // Public routes (no auth required)
+  const PUBLIC_ROUTES = ['login', 'register'];
+
+  // Routes that need temp account (not full session)
+  const TEMP_ROUTES = ['staff-select', 'new-staff', 'store-select'];
+
+  // ═══ CURRENT STATE ═══
+  let currentSection = '';
+  let currentRoute = '';
+  let currentParams = {};
+
+  // ═══ HASH PARSER ═══
+  function parseHash(hash) {
+    const clean = (hash || '').replace(/^#/, '');
+    if (!clean) return { section: 'home', route: 'dashboard', params: {} };
+
+    const parts = clean.split('/');
+    const first = parts[0];
+    const rest = parts.slice(1).join('/');
+
+    // Root route?
+    if (ROOT_ROUTES[first]) {
+      return { section: ROOT_ROUTES[first], route: first, params: parseRouteParams(first, rest) };
+    }
+
+    // Section route: #sales/daily → section=sales, route=daily
+    if (_sections[first]) {
+      const route = rest || _sections[first].defaultRoute || 'home';
+      return { section: first, route, params: parseRouteParams(route, parts.slice(2).join('/')) };
+    }
+
+    // Settings routes (backward compat with #admin/*, #master/*)
+    if (first === 'admin' || first === 'master' || first === 'audit') {
+      return { section: 'home', route: first, params: parseRouteParams(first, rest) };
+    }
+
+    // Unknown → dashboard
+    return { section: 'home', route: 'dashboard', params: {} };
+  }
+
+  function parseRouteParams(route, sub) {
+    const params = {};
+    if (!sub) return params;
+    if (route === 'admin' && sub) params.tab = sub;
+    if (route === 'master' && sub) params.tab = sub;
+    if (route === 'account-detail' && sub) params.account_id = sub;
+    // Generic: if sub exists, store as 'id' or 'tab'
+    if (!Object.keys(params).length && sub) params.id = sub;
+    return params;
+  }
+
+  function buildHash(section, route, params = {}) {
+    // Root routes stay flat
+    if (ROOT_ROUTES[route]) {
+      if (route === 'admin') return `#admin/${params.tab || 'accounts'}`;
+      if (route === 'master') return `#master/${params.tab || 'modules'}`;
+      if (route === 'account-detail' && params.account_id) return `#account-detail/${params.account_id}`;
+      return `#${route}`;
+    }
+    // Section routes
+    if (section && section !== 'home') {
+      return params.id ? `#${section}/${route}/${params.id}` : `#${section}/${route}`;
+    }
+    return `#${route}`;
+  }
+
+  // ═══ NAVIGATE ═══
+  function go(route, params = {}) {
+    const parsed = parseHash(`#${route}`);
+    let section = parsed.section;
+    let resolvedRoute = parsed.route;
+    let resolvedParams = { ...parsed.params, ...params };
+
+    // If someone calls go('sales/daily'), parse it properly
+    if (route.includes('/')) {
+      const pp = parseHash(`#${route}`);
+      section = pp.section;
+      resolvedRoute = pp.route;
+      resolvedParams = { ...pp.params, ...params };
+    } else {
+      resolvedRoute = route;
+      section = ROOT_ROUTES[route] || section;
+    }
+
+    // Find the section
+    const sec = _sections[section];
+    if (!sec) {
+      console.warn(`[SPG] Section not found: ${section}`);
+      return go('login');
+    }
+
+    // Find route config
+    const routeConfig = sec.routes?.[resolvedRoute];
+    if (!routeConfig) {
+      console.warn(`[SPG] Route not found: ${section}/${resolvedRoute}`);
+      return go('dashboard');
+    }
+
+    // Auth guard
+    if (!PUBLIC_ROUTES.includes(resolvedRoute)) {
+      if (TEMP_ROUTES.includes(resolvedRoute)) {
+        if (!SPG.api.getAccountTemp()) return go('login');
+      } else if (!SPG.api.getSession()) {
+        return go('login');
+      }
+    }
+
+    // Permission guard
+    if (routeConfig.minPerm && state._bundleLoaded) {
+      if (!SPG.perm.has(section, routeConfig.minPerm)) {
+        toast('ไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+        return go('dashboard');
+      }
+    }
+
+    // Update state
+    currentSection = section;
+    currentRoute = resolvedRoute;
+    currentParams = resolvedParams;
+
+    // Render
+    const appEl = document.getElementById('app');
+    appEl.innerHTML = routeConfig.render(resolvedParams);
+
+    // Build sidebar for shell pages
+    if (routeConfig.shell !== false) {
+      const sidebarEl = appEl.querySelector('.sidebar');
+      if (sidebarEl && (resolvedRoute !== 'dashboard' || state._bundleLoaded)) {
+        buildSidebar();
+      }
+    }
+
+    // Post-render data loading
+    if (routeConfig.onLoad) setTimeout(() => routeConfig.onLoad(resolvedParams), 30);
+
+    // Scroll reset
+    window.scrollTo(0, 0);
+    const ct = appEl.querySelector('.content');
+    if (ct) ct.scrollTop = 0;
+
+    // URL hash
+    history.replaceState(
+      { section, route: resolvedRoute, params: resolvedParams },
+      '',
+      buildHash(section, resolvedRoute, resolvedParams)
+    );
+  }
+
+  function updateHash(route, params = {}) {
+    currentParams = { ...currentParams, ...params };
+    history.replaceState(
+      { section: currentSection, route: route || currentRoute, params: currentParams },
+      '',
+      buildHash(currentSection, route || currentRoute, currentParams)
+    );
+  }
+
+  // ═══ INIT BUNDLE ═══
+  async function loadBundle() {
+    if (state._bundleLoaded) {
+      // Data in memory → let section handle it
+      return state;
+    }
+    if (state._bundleLoading) return null;
+    state._bundleLoading = true;
+    try {
+      const data = await SPG.api.initBundle();
+      state.session = data.session;
+      state.modules = data.modules;
+      state.homePermission = data.home_permission || 'view_only';
+      state.profileComplete = data.profile_complete !== false;
+      state._bundleLoaded = true;
+
+      // Set home permission
+      SPG.perm.set('home', state.homePermission);
+
+      return state;
+    } catch (e) {
+      toast(e.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');
+      return null;
+    } finally {
+      state._bundleLoading = false;
+    }
+  }
+
+  // ═══ TOAST ═══
+  let _toastTimer = null;
+  function toast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    clearTimeout(_toastTimer);
+    el.textContent = msg;
+    el.className = `toast ${type}`;
+    requestAnimationFrame(() => el.classList.add('show'));
+    _toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ═══ LOADER ═══
+  function showLoader() { document.getElementById('loader')?.classList.remove('hidden'); }
+  function hideLoader() { document.getElementById('loader')?.classList.add('hidden'); }
+
+  // ═══ DIALOG ═══
+  function showDialog(html) {
+    document.getElementById('dialog-root').innerHTML =
+      `<div class="popup-overlay show" onclick="if(event.target===this)SPG.closeDialog()">${html}</div>`;
+  }
+  function closeDialog() { document.getElementById('dialog-root').innerHTML = ''; }
+
+  // ═══ ERROR HELPERS ═══
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideError(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('show');
+  }
+
+  // ═══ SHARED LAYOUT ═══
+  function topbar(sectionLabel) {
+    const s = SPG.api.getSession();
+    const name = s ? (s.display_name || s.display_label || '') : '';
+    const initial = (name || '?').charAt(0).toUpperCase();
+    const multiStore = s && s.store_assignments && s.store_assignments.length > 1;
+    return `<div class="topbar">
+      <div class="hamburger" onclick="SPG.openSidebar()">☰</div>
+      <div class="topbar-logo" onclick="SPG.go('dashboard')">SPG HUB</div>
+      ${sectionLabel ? `<div class="topbar-section-label">${esc(sectionLabel)}</div>` : ''}
+      <div class="topbar-right">
+        ${multiStore ? `<div class="topbar-icon" onclick="SPG.showStoreSwitcher()" title="Switch Store" style="font-size:11px;cursor:pointer">⇄ ${esc(s.store_id || '')}</div>` : ''}
+        <div class="topbar-icon" onclick="SPG.hardRefresh()" title="Refresh">↻</div>
+        <div class="topbar-user" onclick="SPG.showProfilePopup()" style="cursor:pointer">
+          <div class="topbar-avatar">${esc(initial)}</div>
+          <span class="hide-m">${esc(name)}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function shell(inner, sectionLabel) {
+    return `<div class="shell fade-in">
+      ${topbar(sectionLabel)}
+      <div class="shell-body">
+        <nav class="sidebar"></nav>
+        <div class="shell-main">${inner}</div>
+      </div>
+    </div>`;
+  }
+
+  function toolbar(title, actions) {
+    return `<div class="toolbar"><div class="toolbar-title">${esc(title)}</div>${actions || ''}</div>`;
+  }
+
+  // ═══ PROFILE POPUP ═══
+  function showProfilePopup() {
+    const s = SPG.api.getSession();
+    if (!s) return;
+    const initial = (s.display_name || s.display_label || '?').charAt(0).toUpperCase();
+    const row = (label, val) => `<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd2)"><span style="color:var(--t3);font-size:12px">${label}</span><span style="font-size:12px;font-weight:600">${esc(val)}</span></div>`;
+    const posLabel = s.position_id ? s.position_name : (s.tier_name || s.tier_id || '');
+    showDialog(`<div class="popup-sheet" style="width:320px">
+      <div class="popup-header"><div class="popup-title">Profile</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div class="topbar-avatar" style="width:40px;height:40px;font-size:16px">${esc(initial)}</div>
+        <div><div style="font-size:14px;font-weight:700">${esc(s.display_name || s.display_label)}</div>
+        <div style="font-size:11px;color:var(--t3)">${esc(s.display_label || '')}</div></div>
+      </div>
+      <div style="margin-bottom:14px">
+        ${row('Store', s.store_id || 'HQ')}
+        ${row('Dept', s.dept_id || '—')}
+        ${row('Position', posLabel)}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="btn btn-primary btn-full" onclick="SPG.closeDialog();SPG.go('profile')">View Full Profile</button>
+        <button class="btn btn-outline btn-full" style="color:var(--red);border-color:var(--red)" onclick="SPG.closeDialog();SPG.doLogout()">Log out</button>
+      </div>
+    </div>`);
+  }
+
+  // ═══ STORE SWITCHER ═══
+  function showStoreSwitcher() {
+    const s = SPG.api.getSession();
+    if (!s || !s.store_assignments || s.store_assignments.length < 2) return;
+    const cards = s.store_assignments.map(a => {
+      const active = a.store_id === s.store_id ? ' style="border:2px solid var(--acc);background:var(--acc2)"' : '';
+      return `<div class="staff-card"${active} onclick="SPG.doSwitchStore('${esc(a.store_id)}')" style="cursor:pointer;margin-bottom:6px">
+        <div class="staff-avatar" style="background:var(--acc2);color:var(--acc);font-size:12px;width:32px;height:32px">${esc((a.store_id || '?').substring(0, 2))}</div>
+        <div><div style="font-size:12px;font-weight:600">${esc(a.store_id)}</div>
+        <div style="font-size:10px;color:var(--t3)">${esc(a.position_name || '')}${a.dept_id ? ' · ' + esc(a.dept_id) : ''}</div></div>
+        ${a.store_id === s.store_id ? '<span style="margin-left:auto;font-size:10px;color:var(--acc)">Current</span>' : ''}
+      </div>`;
+    }).join('');
+    showDialog(`<div class="popup-sheet" style="width:340px">
+      <div class="popup-header"><div class="popup-title">Switch Store</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
+      <div style="margin-bottom:8px">${cards}</div>
+    </div>`);
+  }
+
+  async function doSwitchStore(storeId) {
+    const s = SPG.api.getSession();
+    if (!s || storeId === s.store_id) { closeDialog(); return; }
+    closeDialog();
+    showLoader();
+    try {
+      const data = await SPG.api.selectStore(s.token, storeId);
+      SPG.api.saveSession(data);
+      resetState();
+      hideLoader();
+      go('dashboard');
+    } catch (e) {
+      hideLoader();
+      toast(e.message || 'Switch failed', 'error');
+    }
+  }
+
+  // ═══ LOGOUT ═══
+  async function doLogout() {
+    showLoader();
+    try { await SPG.api.logout(); } catch { /* ignore */ }
+    SPG.api.clearSession();
+    SPG.perm.clear();
+    SPG.perm.clearCache();
+    resetState();
+    hideLoader();
+    go('login');
+    toast('Signed out', 'info');
+  }
+
+  // ═══ HARD REFRESH ═══
+  function hardRefresh() {
+    resetState();
+    location.reload();
+  }
+
+  function resetState() {
+    state.session = null;
+    state.modules = null;
+    state.profile = null;
+    state.homePermission = null;
+    state._bundleLoaded = false;
+    state._bundleLoading = false;
+    state._profileLoaded = false;
+  }
+
+  // ═══ SIDEBAR — Desktop ═══
+  let _sidebarBuilt = false;
+
+  function buildSidebar() {
+    const s = SPG.api.getSession();
+    if (!s) return;
+    const cl = state.sidebarCollapsed ? ' collapsed' : '';
+
+    const sd = document.querySelector('.sidebar');
+    if (!sd) return;
+
+    let html = `<div class="sidebar-top"><div class="sidebar-toggle" onclick="SPG.toggleSidebar()">☰</div></div>`;
+
+    // ── Home section ──
+    html += sdItem('dashboard', '◇', 'Dashboard');
+    html += '<div style="height:12px"></div>';
+
+    const personIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>';
+    html += sdItem('profile', personIcon, 'Profile');
+    html += '<div style="height:12px"></div>';
+
+    // ── Sections ──
+    html += '<div class="sd-section">Sections</div>';
+
+    // Define all sections with their visual config
+    const sectionDefs = [
+      { id: 'sales',      icon: '📊', label: 'Sales Daily' },
+      { id: 'purchase',   icon: '🛒', label: 'Purchase' },
+      { id: 'bakery',     icon: '🍰', label: 'Bakery Order' },
+      { id: 'operations', icon: '🔧', label: 'Operations' },
+      { id: 'finance',    icon: '💰', label: 'Finance' },
+      { id: 'hr',         icon: '👥', label: 'HR' },
+      { id: 'foodhub',    icon: '📚', label: 'Food Hub' },
+      { id: 'marketing',  icon: '📈', label: 'Marketing' },
+    ];
+
+    // Show sections based on modules from init_bundle
+    if (state.modules) {
+      // Map module_id to section_id
+      const moduleToSection = {
+        'bakery_order': 'bakery',
+        'saledaily_report': 'sales',
+        'finance': 'finance',
+        'purchase': 'purchase',
+        'hr': 'hr',
+        'operations': 'operations',
+        'foodhub': 'foodhub',
+        'marketing': 'marketing',
+      };
+
+      sectionDefs.forEach(def => {
+        // Find matching module
+        const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
+        if (mod && !mod.is_accessible) return; // Hidden
+
+        const isActive = mod && mod.status === 'active' && _sections[def.id];
+        const isSoon = !isActive;
+
+        if (isActive) {
+          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'home');
+          const active = currentSection === def.id ? ' active' : '';
+          html += `<div class="sd-item${active}" onclick="SPG.go('${route}')"><span class="sd-item-icon">${def.icon}</span><span class="sd-item-text">${def.label}</span></div>`;
+        } else if (mod || !state.modules.length) {
+          // Coming soon
+          html += `<div class="sd-item" style="opacity:.4;cursor:default"><span class="sd-item-icon">${def.icon}</span><span class="sd-item-text">${def.label}</span></div>`;
+        }
+      });
+    } else {
+      html += '<div class="sd-item" style="color:var(--t4)"><span class="sd-item-icon">⏳</span><span class="sd-item-text">Loading...</span></div>';
+    }
+
+    // ── Admin / Settings ──
+    if (SPG.perm.hasHome('admin')) {
+      html += '<div style="height:12px"></div>';
+      html += '<div class="sd-section">Admin</div>';
+      html += sdGroup('admin', '⚙', 'Admin',
+        sdFlyItem('admin', 'accounts', 'Accounts') +
+        sdFlyItem('admin', 'base-permissions', 'Base Permissions') +
+        sdFlyItem('admin', 'dept-overrides', 'Dept Overrides') +
+        sdFlyItem('admin', 'staff-assignments', 'Staff Assignments') +
+        sdFlyItem('admin', 'permissions', 'Permissions (Legacy)') +
+        sdFlyItem('admin', 'tieraccess', 'Tier Access (Legacy)') +
+        sdFlyItem('admin', 'requests', 'Requests') +
+        sdFlyItem('admin', 'store-requests', 'Store Requests') +
+        sdFlyItem('admin', 'home-settings', 'Home Settings')
+      );
+      html += sdGroup('master', '▤', 'Master Data',
+        sdFlyItem('master', 'modules', 'Modules') +
+        sdFlyItem('master', 'stores', 'Stores') +
+        sdFlyItem('master', 'depts', 'Departments')
+      );
+    }
+    if (SPG.perm.hasHome('edit')) {
+      html += sdGroup('reports', '☰', 'Reports',
+        `<div class="sd-flyout-item" onclick="SPG.go('audit')">Audit Trail</div>`
+      );
+    }
+
+    // ── Footer ──
+    html += `<div class="sd-footer">
+      <div class="sd-version">v${VERSION} | 20 Mar 2026</div>
+      <a href="#" onclick="SPG.go('dashboard');return false"><span style="font-size:12px">←</span><span class="sd-item-text"> Home</span></a>
+      <a href="#" class="danger" onclick="SPG.doLogout();return false"><span style="font-size:12px">→</span><span class="sd-item-text"> Log out</span></a>
+    </div>`;
+
+    sd.innerHTML = html;
+    sd.className = 'sidebar' + cl;
+    _sidebarBuilt = true;
+
+    buildMobileSidebar(s);
+    setupFlyout();
+  }
+
+  function sdItem(route, icon, label) {
+    const active = currentRoute === route ? ' active' : '';
+    return `<div class="sd-item${active}" onclick="SPG.go('${route}')"><span class="sd-item-icon">${icon}</span><span class="sd-item-text">${label}</span></div>`;
+  }
+
+  function sdGroup(id, icon, label, items) {
+    const routes = id === 'admin' ? ['admin'] : id === 'master' ? ['master'] : id === 'reports' ? ['audit'] : [];
+    const active = routes.includes(currentRoute) ? ' active' : '';
+    return `<div class="sd-group" data-group="${id}">
+      <div class="sd-group-head${active}"><span class="sd-item-icon">${icon}</span><span class="sd-item-text">${label}</span><span class="sd-group-arr">›</span></div>
+      <div class="sd-flyout">${items}</div>
+    </div>`;
+  }
+
+  function sdFlyItem(route, tab, label) {
+    const active = currentRoute === route && currentParams.tab === tab ? ' active' : '';
+    return `<div class="sd-flyout-item${active}" onclick="SPG.go('${route}',{tab:'${tab}'})">${label}</div>`;
+  }
+
+  // ═══ FLYOUT ═══
+  function setupFlyout() {
+    document.querySelectorAll('.sd-group').forEach(sg => {
+      const head = sg.querySelector('.sd-group-head');
+      const sub = sg.querySelector('.sd-flyout');
+      if (!head || !sub) return;
+      let timer = null;
+
+      function openFlyout() {
+        clearTimeout(timer);
+        document.querySelectorAll('.sd-flyout.show').forEach(f => { if (f !== sub) f.classList.remove('show'); });
+        const rect = head.getBoundingClientRect();
+        sub.style.top = rect.top + 'px';
+        sub.style.left = rect.right + 'px';
+        sub.classList.add('show');
+      }
+      function closeFlyout() { timer = setTimeout(() => sub.classList.remove('show'), 150); }
+
+      sg.addEventListener('mouseenter', openFlyout);
+      sg.addEventListener('mouseleave', closeFlyout);
+      sub.addEventListener('mouseenter', () => clearTimeout(timer));
+      sub.addEventListener('mouseleave', closeFlyout);
+      head.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sub.classList.contains('show') ? sub.classList.remove('show') : openFlyout();
+      });
+    });
+
+    if (!setupFlyout._bound) {
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.sd-flyout.show').forEach(f => f.classList.remove('show'));
+      });
+      setupFlyout._bound = true;
+    }
+  }
+
+  function toggleSidebar() {
+    state.sidebarCollapsed = !state.sidebarCollapsed;
+    const sd = document.querySelector('.sidebar');
+    if (sd) sd.classList.toggle('collapsed', state.sidebarCollapsed);
+  }
+
+  // ═══ MOBILE SIDEBAR ═══
+  function buildMobileSidebar(s) {
+    const panel = document.getElementById('sidebar-panel');
+    if (!panel) return;
+
+    let html = `<div class="mob-sidebar-header">
+      <div class="topbar-avatar">${esc((s.display_name || s.display_label || '?').charAt(0).toUpperCase())}</div>
+      <div><div style="font-size:12px;font-weight:600">${esc(s.display_name || s.display_label)}</div>
+      <div style="font-size:9px;color:var(--t3)">${esc(s.position_id ? s.position_name : s.tier_id)} · ${esc(s.store_id || 'HQ')}</div></div>
+    </div>`;
+
+    html += mobItem('dashboard', '◇', 'Dashboard');
+    html += '<div style="height:8px"></div>';
+    const mobPersonIcon = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>';
+    html += mobItem('profile', mobPersonIcon, 'Profile');
+
+    // Sections
+    html += '<div class="mob-sidebar-section">Sections</div>';
+    const sectionDefs = [
+      { id: 'sales',      icon: '📊', label: 'Sales Daily' },
+      { id: 'purchase',   icon: '🛒', label: 'Purchase' },
+      { id: 'bakery',     icon: '🍰', label: 'Bakery Order' },
+      { id: 'operations', icon: '🔧', label: 'Operations' },
+      { id: 'finance',    icon: '💰', label: 'Finance' },
+      { id: 'hr',         icon: '👥', label: 'HR' },
+      { id: 'foodhub',    icon: '📚', label: 'Food Hub' },
+      { id: 'marketing',  icon: '📈', label: 'Marketing' },
+    ];
+
+    const moduleToSection = {
+      'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
+      'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
+      'foodhub': 'foodhub', 'marketing': 'marketing',
+    };
+
+    if (state.modules) {
+      sectionDefs.forEach(def => {
+        const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
+        if (mod && !mod.is_accessible) return;
+        const isActive = mod && mod.status === 'active' && _sections[def.id];
+        if (isActive) {
+          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'home');
+          html += `<div class="mob-sd-item" onclick="SPG.closeSidebar();SPG.go('${route}')"><span class="sd-item-icon">${def.icon}</span>${def.label}</div>`;
+        } else {
+          html += `<div class="mob-sd-item disabled"><span class="sd-item-icon">${def.icon}</span>${def.label} <span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--orange-bg);color:var(--orange)">Soon</span></div>`;
+        }
+      });
+    }
+
+    // Admin
+    if (SPG.perm.hasHome('admin')) {
+      html += '<div style="height:8px"></div><div class="mob-sidebar-section">Admin</div>';
+      html += mobNav('admin', 'accounts', '⚙', 'Accounts');
+      html += mobNav('admin', 'base-permissions', '⚙', 'Base Permissions');
+      html += mobNav('admin', 'dept-overrides', '⚙', 'Dept Overrides');
+      html += mobNav('admin', 'staff-assignments', '⚙', 'Staff Assignments');
+      html += mobNav('admin', 'requests', '⚙', 'Requests');
+      html += mobNav('admin', 'store-requests', '⚙', 'Store Requests');
+      html += '<div style="height:8px"></div><div class="mob-sidebar-section">Master Data</div>';
+      html += mobNav('master', 'modules', '▤', 'Modules');
+      html += mobNav('master', 'stores', '▤', 'Stores');
+      html += mobNav('master', 'depts', '▤', 'Departments');
+    }
+    if (SPG.perm.hasHome('edit')) {
+      html += '<div style="height:8px"></div>';
+      html += mobItem('audit', '☰', 'Audit Trail');
+    }
+
+    html += `<div class="mob-sd-footer"><a href="#" style="font-size:10px;color:var(--red);text-decoration:none" onclick="SPG.doLogout();return false">→ Log out</a></div>`;
+    panel.innerHTML = html;
+  }
+
+  function mobItem(route, icon, label) {
+    const active = currentRoute === route ? ' active' : '';
+    return `<div class="mob-sd-item${active}" onclick="SPG.closeSidebar();SPG.go('${route}')"><span class="sd-item-icon">${icon}</span>${label}</div>`;
+  }
+
+  function mobNav(route, tab, icon, label) {
+    return `<div class="mob-sd-item" onclick="SPG.closeSidebar();SPG.go('${route}',{tab:'${tab}'})"><span class="sd-item-icon">${icon}</span>${label}</div>`;
+  }
+
+  function openSidebar() {
+    if (!_sidebarBuilt) buildSidebar();
+    document.getElementById('sidebar-overlay')?.classList.add('open');
+    document.getElementById('sidebar-panel')?.classList.add('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar-overlay')?.classList.remove('open');
+    document.getElementById('sidebar-panel')?.classList.remove('open');
+  }
+
+  // ═══ LAZY LOAD SECTION SCRIPT ═══
+  function loadSectionScript(name) {
+    if (_loadedScripts[name]) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `sections/${name}.js`;
+      script.onload = () => { _loadedScripts[name] = true; resolve(); };
+      script.onerror = () => reject(new Error(`Failed to load section: ${name}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  // ═══ INIT ═══
+  function init() {
+    window.scrollTo(0, 0);
+
+    // #logout — cross-module logout link
+    if (location.hash === '#logout') {
+      SPG.api.clearSession();
+      SPG.perm.clear();
+      _sidebarBuilt = false;
+      history.replaceState(null, '', '#login');
+      go('login');
+      return;
+    }
+
+    // Token from URL param (cross-module navigation)
+    const urlParams = new URLSearchParams(location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+      SPG.api.setToken(urlToken);
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+
+    const session = SPG.api.getSession();
+    const { section, route, params } = parseHash(location.hash);
+
+    if (route && _sections[section]?.routes?.[route]) {
+      if (PUBLIC_ROUTES.includes(route) || session) {
+        go(route, params);
+      } else {
+        go('login');
+      }
+    } else {
+      go(session ? 'dashboard' : 'login');
+    }
+
+    // Browser back/forward
+    window.addEventListener('popstate', (e) => {
+      if (e.state?.route) {
+        go(e.state.route, e.state.params || {});
+      } else {
+        const parsed = parseHash(location.hash);
+        if (parsed.route) go(parsed.route, parsed.params);
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  // ═══ PUBLIC API ═══
+  Object.assign(SPG, {
+    // State
+    state,
+    VERSION,
+
+    // Navigation
+    go, updateHash, parseHash,
+
+    // Section registration
+    section: registerSection,
+    loadSectionScript,
+
+    // Layout
+    topbar, shell, toolbar,
+
+    // Utilities
+    esc, toast, showLoader, hideLoader,
+    showDialog, closeDialog,
+    showError, hideError,
+
+    // Auth actions
+    doLogout, doSwitchStore,
+    showProfilePopup, showStoreSwitcher,
+    hardRefresh, loadBundle,
+
+    // Sidebar
+    buildSidebar, openSidebar, closeSidebar, toggleSidebar,
+
+    // Getters
+    get currentSection() { return currentSection; },
+    get currentRoute() { return currentRoute; },
+    get currentParams() { return currentParams; },
+  });
+})();
