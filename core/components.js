@@ -64,8 +64,10 @@ SPG.ui = (() => {
   function sortTh(tableId, key, label, extra = '') {
     const st = _sortState[tableId];
     const isActive = st && st.key === key;
-    const arrow = isActive ? (st.dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
-    return `<th${extra} style="cursor:pointer;user-select:none" onclick="SPG.ui.toggleSort('${tableId}','${key}')">${esc(label)}${arrow}</th>`;
+    const upColor = isActive && st.dir === 'asc' ? 'var(--acc)' : '#ccc';
+    const downColor = isActive && st.dir === 'desc' ? 'var(--acc)' : '#ccc';
+    const arrows = `<span style="display:inline-flex;flex-direction:column;line-height:1;margin-left:4px;font-size:8px;vertical-align:middle"><span style="color:${upColor}">▲</span><span style="color:${downColor}">▼</span></span>`;
+    return `<th${extra} style="cursor:pointer;user-select:none;white-space:nowrap" onclick="SPG.ui.toggleSort('${tableId}','${key}')">${esc(label)}${arrows}</th>`;
   }
 
   function toggleSort(tableId, key) {
