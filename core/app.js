@@ -104,8 +104,18 @@
       return { section: first, route, params: parseRouteParams(route, parts.slice(2).join('/')) };
     }
 
-    // Settings routes (backward compat with #admin/*, #master/*)
-    if (first === 'admin' || first === 'master' || first === 'audit') {
+    // Admin/Master sub-routes: #admin/staff-assignments → route='admin/staff-assignments'
+    if (first === 'admin' || first === 'master') {
+      const subRoute = rest ? `${first}/${rest.split('/')[0]}` : first;
+      // Check if clean sub-route exists in section routes
+      const homeSection = _sections['home'];
+      if (homeSection && homeSection.routes && homeSection.routes[subRoute]) {
+        return { section: 'home', route: subRoute, params: parseRouteParams(subRoute, parts.slice(2).join('/')) };
+      }
+      // Fallback: old style with tab param
+      return { section: 'home', route: first, params: parseRouteParams(first, rest) };
+    }
+    if (first === 'audit') {
       return { section: 'home', route: first, params: parseRouteParams(first, rest) };
     }
 
@@ -580,21 +590,21 @@
       html += '<div class="sd-divider"></div>';
       html += '<div class="sd-section">Admin</div>';
       html += sdAccordion('admin', 'Function Access',
-        sdSubItem('admin', 'accounts', 'Accounts') +
-        sdSubItem('admin', 'base-permissions', 'Base Permissions') +
-        sdSubItem('admin', 'dept-overrides', 'Dept Overrides') +
-        sdSubItem('admin', 'staff-assignments', 'Staff Assignments') +
-        sdSubItem('admin', 'requests', 'Requests', 'req-badge') +
-        sdSubItem('admin', 'store-requests', 'Store Requests')
+        sdSubItem('admin/accounts', null, 'Accounts') +
+        sdSubItem('admin/base-permissions', null, 'Base Permissions') +
+        sdSubItem('admin/dept-overrides', null, 'Dept Overrides') +
+        sdSubItem('admin/staff-assignments', null, 'Staff Assignments') +
+        sdSubItem('admin/requests', null, 'Requests', 'req-badge') +
+        sdSubItem('admin/store-requests', null, 'Store Requests')
       );
       html += sdAccordion('master', 'Master Data',
-        sdSubItem('master', 'modules', 'Modules') +
-        sdSubItem('master', 'stores', 'Stores') +
-        sdSubItem('master', 'depts', 'Departments')
+        sdSubItem('master/modules', null, 'Modules') +
+        sdSubItem('master/stores', null, 'Stores') +
+        sdSubItem('master/depts', null, 'Departments')
       );
       html += sdAccordion('announce', 'Announcements',
-        sdSubItem('admin', 'announcements', 'All Announcements') +
-        sdSubItem('admin', 'create-announcement', 'Create New')
+        sdSubItem('admin/announcements', null, 'All Announcements') +
+        sdSubItem('admin/create-announcement', null, 'Create New')
       );
       html += sdAccordion('settings', 'Settings',
         sdSubItem('settings', 'general', 'General') +

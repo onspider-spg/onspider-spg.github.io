@@ -830,7 +830,19 @@ SPG.section('home', {
 
     // Admin shells
     'admin':          { render: renderAdmin,        minPerm: 'admin' },
+    // Admin sub-routes (clean URLs)
+    'admin/accounts':          { render: (p) => renderAdmin({...p, tab:'accounts'}),          minPerm: 'admin' },
+    'admin/base-permissions':  { render: (p) => renderAdmin({...p, tab:'base-permissions'}),  minPerm: 'admin' },
+    'admin/dept-overrides':    { render: (p) => renderAdmin({...p, tab:'dept-overrides'}),    minPerm: 'admin' },
+    'admin/staff-assignments': { render: (p) => renderAdmin({...p, tab:'staff-assignments'}), minPerm: 'admin' },
+    'admin/requests':          { render: (p) => renderAdmin({...p, tab:'requests'}),          minPerm: 'admin' },
+    'admin/store-requests':    { render: (p) => renderAdmin({...p, tab:'store-requests'}),    minPerm: 'admin' },
+    'admin/announcements':     { render: (p) => renderAdmin({...p, tab:'announcements'}),     minPerm: 'admin' },
+    'admin/create-announcement': { render: (p) => renderAdmin({...p, tab:'create-announcement'}), minPerm: 'admin' },
     'master':         { render: renderMaster,       minPerm: 'admin' },
+    'master/modules': { render: (p) => renderMaster({...p, tab:'modules'}), minPerm: 'admin' },
+    'master/stores':  { render: (p) => renderMaster({...p, tab:'stores'}),  minPerm: 'admin' },
+    'master/depts':   { render: (p) => renderMaster({...p, tab:'depts'}),   minPerm: 'admin' },
     'account-detail': { render: renderAccountDetail, minPerm: 'admin' },
     'acct-create':    { render: renderAcctCreate,   minPerm: 'admin' },
     'audit':          { render: renderAudit,        minPerm: 'edit' },

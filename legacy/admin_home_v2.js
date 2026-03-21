@@ -380,6 +380,13 @@ Admin.saveAdminTab = function(tab) {
   }
 };
 
+// ═══ SORT LISTENER ═══
+document.addEventListener('spg-sort', (e) => {
+  const ct = document.getElementById('admin-content');
+  if (!ct) return;
+  if (e.detail.tableId === 'sa' && V2.assignments) renderStaffAssignments(ct);
+});
+
 // ═══ GLOBAL EXPORT ═══
 window.AdminV2 = {
   loadBasePermissions, markBaseDirty, saveBasePermissions,
