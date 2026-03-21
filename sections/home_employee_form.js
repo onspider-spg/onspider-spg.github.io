@@ -1,7 +1,7 @@
 /**
- * SPG HUB v2.0.0 | 21 MAR 2026 | Siam Palette Group
+ * SPG HUB v2.0.0 | 22 MAR 2026 | Siam Palette Group
  * sections/home_employee_form.js — Multi-step Employee Form
- * Steps: Profile → Bank → Super → Fair Work → LINE → Submit
+ * Tabs: 1.Profile → 2.Bank → 3.Super → 4.Fair Work → 5.LINE
  */
 (() => {
 const esc = SPG.esc;
@@ -10,7 +10,8 @@ const api = SPG.api;
 let _tab = 0;
 let _data = {};
 let _lineStatus = null;
-let _isForced = false; // true = new user flow (can't skip)
+let _isForced = false;
+let _fwisRead = false;
 
 const TABS = ['Profile', 'Bank', 'Super', 'Fair Work', 'LINE'];
 
@@ -31,6 +32,7 @@ function render(params) {
 
 async function onLoad() {
   _tab = 0;
+  _fwisRead = false;
   SPG.showLoader();
   try {
     const [empRes, lineRes] = await Promise.all([api.getEmployeeDetail(), api.getLineStatus()]);
@@ -94,12 +96,15 @@ async function saveAndNext() {
 }
 
 async function submitAll() {
+  if (!_lineStatus?.connected) {
+    SPG.toast('Please connect LINE before submitting', 'error');
+    return;
+  }
   SPG.showLoader();
   try {
     _data.profile_complete = true;
     await api.saveEmployeeDetail(_data);
-    // Submit for approval if account is incomplete
-    try { await api.submitForApproval({}); } catch { /* may not be incomplete status */ }
+    try { await api.submitForApproval({}); } catch { /* may not be incomplete */ }
     SPG.hideLoader();
     SPG.toast('Employee details submitted!', 'success');
     if (_isForced) {
@@ -129,71 +134,90 @@ function collectCurrentTab() {
       _data.emergency_contact_name = get('emp-emg-name');
       _data.emergency_contact_phone = get('emp-emg-phone');
       if (!_data.full_name_en) { SPG.toast('Full Name (EN) is required', 'error'); return false; }
+      if (!_data.id_type || !_data.id_number) { SPG.toast('ID Type and ID Number are required', 'error'); return false; }
+      if (!_data.date_of_birth) { SPG.toast('Date of Birth is required', 'error'); return false; }
+      if (!_data.phone) { SPG.toast('Phone is required', 'error'); return false; }
+      if (!_data.address) { SPG.toast('Address is required', 'error'); return false; }
+      if (!_data.city) { SPG.toast('City / Suburb is required', 'error'); return false; }
+      if (!_data.postcode) { SPG.toast('Postcode is required', 'error'); return false; }
       break;
     case 1:
       _data.bank_name = get('emp-bank-name');
       _data.bank_bsb = get('emp-bank-bsb');
       _data.bank_account_number = get('emp-bank-acct');
       _data.bank_account_name = get('emp-bank-acct-name');
+      if (!_data.bank_name) { SPG.toast('Bank Name is required', 'error'); return false; }
+      if (!_data.bank_bsb) { SPG.toast('BSB is required', 'error'); return false; }
+      if (!_data.bank_account_number) { SPG.toast('Account Number is required', 'error'); return false; }
+      if (!_data.bank_account_name) { SPG.toast('Account Name is required', 'error'); return false; }
       break;
     case 2:
       _data.super_fund_name = get('emp-super-name');
       _data.super_fund_number = get('emp-super-number');
       _data.super_member_number = get('emp-super-member');
+      if (!_data.super_fund_name) { SPG.toast('Super Fund Name is required', 'error'); return false; }
+      if (!_data.super_fund_number) { SPG.toast('Fund Number is required', 'error'); return false; }
+      if (!_data.super_member_number) { SPG.toast('Member Number is required', 'error'); return false; }
       break;
     case 3:
       _data.tfn = get('emp-tfn');
       _data.visa_type = get('emp-visa-type');
       _data.visa_expiry = get('emp-visa-expiry');
       _data.start_date = get('emp-start-date');
+      if (!_data.tfn) { SPG.toast('TFN is required', 'error'); return false; }
+      if (!_data.start_date) { SPG.toast('Start Date is required', 'error'); return false; }
+      if (!_fwisRead) { SPG.toast('Please read the Fair Work Information Statement first', 'error'); return false; }
       break;
   }
   return true;
 }
 
-// ═══ TAB RENDERERS ═══
+// ═══ TAB 1: PROFILE ═══
 function renderProfile() {
   const d = _data;
   return `
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Full Name (EN) *</label><input class="inp" id="emp-name-en" value="${esc(d.full_name_en || '')}"></div>
     <div class="fg" style="flex:1"><label class="lb">Full Name (TH)</label><input class="inp" id="emp-name-th" value="${esc(d.full_name_th || '')}"></div></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">ID Type</label><select class="inp" id="emp-id-type"><option value="citizen" ${d.id_type === 'citizen' ? 'selected' : ''}>National ID</option><option value="passport" ${d.id_type === 'passport' ? 'selected' : ''}>Passport</option></select></div>
-    <div class="fg" style="flex:1"><label class="lb">ID Number</label><input class="inp" id="emp-id-number" value="${esc(d.id_number || '')}"></div></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Date of Birth</label><input class="inp" id="emp-dob" type="date" value="${esc(d.date_of_birth || '')}"></div>
-    <div class="fg" style="flex:1"><label class="lb">Phone</label><input class="inp" id="emp-phone" type="tel" value="${esc(d.phone || '')}"></div></div>
-    <div class="fg"><label class="lb">Address</label><input class="inp" id="emp-address" value="${esc(d.address || '')}" placeholder="Street address"></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">City / Suburb</label><input class="inp" id="emp-city" value="${esc(d.city || '')}"></div>
-    <div class="fg" style="flex:1"><label class="lb">Postcode</label><input class="inp" id="emp-postcode" value="${esc(d.postcode || '')}"></div></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Emergency Contact</label><input class="inp" id="emp-emg-name" value="${esc(d.emergency_contact_name || '')}" placeholder="Name"></div>
-    <div class="fg" style="flex:1"><label class="lb">Emergency Phone</label><input class="inp" id="emp-emg-phone" type="tel" value="${esc(d.emergency_contact_phone || '')}"></div></div>`;
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">ID Type *</label><select class="inp" id="emp-id-type"><option value="citizen" ${d.id_type === 'citizen' ? 'selected' : ''}>National ID</option><option value="passport" ${d.id_type === 'passport' ? 'selected' : ''}>Passport</option></select></div>
+    <div class="fg" style="flex:1"><label class="lb">ID Number *</label><input class="inp" id="emp-id-number" value="${esc(d.id_number || '')}"></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Date of Birth *</label><input class="inp" id="emp-dob" type="date" value="${esc(d.date_of_birth || '')}"></div>
+    <div class="fg" style="flex:1"><label class="lb">Phone *</label><input class="inp" id="emp-phone" type="tel" value="${esc(d.phone || '')}"></div></div>
+    <div class="fg"><label class="lb">Address *</label><input class="inp" id="emp-address" value="${esc(d.address || '')}" placeholder="Street address"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">City / Suburb *</label><input class="inp" id="emp-city" value="${esc(d.city || '')}"></div>
+    <div class="fg" style="flex:1"><label class="lb">Postcode *</label><input class="inp" id="emp-postcode" value="${esc(d.postcode || '')}"></div></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Emergency Contact *</label><input class="inp" id="emp-emg-name" value="${esc(d.emergency_contact_name || '')}" placeholder="Name"></div>
+    <div class="fg" style="flex:1"><label class="lb">Emergency Phone *</label><input class="inp" id="emp-emg-phone" type="tel" value="${esc(d.emergency_contact_phone || '')}"></div></div>`;
 }
 
+// ═══ TAB 2: BANK ═══
 function renderBank() {
   const d = _data;
   return `
     <div style="padding:10px 14px;background:var(--blue-bg);border-radius:var(--rd);font-size:12px;color:var(--blue);margin-bottom:14px">Bank details are used for salary payments (ABA file export)</div>
-    <div class="fg"><label class="lb">Bank Name</label><input class="inp" id="emp-bank-name" value="${esc(d.bank_name || '')}" placeholder="e.g. Westpac, CBA, NAB, ANZ"></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">BSB</label><input class="inp" id="emp-bank-bsb" value="${esc(d.bank_bsb || '')}" placeholder="e.g. 032-xxx" maxlength="7"></div>
-    <div class="fg" style="flex:1"><label class="lb">Account Number</label><input class="inp" id="emp-bank-acct" value="${esc(d.bank_account_number || '')}"></div></div>
-    <div class="fg"><label class="lb">Account Name</label><input class="inp" id="emp-bank-acct-name" value="${esc(d.bank_account_name || '')}" placeholder="Name on bank account"></div>`;
+    <div class="fg"><label class="lb">Bank Name *</label><input class="inp" id="emp-bank-name" value="${esc(d.bank_name || '')}" placeholder="e.g. Westpac, CBA, NAB, ANZ"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">BSB *</label><input class="inp" id="emp-bank-bsb" value="${esc(d.bank_bsb || '')}" placeholder="e.g. 032-xxx" maxlength="7"></div>
+    <div class="fg" style="flex:1"><label class="lb">Account Number *</label><input class="inp" id="emp-bank-acct" value="${esc(d.bank_account_number || '')}"></div></div>
+    <div class="fg"><label class="lb">Account Name *</label><input class="inp" id="emp-bank-acct-name" value="${esc(d.bank_account_name || '')}" placeholder="Name on bank account"></div>`;
 }
 
+// ═══ TAB 3: SUPER ═══
 function renderSuper() {
   const d = _data;
   return `
     <div style="padding:10px 14px;background:var(--green-bg);border-radius:var(--rd);font-size:12px;color:var(--green);margin-bottom:14px">Superannuation details for employer contributions</div>
-    <div class="fg"><label class="lb">Super Fund Name</label><input class="inp" id="emp-super-name" value="${esc(d.super_fund_name || '')}" placeholder="e.g. AustralianSuper, REST, Hostplus"></div>
-    <div class="fg"><label class="lb">Fund Number (USI/ABN)</label><input class="inp" id="emp-super-number" value="${esc(d.super_fund_number || '')}"></div>
-    <div class="fg"><label class="lb">Member Number</label><input class="inp" id="emp-super-member" value="${esc(d.super_member_number || '')}"></div>`;
+    <div class="fg"><label class="lb">Super Fund Name *</label><input class="inp" id="emp-super-name" value="${esc(d.super_fund_name || '')}" placeholder="e.g. AustralianSuper, REST, Hostplus"></div>
+    <div class="fg"><label class="lb">Fund Number (USI/ABN) *</label><input class="inp" id="emp-super-number" value="${esc(d.super_fund_number || '')}"></div>
+    <div class="fg"><label class="lb">Member Number *</label><input class="inp" id="emp-super-member" value="${esc(d.super_member_number || '')}"></div>`;
 }
 
+// ═══ TAB 4: FAIR WORK ═══
 function renderFairWork() {
   const d = _data;
   return `
-    <div class="fg"><label class="lb">TFN (Tax File Number)</label><input class="inp" id="emp-tfn" value="${esc(d.tfn || '')}" placeholder="9 digits"></div>
-    <div class="fg"><label class="lb">Start Date</label><input class="inp" id="emp-start-date" type="date" value="${esc(d.start_date || '')}"></div>
-    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Visa Type</label><select class="inp" id="emp-visa-type">
-      <option value="" ${!d.visa_type ? 'selected' : ''}>N/A (Citizen/PR)</option>
+    <div class="fg"><label class="lb">TFN (Tax File Number) *</label><input class="inp" id="emp-tfn" value="${esc(d.tfn || '')}" placeholder="9 digits"></div>
+    <div class="fg"><label class="lb">Start Date *</label><input class="inp" id="emp-start-date" type="date" value="${esc(d.start_date || '')}"></div>
+    <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Visa Type *</label><select class="inp" id="emp-visa-type">
+      <option value="citizen" ${(!d.visa_type || d.visa_type === 'citizen') ? 'selected' : ''}>Citizen / PR</option>
       <option value="student" ${d.visa_type === 'student' ? 'selected' : ''}>Student (500)</option>
       <option value="whm" ${d.visa_type === 'whm' ? 'selected' : ''}>WHM (417/462)</option>
       <option value="graduate" ${d.visa_type === 'graduate' ? 'selected' : ''}>Graduate (485)</option>
@@ -202,9 +226,31 @@ function renderFairWork() {
       <option value="other" ${d.visa_type === 'other' ? 'selected' : ''}>Other</option>
     </select></div>
     <div class="fg" style="flex:1"><label class="lb">Visa Expiry</label><input class="inp" id="emp-visa-expiry" type="date" value="${esc(d.visa_expiry || '')}"></div></div>
-    <div class="inp-hint" style="margin-top:4px">Document uploads (ID photo, Visa) will be available in a future update.</div>`;
+
+    <div style="margin-top:16px;border-top:1px solid var(--bd2);padding-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Fair Work Information Statement</div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px;line-height:1.5">
+        As required by the Fair Work Act 2009, you must read the Fair Work Information Statement before commencing employment.
+      </div>
+      <a href="https://www.fairwork.gov.au/sites/default/files/migration/724/Fair-Work-Information-Statement.pdf"
+        target="_blank" rel="noopener"
+        onclick="EmpForm.markFwisRead()"
+        class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:6px">
+        📄 Read Fair Work Information Statement
+      </a>
+      <div id="fwis-status" style="margin-top:8px;font-size:11px;color:${_fwisRead ? 'var(--green)' : 'var(--orange)'}">
+        ${_fwisRead ? '✅ Read — you may continue' : '⚠️ You must read this document before continuing'}
+      </div>
+    </div>`;
 }
 
+function markFwisRead() {
+  _fwisRead = true;
+  const el = document.getElementById('fwis-status');
+  if (el) { el.style.color = 'var(--green)'; el.innerHTML = '✅ Read — you may continue'; }
+}
+
+// ═══ TAB 5: LINE ═══
 function renderLINE() {
   const connected = _lineStatus?.connected;
   const line = _lineStatus?.line;
@@ -220,16 +266,17 @@ function renderLINE() {
   return `<div style="text-align:center;padding:20px">
     <div style="font-size:40px;margin-bottom:8px">💬</div>
     <div style="font-size:16px;font-weight:700;margin-bottom:4px">Connect LINE</div>
-    <div style="color:var(--t3);font-size:13px;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.5">
-      Connect your LINE account to receive push notifications from SPG HUB.
+    <div style="color:var(--t3);font-size:13px;margin-bottom:8px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.5">
+      Connect your LINE account to receive notifications from SPG HUB.
+    </div>
+    <div style="padding:8px 14px;background:var(--orange-bg);border-radius:var(--rd);font-size:11px;color:var(--orange);margin-bottom:16px">
+      ⚠️ LINE connection is required before submitting
     </div>
     <button class="btn btn-primary" style="background:#06C755;border-color:#06C755" onclick="EmpForm.connectLine()">Connect with LINE</button>
-    ${!_isForced ? '<div style="margin-top:12px"><a class="lk" style="font-size:11px;color:var(--t3);cursor:pointer" onclick="EmpForm.skipLine()">Skip for now</a></div>' : ''}
   </div>`;
 }
 
 function connectLine() {
-  // LINE Login OAuth redirect
   const channelId = '2007321330';
   const redirectUri = encodeURIComponent(location.origin + '/line-callback.html');
   const state = api.getToken();
@@ -247,9 +294,6 @@ async function disconnectLine() {
   } catch (e) { SPG.hideLoader(); SPG.toast(e.message, 'error'); }
 }
 
-function skipLine() { SPG.toast('You can connect LINE later from Profile', 'info'); }
-
-// Called from LINE callback page
 async function handleLineCallback(code) {
   SPG.showLoader();
   try {
@@ -267,6 +311,7 @@ async function handleLineCallback(code) {
 
 window.EmpForm = {
   render, onLoad, goTab, prev, saveAndNext, submitAll,
-  connectLine, disconnectLine, skipLine, handleLineCallback,
+  connectLine, disconnectLine, handleLineCallback,
+  markFwisRead,
 };
 })();
