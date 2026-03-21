@@ -342,8 +342,7 @@ async function _onPhotoSelect(input) {
       _data.photo_url = result.photo_url;
       if (statusEl) statusEl.textContent = 'Uploaded!';
       // Update avatar preview
-      const ct = document.getElementById('emp-form-content');
-      if (ct) ct.innerHTML = renderCurrentTab();
+      renderTab();
     }
   } catch (e) {
     if (statusEl) statusEl.textContent = 'Upload failed';
