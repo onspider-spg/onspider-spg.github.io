@@ -341,11 +341,21 @@ async function reviewRequest(requestId) {
   const dt = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
   const stsClass = r.status === 'approved' ? 'sts-ok' : r.status === 'rejected' ? 'sts-err' : 'sts-warn';
 
+  // Photo avatar
+  const avatarHtml = r.photo_url
+    ? `<div style="text-align:center;margin-bottom:12px"><img src="${esc(r.photo_url)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--bd2)"></div>`
+    : `<div style="text-align:center;margin-bottom:12px"><div style="width:80px;height:80px;border-radius:50%;background:var(--bd2);display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--t3)">${esc((r.display_name || r.full_name || '?')[0].toUpperCase())}</div></div>`;
+
   let actions = '';
-  if (r.status === 'pending') {
+  if (r.status === 'pending' || r.status === 'incomplete') {
     const stores = await App.getStoresCache();
     const storeOpts = stores.filter(s => s.store_id !== 'ALL').map(s =>
       `<option value="${esc(s.store_id)}"${s.store_id === r.requested_store_id ? ' selected' : ''}>${esc(s.store_name)}</option>`
+    ).join('');
+    // Load depts
+    const depts = await App.getDeptsCache();
+    const deptOpts = depts.map(d =>
+      `<option value="${esc(d.dept_id)}"${d.dept_id === r.requested_dept_id ? ' selected' : ''}>${esc(d.dept_name_th || d.dept_name)}</option>`
     ).join('');
     // Load positions for dropdown
     let posOpts = '<option value="POS-JS" selected>Junior Staff</option>';
@@ -367,11 +377,22 @@ async function reviewRequest(requestId) {
           <option value="T6" selected>T6 — Junior Staff</option>
           <option value="T7">T7 — Viewer</option>
         </select>
-        <label style="font-size:11px;color:var(--t3)">Assign Store</label>
-        <select id="rev-store" class="fl" style="margin-bottom:8px">
-          <option value="">— ไม่ระบุ —</option>
-          ${storeOpts}
-        </select>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label style="font-size:11px;color:var(--t3)">Assign Store</label>
+            <select id="rev-store" class="fl" style="margin-bottom:8px" onchange="Admin._onStoreChange()">
+              <option value="">— select —</option>
+              ${storeOpts}
+            </select>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:11px;color:var(--t3)">Assign Dept</label>
+            <select id="rev-dept" class="fl" style="margin-bottom:8px">
+              <option value="">— select —</option>
+              ${deptOpts}
+            </select>
+          </div>
+        </div>
         <label style="font-size:11px;color:var(--t3)">Assign Position</label>
         <select id="rev-position" class="fl" style="margin-bottom:8px">
           ${posOpts}
@@ -393,20 +414,32 @@ async function reviewRequest(requestId) {
       </div>`;
   }
 
-  App.showDialog(`<div class="popup-sheet" style="width:360px">
+  App.showDialog(`<div class="popup-sheet" style="width:400px">
     <div class="popup-header"><div class="popup-title">Registration Request</div><button class="popup-close" onclick="App.closeDialog()">✕</button></div>
-    ${row('Name', r.display_name || r.full_name)}
+    ${avatarHtml}
+    ${row('Display Name', r.display_name)}
     ${row('Full Name', r.full_name)}
     ${row('Email', r.email)}
-    ${row('Username', r.username)}
     ${row('Phone', r.phone)}
     ${row('Store', r.requested_store_id)}
     ${row('Dept', r.requested_dept_id)}
     ${r.request_note ? row('Note', r.request_note) : ''}
     ${row('Date', dt)}
-    ${row('Status', `<span class="sts ${stsClass}">${r.status}</span>`)}
+    ${row('Status', r.status)}
+    ${r.source === 'v2' ? row('Source', 'Register v2') : ''}
     ${actions}
   </div>`);
+}
+
+// Dynamic dept filter by store
+async function _onStoreChange() {
+  const storeId = document.getElementById('rev-store')?.value;
+  const deptEl = document.getElementById('rev-dept');
+  if (!deptEl) return;
+  const depts = await App.getDeptsCache();
+  // Show all depts (filter by store can be added later if store_departments table exists)
+  deptEl.innerHTML = '<option value="">— select —</option>' +
+    depts.map(d => `<option value="${esc(d.dept_id)}">${esc(d.dept_name_th || d.dept_name)}</option>`).join('');
 }
 
 async function submitReview(requestId, action) {
@@ -419,6 +452,7 @@ async function submitReview(requestId, action) {
   if (action === 'approve') {
     payload.tier_id = document.getElementById('rev-tier')?.value || 'T6';
     payload.store_id = document.getElementById('rev-store')?.value || '';
+    payload.dept_id = document.getElementById('rev-dept')?.value || '';
     payload.position_id = document.getElementById('rev-position')?.value || 'POS-JS';
   }
   App.showLoader();
@@ -686,7 +720,7 @@ window.Admin = {
   filterAccounts, loadAccountsPage,
   markPermDirty, savePermissions,
   markTierDirty, saveTierAccess,
-  loadRequests, reviewRequest, submitReview,
+  loadRequests, reviewRequest, submitReview, _onStoreChange,
   loadStoreRequests, reviewStoreRequest, submitStoreReview,
   markHomePermDirty, saveHomeSettings,
 };

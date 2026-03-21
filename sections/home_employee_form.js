@@ -178,7 +178,17 @@ function collectCurrentTab() {
 // ═══ TAB 1: PROFILE ═══
 function renderProfile() {
   const d = _data;
+  const photoSrc = d.photo_url || '';
+  const avatarHtml = photoSrc
+    ? `<img src="${esc(photoSrc)}" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--bd2);cursor:pointer" onclick="document.getElementById('emp-photo-input').click()">`
+    : `<div style="width:100px;height:100px;border-radius:50%;background:var(--bd2);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:var(--t3);cursor:pointer" onclick="document.getElementById('emp-photo-input').click()">${esc((d.full_name_en || '?')[0].toUpperCase())}</div>`;
   return `
+    <div style="text-align:center;margin-bottom:16px">
+      ${avatarHtml}
+      <input type="file" id="emp-photo-input" accept="image/*" style="display:none" onchange="EmpForm._onPhotoSelect(this)">
+      <div style="font-size:11px;color:var(--t3);margin-top:6px">Click to upload photo</div>
+      <div id="emp-photo-status" style="font-size:11px;color:var(--accent);margin-top:4px"></div>
+    </div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">Full Name (EN) *</label><input class="inp" id="emp-name-en" value="${esc(d.full_name_en || '')}"></div>
     <div class="fg" style="flex:1"><label class="lb">Full Name (TH)</label><input class="inp" id="emp-name-th" value="${esc(d.full_name_th || '')}"></div></div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">ID Type *</label><select class="inp" id="emp-id-type"><option value="citizen" ${d.id_type === 'citizen' ? 'selected' : ''}>National ID</option><option value="passport" ${d.id_type === 'passport' ? 'selected' : ''}>Passport</option></select></div>
@@ -312,9 +322,38 @@ async function handleLineCallback(code) {
   }
 }
 
+// ═══ Photo Upload ═══
+async function _onPhotoSelect(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { SPG.toast('Photo must be under 5MB', 'error'); return; }
+  const statusEl = document.getElementById('emp-photo-status');
+  if (statusEl) statusEl.textContent = 'Uploading...';
+  try {
+    // Convert to base64
+    const reader = new FileReader();
+    const base64 = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const result = await api.uploadPhoto({ photo_base64: base64, content_type: file.type });
+    if (result.photo_url) {
+      _data.photo_url = result.photo_url;
+      if (statusEl) statusEl.textContent = 'Uploaded!';
+      // Update avatar preview
+      const ct = document.getElementById('emp-form-content');
+      if (ct) ct.innerHTML = renderCurrentTab();
+    }
+  } catch (e) {
+    if (statusEl) statusEl.textContent = 'Upload failed';
+    SPG.toast(e.message || 'Upload failed', 'error');
+  }
+}
+
 window.EmpForm = {
   render, onLoad, goTab, prev, saveAndNext, submitAll,
   connectLine, disconnectLine, handleLineCallback,
-  markFwisRead,
+  markFwisRead, _onPhotoSelect,
 };
 })();

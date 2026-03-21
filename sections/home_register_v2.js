@@ -146,21 +146,19 @@ function backToStep1() {
 function renderStep3() {
   return `<div class="reg-step">
     <div class="reg-step-title">Step 3 of 4 — Your Info</div>
-    <div style="display:flex;gap:8px">
-      <div class="fg" style="flex:1"><label class="lb">Full Name (EN) *</label><input class="inp" id="reg-fullname" placeholder="First Last"></div>
-      <div class="fg" style="flex:1"><label class="lb">Display Name *</label><input class="inp" id="reg-nickname" placeholder="e.g. Mint"></div>
-    </div>
+    <div class="fg"><label class="lb">Display Name *</label><input class="inp" id="reg-nickname" placeholder="e.g. Mint, Onnie, Boss"></div>
     <div class="fg"><label class="lb">Phone</label><input class="inp" id="reg-phone" type="tel" placeholder="04xx xxx xxx"></div>
+    <p style="font-size:11px;color:var(--t3);margin-top:4px">Full name will be entered in Employee Details after login.</p>
     <div class="error-msg" id="reg-error"></div>
     <button class="login-btn" onclick="RegV2.nextStep3()">Continue</button>
   </div>`;
 }
 
 function nextStep3() {
-  _fullName = document.getElementById('reg-fullname')?.value.trim();
   _displayName = document.getElementById('reg-nickname')?.value.trim();
   _phone = document.getElementById('reg-phone')?.value.trim();
-  if (!_fullName || !_displayName) { SPG.showError('reg-error', 'Please fill in name fields'); return; }
+  _fullName = _displayName; // Full name = display name initially, real full name entered in Employee Details
+  if (!_displayName) { SPG.showError('reg-error', 'Please enter a display name'); return; }
   _step = 4;
   renderCurrentStep();
 }

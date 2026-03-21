@@ -139,6 +139,7 @@ SPG.api = (() => {
     updateProfile: (data) => homePost('update_profile', tb(data)),
     changePassword: (data) => homePost('change_password', tb(data)),
     changePin: (data) => homePost('change_pin', tb(data)),
+    uploadPhoto: (data) => homePost('upload_photo', tb(data)),
 
     // Public
     getStores: () => homePost('get_stores', {}),
