@@ -22,7 +22,7 @@ function renderLogin() {
     <div class="login-logo">🎨</div>
     <div class="login-title">SPG HUB</div>
     <div class="login-brand">SIAM PALETTE GROUP</div>
-    <div class="login-sub">One Union Management System</div>
+    <div class="login-sub">Hospo Management System</div>
     <div class="login-form">
       <input class="login-inp" id="inp-user" placeholder="Email / Username" autocomplete="username" autofocus>
       <input class="login-inp" id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password">

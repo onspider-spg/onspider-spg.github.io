@@ -1,7 +1,7 @@
 {
   "name": "SPG HUB — Siam Palette Group",
   "short_name": "SPG HUB",
-  "description": "Siam Palette Group — One Union Management System",
+  "description": "Siam Palette Group — Hospo Management System",
   "start_url": "/#dashboard",
   "scope": "/",
   "display": "standalone",
