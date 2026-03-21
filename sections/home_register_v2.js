@@ -233,6 +233,16 @@ function renderCurrentStep() {
     case 4: ct.innerHTML = renderStep4(); setTimeout(loadStep4Dropdowns, 50); break;
     case 5: ct.innerHTML = renderStep5(); break;
   }
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelectorAll('.reg-dot').forEach((dot, i) => {
+    const stepNum = i + 1;
+    dot.classList.remove('active', 'current');
+    if (stepNum < _step) dot.classList.add('active');
+    if (stepNum === _step) { dot.classList.add('active'); dot.classList.add('current'); }
+  });
 }
 
 function render() {
