@@ -188,6 +188,24 @@
       }
     }
 
+    // Profile incomplete guard — block navigation everywhere except allowed routes
+    const PROFILE_EXEMPT = ['login', 'register', 'staff-select', 'store-select', 'new-staff', 'employee-form', 'line-connect', 'pending-approval'];
+    if (state._bundleLoaded && state.profileComplete === false && !PROFILE_EXEMPT.includes(resolvedRoute)) {
+      // Show blocking popup
+      setTimeout(() => {
+        showDialog(`<div class="popup-sheet" style="width:360px">
+          <div class="popup-header"><div class="popup-title">⚠️ Employee Form Incomplete</div></div>
+          <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
+            กรุณากรอกข้อมูลพนักงานให้ครบถ้วนก่อนใช้งาน<br>
+            <span style="color:var(--t3);font-size:11px">Please complete your employee details to continue.</span>
+          </div>
+          <div class="popup-actions">
+            <button class="btn btn-primary" onclick="SPG.closeDialog();SPG.go('employee-form')">Go to Employee Form</button>
+          </div>
+        </div>`);
+      }, 300);
+    }
+
     // Update state
     currentSection = section;
     currentRoute = resolvedRoute;
