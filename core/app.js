@@ -16,8 +16,31 @@
  */
 
 (() => {
-  const VERSION = '1.0.0';
+  const VERSION = '2.0.0';
   const esc = SPG.ui.esc;
+
+  // ═══ THEME COLORS (per section) ═══
+  const THEME_COLORS = {
+    home:       { theme: '#7c3aed', bg: '#ede9fe', dark: '#6d28d9' },
+    sales:      { theme: '#2563eb', bg: '#dbeafe', dark: '#1d4ed8' },
+    purchase:   { theme: '#d97706', bg: '#fef3c7', dark: '#b45309' },
+    bakery:     { theme: '#db2777', bg: '#fce7f3', dark: '#be185d' },
+    finance:    { theme: '#7c3aed', bg: '#ede9fe', dark: '#6d28d9' },
+    hr:         { theme: '#4f46e5', bg: '#e0e7ff', dark: '#4338ca' },
+    operations: { theme: '#0d9488', bg: '#ccfbf1', dark: '#0f766e' },
+    foodhub:    { theme: '#16a34a', bg: '#dcfce7', dark: '#15803d' },
+    marketing:  { theme: '#e11d48', bg: '#ffe4e6', dark: '#be123c' },
+    equipment:  { theme: '#475569', bg: '#f1f5f9', dark: '#334155' },
+    bi:         { theme: '#0891b2', bg: '#cffafe', dark: '#0e7490' },
+    crm:        { theme: '#8b5cf6', bg: '#ede9fe', dark: '#7c3aed' },
+  };
+
+  function setTheme(sectionId) {
+    const t = THEME_COLORS[sectionId] || THEME_COLORS.home;
+    document.documentElement.style.setProperty('--theme', t.theme);
+    document.documentElement.style.setProperty('--theme-bg', t.bg);
+    document.documentElement.style.setProperty('--theme-dark', t.dark);
+  }
 
   // ═══ STATE ═══
   const state = {
@@ -169,6 +192,9 @@
     currentRoute = resolvedRoute;
     currentParams = resolvedParams;
 
+    // Apply theme color for this section
+    setTheme(section);
+
     // Render
     const appEl = document.getElementById('app');
     appEl.innerHTML = routeConfig.render(resolvedParams);
@@ -282,6 +308,10 @@
       ${sectionLabel ? `<div class="topbar-section-label">${esc(sectionLabel)}</div>` : ''}
       <div class="topbar-right">
         ${multiStore ? `<div class="topbar-icon" onclick="SPG.showStoreSwitcher()" title="Switch Store" style="font-size:11px;cursor:pointer">⇄ ${esc(s.store_id || '')}</div>` : ''}
+        <div class="notif-bell" onclick="SPG.toggleNotifications()" title="Notifications">
+          <span class="bell-icon">🔔</span>
+          <span class="notif-badge" id="notif-count" style="display:none">0</span>
+        </div>
         <div class="topbar-icon" onclick="SPG.hardRefresh()" title="Refresh">↻</div>
         <div class="topbar-user" onclick="SPG.showProfilePopup()" style="cursor:pointer">
           <div class="topbar-avatar">${esc(initial)}</div>
@@ -295,12 +325,60 @@
     const toggleIcon = state.sidebarCollapsed ? '›' : '‹';
     return `<div class="shell fade-in">
       ${topbar(sectionLabel)}
+      <div class="notif-dropdown" id="notif-dropdown" style="display:none">
+        <div class="notif-dropdown-header">
+          <span style="font-weight:700;font-size:13px">Notifications</span>
+          <a href="#" style="font-size:11px;color:var(--theme,var(--acc))" onclick="SPG.markAllNotificationsRead();return false">Mark all read</a>
+        </div>
+        <div class="notif-dropdown-body" id="notif-list">
+          <div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No notifications</div>
+        </div>
+      </div>
       <div class="shell-body">
         <nav class="sidebar${state.sidebarCollapsed ? ' closed' : ''}"></nav>
         <div class="sd-toggle" onclick="SPG.toggleSidebar()" title="Toggle sidebar">${toggleIcon}</div>
         <div class="shell-main">${inner}</div>
       </div>
     </div>`;
+  }
+
+  // ═══ NOTIFICATIONS ═══
+  let _notifOpen = false;
+  function toggleNotifications() {
+    const dd = document.getElementById('notif-dropdown');
+    if (!dd) return;
+    _notifOpen = !_notifOpen;
+    dd.style.display = _notifOpen ? 'block' : 'none';
+    if (_notifOpen) loadNotifications();
+  }
+
+  async function loadNotifications() {
+    try {
+      const data = await SPG.api.getNotifications({ limit: 20 });
+      const list = document.getElementById('notif-list');
+      if (!list) return;
+      const items = data.notifications || [];
+      if (items.length === 0) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No notifications</div>';
+      } else {
+        list.innerHTML = items.map(n => SPG.ui.notifItem(n)).join('');
+      }
+      const unread = items.filter(n => !n.is_read).length;
+      const badge = document.getElementById('notif-count');
+      if (badge) {
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+      }
+    } catch { /* notifications not implemented yet — silent fail */ }
+  }
+
+  async function markAllNotificationsRead() {
+    try {
+      await SPG.api.markAllNotificationsRead();
+      const badge = document.getElementById('notif-count');
+      if (badge) badge.style.display = 'none';
+      document.querySelectorAll('.notif-item.notif-unread').forEach(el => el.classList.remove('notif-unread'));
+    } catch { /* silent */ }
   }
 
   function toolbar(title, actions) {
@@ -427,12 +505,16 @@
       { id: 'operations', label: 'Operations' },
       { id: 'foodhub',    label: 'Food Hub' },
       { id: 'marketing',  label: 'Marketing' },
+      { id: 'equipment',  label: 'Equipment' },
+      { id: 'bi',         label: 'BI Dashboard' },
+      { id: 'crm',        label: 'CRM' },
     ];
 
     const moduleToSection = {
       'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
       'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
       'foodhub': 'foodhub', 'marketing': 'marketing',
+      'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
     };
 
     if (state.modules) {
@@ -563,7 +645,7 @@
 
     // Sections
     html += '<div class="mob-sidebar-section">Sections</div>';
-    const sectionDefs = [
+    const mobSectionDefs = [
       { id: 'sales',      label: 'Sales Daily' },
       { id: 'purchase',   label: 'Purchase' },
       { id: 'bakery',     label: 'Bakery Order' },
@@ -572,16 +654,20 @@
       { id: 'hr',         label: 'HR' },
       { id: 'foodhub',    label: 'Food Hub' },
       { id: 'marketing',  label: 'Marketing' },
+      { id: 'equipment',  label: 'Equipment' },
+      { id: 'bi',         label: 'BI Dashboard' },
+      { id: 'crm',        label: 'CRM' },
     ];
 
     const moduleToSection = {
       'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
       'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
       'foodhub': 'foodhub', 'marketing': 'marketing',
+      'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
     };
 
     if (state.modules) {
-      sectionDefs.forEach(def => {
+      mobSectionDefs.forEach(def => {
         const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
         const isActive = mod && mod.status === 'active' && _sections[def.id];
@@ -721,6 +807,12 @@
     doLogout, doSwitchStore,
     showProfilePopup, showStoreSwitcher,
     hardRefresh, loadBundle,
+
+    // Theme
+    setTheme,
+
+    // Notifications
+    toggleNotifications, loadNotifications, markAllNotificationsRead,
 
     // Sidebar
     buildSidebar, openSidebar, closeSidebar, toggleSidebar,

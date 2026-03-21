@@ -22,7 +22,7 @@ function renderLogin() {
     <div class="login-logo">🎨</div>
     <div class="login-title">SPG HUB</div>
     <div class="login-brand">SIAM PALETTE GROUP</div>
-    <div class="login-sub">Hospo Management System</div>
+    <div class="login-sub">One Union Management System</div>
     <div class="login-form">
       <input class="login-inp" id="inp-user" placeholder="Email / Username" autocomplete="username" autofocus>
       <input class="login-inp" id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password">
@@ -396,14 +396,17 @@ function fillDashboard(session, modules) {
 
   // Section definitions with visual config
   const SECTION_COLORS = {
-    'saledaily_report': { bg: 'var(--blue-bg)',   color: 'var(--blue)',   abbr: 'SD', icon: '📊', name: 'Sales Daily',   desc: 'Daily sales & reports' },
-    'purchase':         { bg: 'var(--orange-bg)',  color: 'var(--orange)', abbr: 'PO', icon: '🛒', name: 'Purchase',      desc: 'Orders & receiving' },
-    'bakery_order':     { bg: 'var(--green-bg)',   color: 'var(--green)',  abbr: 'BC', icon: '🍰', name: 'Bakery Order',  desc: 'Center to branch orders' },
-    'finance':          { bg: 'var(--acc2)',        color: 'var(--acc)',    abbr: 'FN', icon: '💰', name: 'Finance',       desc: 'Transactions & payments' },
-    'operations':       { bg: 'var(--red-bg)',     color: 'var(--red)',    abbr: 'OP', icon: '🔧', name: 'Operations',    desc: 'Daily ops & reports' },
-    'hr':               { bg: '#fef3c7',           color: '#92400e',       abbr: 'HR', icon: '👥', name: 'HR',            desc: 'People & access' },
-    'foodhub':          { bg: '#fce7f3',           color: '#be185d',       abbr: 'FH', icon: '📚', name: 'Food Hub',      desc: 'Recipes & SOP' },
-    'marketing':        { bg: '#e0e7ff',           color: '#4338ca',       abbr: 'MK', icon: '📈', name: 'Marketing',     desc: 'Sales analysis & NPD' },
+    'saledaily_report': { bg: '#dbeafe',          color: '#2563eb',       abbr: 'SD', name: 'Sales Daily',   desc: 'Daily sales & reports' },
+    'purchase':         { bg: '#fef3c7',           color: '#d97706',       abbr: 'PO', name: 'Purchase',      desc: 'Orders & receiving' },
+    'bakery_order':     { bg: '#fce7f3',           color: '#db2777',       abbr: 'BC', name: 'Bakery Order',  desc: 'Center to branch orders' },
+    'finance':          { bg: '#ede9fe',           color: '#7c3aed',       abbr: 'FN', name: 'Finance',       desc: 'Transactions & payments' },
+    'operations':       { bg: '#ccfbf1',           color: '#0d9488',       abbr: 'OP', name: 'Operations',    desc: 'Daily ops & checklists' },
+    'hr':               { bg: '#e0e7ff',           color: '#4f46e5',       abbr: 'HR', name: 'HR',            desc: 'People & access' },
+    'foodhub':          { bg: '#dcfce7',           color: '#16a34a',       abbr: 'FH', name: 'Food Hub',      desc: 'Recipes & SOP' },
+    'marketing':        { bg: '#ffe4e6',           color: '#e11d48',       abbr: 'MK', name: 'Marketing',     desc: 'Sales analysis & NPD' },
+    'equipment':        { bg: '#f1f5f9',           color: '#475569',       abbr: 'EQ', name: 'Equipment',     desc: 'Asset & repair tracking' },
+    'bi':               { bg: '#cffafe',           color: '#0891b2',       abbr: 'BI', name: 'BI Dashboard',  desc: 'Cross-module insights' },
+    'crm':              { bg: '#ede9fe',           color: '#8b5cf6',       abbr: 'CR', name: 'CRM',           desc: 'Customer experience' },
   };
 
   // Module-to-section mapping
@@ -411,6 +414,7 @@ function fillDashboard(session, modules) {
     'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
     'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
     'foodhub': 'foodhub', 'marketing': 'marketing',
+    'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
   };
 
   grid.innerHTML = modules.filter(m => m.is_accessible).map(m => {
@@ -449,6 +453,12 @@ function launchSection(sectionId, externalUrl) {
     'bakery': 'bakery/home',
     'finance': 'finance/home',
     'hr': 'hr/home',
+    'operations': 'operations/home',
+    'foodhub': 'foodhub/home',
+    'marketing': 'marketing/home',
+    'equipment': 'equipment/home',
+    'bi': 'bi/home',
+    'crm': 'crm/home',
   };
 
   if (sectionId && migratedSections[sectionId]) {

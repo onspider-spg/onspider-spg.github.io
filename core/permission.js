@@ -83,9 +83,25 @@ SPG.perm = (() => {
     _depts = null; _deptsLoaded = false;
   }
 
+  // Get numeric level value for a section (useful for comparisons)
+  function getLevel(sectionId) {
+    const userLevel = _perms[sectionId];
+    if (userLevel) return LEVELS[userLevel] || 0;
+    // Fallback: derive from session
+    const s = SPG.api.getSession();
+    if (!s) return 0;
+    const pl = s.position_id
+      ? (s.position_level || 99)
+      : parseInt((s.tier_id || 'T9').replace('T', ''));
+    if (pl === 1) return LEVELS['super_admin'];
+    if (pl === 2) return LEVELS['admin'];
+    if (pl <= 4) return LEVELS['edit'];
+    return LEVELS['view_only'];
+  }
+
   return {
     LEVELS,
-    set, get, has, hasHome, clear,
+    set, get, has, hasHome, getLevel, clear,
     getStoresCache, getDeptsCache, clearCache,
   };
 })();

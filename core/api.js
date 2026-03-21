@@ -15,6 +15,12 @@ SPG.api = (() => {
     sales: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/saledaily-report',
     purchase: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/purchase',
     hr: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/hr',
+    operations: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/operations',
+    foodhub: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/foodhub',
+    marketing: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/marketing',
+    equipment: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/equipment',
+    bi: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/bi',
+    crm: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/crm',
   };
 
   // Register additional endpoints from sections
@@ -173,5 +179,14 @@ SPG.api = (() => {
     adminRemoveStoreAssignment: (data) => homePost('admin_remove_store_assignment', tb(data)),
     adminGetStoreRequests: (f = {}) => homePost('admin_get_store_requests', tb(f)),
     adminReviewStoreRequest: (data) => homePost('admin_review_store_request', tb(data)),
+
+    // Notifications
+    getNotifications: (f = {}) => homePost('get_notifications', tb(f)),
+    markNotificationRead: (notification_id) => homePost('mark_notification_read', tb({ notification_id })),
+    markAllNotificationsRead: () => homePost('mark_all_notifications_read', tb()),
+
+    // Employee Detail (extended profile)
+    getEmployeeDetail: () => homePost('get_employee_detail', tb()),
+    saveEmployeeDetail: (data) => homePost('save_employee_detail', tb(data)),
   };
 })();

@@ -122,17 +122,30 @@ SPG.ui = (() => {
   // ═══ SECTION CARD (for dashboard) ═══
   function sectionCard(cfg) {
     // cfg = { id, name, desc, icon, bg, color, abbr, status, onClick }
+    const display = cfg.abbr || cfg.icon || '??';
     if (cfg.status !== 'active') {
       return `<div class="sec-card disabled">
-        <div class="sec-icon" style="background:${cfg.bg};color:${cfg.color}">${cfg.icon || cfg.abbr}</div>
+        <div class="sec-icon" style="background:${cfg.bg};color:${cfg.color}">${display}</div>
         <div><div class="sec-name">${esc(cfg.name)}</div><div class="sec-desc">${esc(cfg.desc)} · Coming soon</div></div>
         <span class="sts sts-warn" style="font-size:9px;margin-left:auto">Soon</span>
       </div>`;
     }
     return `<div class="sec-card" onclick="${cfg.onClick || ''}">
-      <div class="sec-icon" style="background:${cfg.bg};color:${cfg.color}">${cfg.icon || cfg.abbr}</div>
+      <div class="sec-icon" style="background:${cfg.bg};color:${cfg.color}">${display}</div>
       <div><div class="sec-name">${esc(cfg.name)}</div><div class="sec-desc">${esc(cfg.desc)}</div></div>
       <div class="sec-arr">\u203A</div>
+    </div>`;
+  }
+
+  // ═══ NOTIFICATION ITEM ═══
+  function notifItem(n) {
+    // n = { id, title, body, type, is_read, created_at, onClick }
+    const unreadCls = n.is_read ? '' : ' notif-unread';
+    const time = n.created_at ? new Date(n.created_at).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    return `<div class="notif-item${unreadCls}" onclick="${n.onClick || ''}">
+      <div class="notif-title">${esc(n.title || '')}</div>
+      <div class="notif-body">${esc(n.body || '')}</div>
+      <div class="notif-time">${esc(time)}</div>
     </div>`;
   }
 
@@ -140,6 +153,6 @@ SPG.ui = (() => {
     esc,
     badge, STATUS_MAP,
     sortData, sortTh, toggleSort, getSortState,
-    empty, filterBar, card, skeleton, sectionCard,
+    empty, filterBar, card, skeleton, sectionCard, notifItem,
   };
 })();
