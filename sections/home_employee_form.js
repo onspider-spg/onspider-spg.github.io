@@ -150,6 +150,9 @@ function collectCurrentTab() {
       if (!_data.bank_bsb) { SPG.toast('BSB is required', 'error'); return false; }
       if (!_data.bank_account_number) { SPG.toast('Account Number is required', 'error'); return false; }
       if (!_data.bank_account_name) { SPG.toast('Account Name is required', 'error'); return false; }
+      if (_data.full_name_en && _data.bank_account_name.toLowerCase() !== _data.full_name_en.toLowerCase()) {
+        SPG.toast('Account Name must match your Full Name (EN): ' + _data.full_name_en, 'error'); return false;
+      }
       break;
     case 2:
       _data.super_fund_name = get('emp-super-name');
@@ -197,7 +200,7 @@ function renderBank() {
     <div class="fg"><label class="lb">Bank Name *</label><input class="inp" id="emp-bank-name" value="${esc(d.bank_name || '')}" placeholder="e.g. Westpac, CBA, NAB, ANZ"></div>
     <div style="display:flex;gap:8px"><div class="fg" style="flex:1"><label class="lb">BSB *</label><input class="inp" id="emp-bank-bsb" value="${esc(d.bank_bsb || '')}" placeholder="e.g. 032-xxx" maxlength="7"></div>
     <div class="fg" style="flex:1"><label class="lb">Account Number *</label><input class="inp" id="emp-bank-acct" value="${esc(d.bank_account_number || '')}"></div></div>
-    <div class="fg"><label class="lb">Account Name *</label><input class="inp" id="emp-bank-acct-name" value="${esc(d.bank_account_name || '')}" placeholder="Name on bank account"></div>`;
+    <div class="fg"><label class="lb">Account Name * (Must match Full Name)</label><input class="inp" id="emp-bank-acct-name" value="${esc(d.bank_account_name || '')}" placeholder="Must match your full name"></div>`;
 }
 
 // ═══ TAB 3: SUPER ═══
