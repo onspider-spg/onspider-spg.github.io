@@ -66,12 +66,16 @@ function renderCreate() {
         <select class="inp" id="ann-target" onchange="Announce.targetChanged()">
           <option value="all">All Staff</option>
           <option value="store">Specific Store(s)</option>
-          <option value="dept">Specific Department(s)</option>
+          <option value="dept">Specific Store → Department(s)</option>
         </select>
       </div>
-      <div class="fg" id="ann-target-ids-wrap" style="display:none">
-        <label class="lb">Select target(s)</label>
-        <div id="ann-target-ids"></div>
+      <div class="fg" id="ann-store-wrap" style="display:none">
+        <label class="lb">Select Store(s)</label>
+        <div id="ann-store-ids"></div>
+      </div>
+      <div class="fg" id="ann-dept-wrap" style="display:none">
+        <label class="lb">Select Department(s)</label>
+        <div id="ann-dept-ids"></div>
       </div>
       <div class="fg" style="margin-top:8px">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
@@ -97,17 +101,55 @@ async function loadTargetOptions() {
 
 function targetChanged() {
   const type = document.getElementById('ann-target')?.value;
-  const wrap = document.getElementById('ann-target-ids-wrap');
-  const ct = document.getElementById('ann-target-ids');
-  if (!wrap || !ct) return;
-  if (type === 'all') { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  const items = type === 'store' ? (window._annStores || []) : (window._annDepts || []);
-  const idKey = type === 'store' ? 'store_id' : 'dept_id';
-  const nameKey = type === 'store' ? 'store_name' : 'dept_name';
-  ct.innerHTML = items.filter(i => i[idKey] !== 'ALL').map(i =>
+  const storeWrap = document.getElementById('ann-store-wrap');
+  const deptWrap = document.getElementById('ann-dept-wrap');
+  const storeCt = document.getElementById('ann-store-ids');
+  const deptCt = document.getElementById('ann-dept-ids');
+  if (!storeWrap || !deptWrap) return;
+
+  // Reset
+  storeWrap.style.display = 'none';
+  deptWrap.style.display = 'none';
+
+  if (type === 'all') return;
+
+  // Show store checkboxes for both 'store' and 'dept'
+  const stores = (window._annStores || []).filter(s => s.store_id !== 'ALL');
+  if (storeCt) {
+    storeCt.innerHTML = stores.map(s =>
+      `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;cursor:pointer">
+        <input type="checkbox" value="${esc(s.store_id)}" class="ann-store-cb" onchange="Announce.storeFilterChanged()"> ${esc(s.store_name || s.store_id)}
+      </label>`
+    ).join('');
+  }
+  storeWrap.style.display = 'block';
+
+  // If dept mode, clear dept list (will populate when store is selected)
+  if (type === 'dept' && deptCt) {
+    deptCt.innerHTML = '<div style="font-size:11px;color:var(--t3);padding:4px 0">Select store(s) first</div>';
+  }
+}
+
+function storeFilterChanged() {
+  const type = document.getElementById('ann-target')?.value;
+  if (type !== 'dept') return; // Only show dept checkboxes in dept mode
+
+  const deptWrap = document.getElementById('ann-dept-wrap');
+  const deptCt = document.getElementById('ann-dept-ids');
+  if (!deptWrap || !deptCt) return;
+
+  const selectedStores = Array.from(document.querySelectorAll('.ann-store-cb:checked')).map(cb => cb.value);
+  if (selectedStores.length === 0) {
+    deptWrap.style.display = 'none';
+    return;
+  }
+
+  // Show dept checkboxes
+  deptWrap.style.display = 'block';
+  const depts = (window._annDepts || []).filter(d => d.dept_id !== 'ALL');
+  deptCt.innerHTML = depts.map(d =>
     `<label style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px;cursor:pointer">
-      <input type="checkbox" value="${esc(i[idKey])}" class="ann-target-cb"> ${esc(i[nameKey] || i[idKey])}
+      <input type="checkbox" value="${esc(d.dept_id)}" class="ann-target-cb"> ${esc(d.dept_name || d.dept_id)}
     </label>`
   ).join('');
 }
@@ -120,14 +162,20 @@ async function send() {
   if (!title) { SPG.showError('ann-error', 'Title is required'); return; }
 
   let target_ids = [];
-  if (target_type !== 'all') {
+  let target_store_ids = [];
+  if (target_type === 'store') {
+    target_ids = Array.from(document.querySelectorAll('.ann-store-cb:checked')).map(cb => cb.value);
+    if (target_ids.length === 0) { SPG.showError('ann-error', 'Please select at least one store'); return; }
+  } else if (target_type === 'dept') {
+    target_store_ids = Array.from(document.querySelectorAll('.ann-store-cb:checked')).map(cb => cb.value);
     target_ids = Array.from(document.querySelectorAll('.ann-target-cb:checked')).map(cb => cb.value);
-    if (target_ids.length === 0) { SPG.showError('ann-error', 'Please select at least one target'); return; }
+    if (target_store_ids.length === 0) { SPG.showError('ann-error', 'Please select store(s) first'); return; }
+    if (target_ids.length === 0) { SPG.showError('ann-error', 'Please select at least one department'); return; }
   }
 
   // Confirmation
   const lineNote = send_line ? ' + LINE push' : '';
-  const targetNote = target_type === 'all' ? 'all staff' : `${target_ids.length} ${target_type}(s)`;
+  const targetNote = target_type === 'all' ? 'all staff' : target_type === 'dept' ? `${target_ids.length} dept(s) in ${target_store_ids.length} store(s)` : `${target_ids.length} store(s)`;
   SPG.showDialog(`<div class="popup-sheet" style="width:340px">
     <div class="popup-header"><div class="popup-title">Confirm Send</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
     <div style="font-size:13px;margin-bottom:14px">
@@ -141,7 +189,7 @@ async function send() {
   </div>`);
 
   // Store for doSend
-  window._annPending = { title, body, target_type, target_ids, send_line };
+  window._annPending = { title, body, target_type, target_ids, target_store_ids, send_line };
 }
 
 async function doSend() {
@@ -182,7 +230,7 @@ async function doDelete(id) {
 
 window.Announce = {
   renderList, renderCreate, loadList,
-  targetChanged, send, doSend,
+  targetChanged, storeFilterChanged, send, doSend,
   confirmDelete, doDelete,
 };
 })();
