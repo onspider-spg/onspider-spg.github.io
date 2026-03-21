@@ -803,6 +803,15 @@
       history.replaceState(null, '', location.pathname + location.hash);
     }
 
+    // LINE callback: ?line_code=xxx → handle automatically
+    const lineCode = urlParams.get('line_code');
+    if (lineCode) {
+      history.replaceState(null, '', location.pathname + '#employee-form');
+      setTimeout(() => {
+        if (typeof EmpForm !== 'undefined') EmpForm.handleLineCallback(lineCode);
+      }, 1000);
+    }
+
     const session = SPG.api.getSession();
     const { section, route, params } = parseHash(location.hash);
 
