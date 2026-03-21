@@ -364,6 +364,15 @@
         <div class="notif-bell" onclick="SPG.toggleNotifications()" title="Notifications">
           <span class="bell-icon">🔔</span>
           <span class="notif-badge" id="notif-count" style="display:none">0</span>
+          <div class="notif-dropdown" id="notif-dropdown" style="display:none" onclick="event.stopPropagation()">
+            <div class="notif-dropdown-header" style="padding:12px 14px;border-bottom:1px solid var(--bd2);display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:700;font-size:13px">Notifications</span>
+              <a href="#" style="font-size:11px;color:var(--theme,var(--acc))" onclick="SPG.markAllNotificationsRead();return false">Mark all read</a>
+            </div>
+            <div class="notif-dropdown-body" id="notif-list">
+              <div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No notifications</div>
+            </div>
+          </div>
         </div>
         <div class="topbar-icon" onclick="SPG.hardRefresh()" title="Refresh">↻</div>
         <div class="topbar-user" onclick="SPG.showProfilePopup()" style="cursor:pointer">
@@ -378,15 +387,7 @@
     const toggleIcon = state.sidebarCollapsed ? '›' : '‹';
     return `<div class="shell fade-in">
       ${topbar(sectionLabel)}
-      <div class="notif-dropdown" id="notif-dropdown" style="display:none">
-        <div class="notif-dropdown-header">
-          <span style="font-weight:700;font-size:13px">Notifications</span>
-          <a href="#" style="font-size:11px;color:var(--theme,var(--acc))" onclick="SPG.markAllNotificationsRead();return false">Mark all read</a>
-        </div>
-        <div class="notif-dropdown-body" id="notif-list">
-          <div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No notifications</div>
-        </div>
-      </div>
+      <!-- notif-dropdown moved inside .notif-bell -->
       <div class="shell-body">
         <nav class="sidebar${state.sidebarCollapsed ? ' closed' : ''}"></nav>
         <div class="sd-toggle" onclick="SPG.toggleSidebar()" title="Toggle sidebar">${toggleIcon}</div>
