@@ -227,37 +227,66 @@ async function loadStaffAssignments() {
 function renderStaffAssignments(ct) {
   const { list, stores, depts } = V2.assignments;
   const isSA = App.hasHomePerm('super_admin');
+  const searchTerm = (V2._saSearch || '').toLowerCase();
 
   // Group by account
   const byAcc = {};
   (list || []).forEach(a => {
-    if (!byAcc[a.account_id]) byAcc[a.account_id] = [];
-    byAcc[a.account_id].push(a);
+    if (!byAcc[a.account_id]) byAcc[a.account_id] = { name: a.display_name || a.account_id, items: [] };
+    byAcc[a.account_id].items.push(a);
+    if (a.display_name) byAcc[a.account_id].name = a.display_name;
   });
 
-  const rows = Object.entries(byAcc).map(([accId, assignments]) => {
-    const assRows = assignments.map(a => {
-      const primary = a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:3px;background:var(--acc2);color:var(--acc);margin-left:4px">Primary</span>' : '';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px">
-        <span style="font-weight:600">${esc(a.store_id)}</span>
-        <span style="color:var(--t3)">${esc(a.dept_id || '-')}</span>
-        <span style="color:var(--acc)">${esc(a.position_name)}</span>
-        ${primary}
-        ${isSA ? `<span style="margin-left:auto;cursor:pointer;color:var(--red);font-size:10px" onclick="AdminV2.removeAssignment('${esc(a.account_id)}','${esc(a.store_id)}','${esc(a.dept_id || '')}')">Remove</span>` : ''}
-      </div>`;
-    }).join('');
-    return `<div class="card" style="margin-bottom:8px;padding:10px 14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div style="font-weight:700;font-size:12px">${esc(accId)}</div>
-        ${isSA ? `<button class="btn btn-outline btn-sm" style="font-size:10px" onclick="AdminV2.showAddAssignment('${esc(accId)}')">+ Add</button>` : ''}
-      </div>
-      ${assRows}
-    </div>`;
-  }).join('');
+  // Filter by search
+  const entries = Object.entries(byAcc).filter(([accId, data]) => {
+    if (!searchTerm) return true;
+    return accId.toLowerCase().includes(searchTerm) ||
+      data.name.toLowerCase().includes(searchTerm) ||
+      data.items.some(a => (a.store_id || '').toLowerCase().includes(searchTerm) || (a.dept_id || '').toLowerCase().includes(searchTerm));
+  });
+
+  // Build table rows
+  let rows = '';
+  if (entries.length === 0) {
+    rows = `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--t3)">${searchTerm ? 'No results found' : 'No assignments found'}</td></tr>`;
+  } else {
+    entries.forEach(([accId, data]) => {
+      data.items.forEach((a, i) => {
+        const storeName = (stores || []).find(s => s.store_id === a.store_id)?.store_name || a.store_id;
+        const deptName = (depts || []).find(d => d.dept_id === a.dept_id)?.dept_name || a.dept_id || '-';
+        const primary = a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:3px;background:var(--acc2);color:var(--acc)">Primary</span>' : '';
+        const nameCell = i === 0 ? `<td rowspan="${data.items.length}" style="font-weight:600;vertical-align:top;border-right:1px solid var(--bd2)">
+          <div>${esc(data.name)}</div>
+          <div style="font-size:10px;color:var(--t3);font-weight:400">${esc(accId)}</div>
+          ${isSA ? `<button class="btn btn-outline btn-sm" style="font-size:9px;margin-top:6px" onclick="AdminV2.showAddAssignment('${esc(accId)}')">+ Add</button>` : ''}
+        </td>` : '';
+        rows += `<tr style="border-top:${i === 0 ? '2px solid var(--bd2)' : 'none'}">
+          ${nameCell}
+          <td>${esc(storeName)}</td>
+          <td>${esc(deptName)}</td>
+          <td><span style="color:var(--acc);font-size:11px">${esc(a.position_name || '-')}</span></td>
+          <td>${primary}</td>
+          <td>${isSA ? `<a class="lk" style="color:var(--red);font-size:10px;cursor:pointer" onclick="AdminV2.removeAssignment('${esc(a.account_id)}','${esc(a.store_id)}','${esc(a.dept_id || '')}')">Remove</a>` : ''}</td>
+        </tr>`;
+      });
+    });
+  }
 
   ct.innerHTML = `
-    <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Store + Department + Position assignments per account. One account can have multiple stores.</div>
-    ${rows || '<div style="text-align:center;padding:30px;color:var(--t3)">No assignments found</div>'}`;
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--t3)">${(list || []).length} assignments across ${entries.length} staff</div>
+      <input class="inp" style="width:220px;font-size:12px" placeholder="Search name, store, dept..." value="${esc(V2._saSearch || '')}" oninput="AdminV2._saSearch(this.value)">
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="tbl"><thead><tr>
+        <th style="min-width:140px">Staff</th><th>Store</th><th>Dept</th><th>Position</th><th></th><th></th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+function _saSearch(val) {
+  V2._saSearch = val;
+  const ct = document.getElementById('admin-content');
+  if (ct) renderStaffAssignments(ct);
 }
 
 function showAddAssignment(accountId) {
@@ -347,7 +376,7 @@ window.AdminV2 = {
   loadBasePermissions, markBaseDirty, saveBasePermissions,
   loadDeptOverrides, showDeptDetail, markDeptDirty, saveDeptOverrides,
   loadStaffAssignments, showAddAssignment, submitAddAssignment, removeAssignment,
-  loadIndividualOverrides,
+  loadIndividualOverrides, _saSearch,
 };
 
 })();

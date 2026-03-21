@@ -584,7 +584,7 @@
         sdSubItem('admin', 'base-permissions', 'Base Permissions') +
         sdSubItem('admin', 'dept-overrides', 'Dept Overrides') +
         sdSubItem('admin', 'staff-assignments', 'Staff Assignments') +
-        sdSubItem('admin', 'requests', 'Requests') +
+        sdSubItem('admin', 'requests', 'Requests', 'req-badge') +
         sdSubItem('admin', 'store-requests', 'Store Requests')
       );
       html += sdAccordion('master', 'Master Data',
@@ -644,10 +644,11 @@
     </div>`;
   }
 
-  function sdSubItem(route, tab, label) {
+  function sdSubItem(route, tab, label, badgeId) {
     const active = currentRoute === route && (!tab || currentParams.tab === tab) ? ' active' : '';
     const onclick = tab ? `SPG.go('${route}',{tab:'${tab}'})` : `SPG.go('${route}')`;
-    return `<div class="sd-sub-item${active}" onclick="${onclick}">${label}</div>`;
+    const badge = badgeId ? `<span id="${badgeId}" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:50%;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;margin-left:6px"></span>` : '';
+    return `<div class="sd-sub-item${active}" onclick="${onclick}" style="display:flex;align-items:center;justify-content:space-between">${label}${badge}</div>`;
   }
 
   // ═══ ACCORDION ═══

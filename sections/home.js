@@ -376,6 +376,19 @@ async function loadDashboard() {
   fillDashboard(st.session, st.modules);
   SPG.buildSidebar();
 
+  // Update pending requests badge
+  if (SPG.perm.hasHome('admin')) {
+    try {
+      const regData = await SPG.api.adminGetRegistrations();
+      const pendingCount = (regData.requests || []).filter(r => r.status === 'pending' || r.status === 'incomplete').length;
+      const badge = document.getElementById('req-badge');
+      if (badge && pendingCount > 0) {
+        badge.textContent = pendingCount;
+        badge.style.display = 'inline-block';
+      }
+    } catch {}
+  }
+
   // Profile completion alert
   if (!st.profileComplete) {
     setTimeout(() => {

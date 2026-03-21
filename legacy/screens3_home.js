@@ -67,7 +67,7 @@ function renderDetail(ct) {
         <div><div class="lb">Email</div><div class="profile-field-readonly">${esc(a.email || '-')}</div></div>
         <div><div class="lb">Store</div><div class="profile-field-readonly">${esc(a.store_id || '-')}</div></div>
         <div><div class="lb">Department</div><div class="profile-field-readonly">${esc(a.dept_id || '-')}</div></div>
-        <div><div class="lb">Users</div><div class="profile-field-readonly">${a.user_count || 0}</div></div>
+        <div><div class="lb">Linked Users</div><div class="profile-field-readonly">${a.user_count || _accUsers.length || 0}</div></div>
         <div><div class="lb">Last Login</div><div class="profile-field-readonly">${a.last_login ? new Date(a.last_login).toLocaleString('en-GB') : 'Never'}</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">

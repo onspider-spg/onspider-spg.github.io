@@ -307,28 +307,44 @@ function renderRequestsTable(ct, data) {
   const ST = App.getSortState('requests');
   const sortKey = ST ? ST.key : 'display_name';
   const sortDir = ST ? ST.dir : 'asc';
-  const reqs = App.sortData(data.requests || [], sortKey, sortDir);
+  // Default: show only pending/incomplete. Toggle to show all.
+  const showAll = A._showAllReqs || false;
+  const allReqs = data.requests || [];
+  const pendingReqs = allReqs.filter(r => r.status === 'pending' || r.status === 'incomplete');
+  const displayReqs = showAll ? allReqs : pendingReqs;
+  const reqs = App.sortData(displayReqs, sortKey, sortDir);
   let rows = '';
   if (reqs.length === 0) {
-    rows = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--t3)">No registration requests</td></tr>';
+    rows = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--t3)">No pending requests</td></tr>';
   } else {
     rows = reqs.map(r => {
       const dt = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-';
+      const stsLabel = r.status === 'incomplete' ? 'incomplete' : r.status;
       return `<tr style="cursor:pointer" onclick="Admin.reviewRequest('${esc(r.request_id)}')">
         <td style="font-weight:600">${esc(r.display_name || r.full_name)}</td>
         <td>${esc(r.email || r.username)}</td>
         <td class="hide-m">${esc(r.requested_store_id || '-')}</td>
         <td>${dt}</td>
-        <td><span class="sts ${r.status === 'approved' ? 'sts-ok' : r.status === 'rejected' ? 'sts-err' : r.status === 'incomplete' ? 'sts-info' : 'sts-warn'}">${esc(r.status)}${r.source === 'v2' ? ' (v2)' : ''}</span></td>
+        <td><span class="sts ${r.status === 'approved' ? 'sts-ok' : r.status === 'rejected' ? 'sts-err' : r.status === 'incomplete' ? 'sts-info' : 'sts-warn'}">${esc(stsLabel)}</span></td>
       </tr>`;
     }).join('');
   }
+  const toggleBtn = allReqs.length > pendingReqs.length
+    ? `<button class="btn btn-outline btn-sm" style="font-size:11px" onclick="Admin._toggleShowAll()">${showAll ? 'Show Pending Only' : `Show All (${allReqs.length})`}</button>` : '';
   ct.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--t3)">${pendingReqs.length} pending request(s)</div>
+      ${toggleBtn}
+    </div>
     <div class="card" style="padding:0;overflow:hidden">
       <table class="tbl"><thead><tr>${App.sortTh('requests','display_name','Name')}${App.sortTh('requests','email','Email')}${App.sortTh('requests','requested_store_id','Store',' class="hide-m"')}${App.sortTh('requests','submitted_at','Date')}${App.sortTh('requests','status','Status')}</tr></thead>
       <tbody>${rows}</tbody></table>
-    </div>
-    ${data.pending_count > 0 ? `<div style="font-size:11px;color:var(--orange);margin-top:8px">${data.pending_count} pending request(s)</div>` : ''}`;
+    </div>`;
+}
+function _toggleShowAll() {
+  A._showAllReqs = !A._showAllReqs;
+  const ct = document.getElementById('admin-content');
+  if (ct && A._regData) renderRequestsTable(ct, A._regData);
 }
 
 // ════════════════════════════════
@@ -720,7 +736,7 @@ window.Admin = {
   filterAccounts, loadAccountsPage,
   markPermDirty, savePermissions,
   markTierDirty, saveTierAccess,
-  loadRequests, reviewRequest, submitReview, _onStoreChange,
+  loadRequests, reviewRequest, submitReview, _onStoreChange, _toggleShowAll,
   loadStoreRequests, reviewStoreRequest, submitStoreReview,
   markHomePermDirty, saveHomeSettings,
 };
