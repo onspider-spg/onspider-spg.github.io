@@ -189,8 +189,11 @@
     }
 
     // Profile incomplete guard — block navigation everywhere except allowed routes
+    // Skip for Owner/GM (position_level <= 2) — they don't need employee form
     const PROFILE_EXEMPT = ['login', 'register', 'staff-select', 'store-select', 'new-staff', 'employee-form', 'line-connect', 'pending-approval'];
-    if (state._bundleLoaded && state.profileComplete === false && !PROFILE_EXEMPT.includes(resolvedRoute)) {
+    const _ses = SPG.api.getSession();
+    const _isAdmin = _ses && ((_ses.position_level && _ses.position_level <= 2) || (_ses.tier_id === 'T1' || _ses.tier_id === 'T2'));
+    if (state._bundleLoaded && state.profileComplete === false && !_isAdmin && !PROFILE_EXEMPT.includes(resolvedRoute)) {
       // Show blocking popup
       setTimeout(() => {
         showDialog(`<div class="popup-sheet" style="width:360px">

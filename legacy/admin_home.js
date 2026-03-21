@@ -319,7 +319,7 @@ function renderRequestsTable(ct, data) {
         <td>${esc(r.email || r.username)}</td>
         <td class="hide-m">${esc(r.requested_store_id || '-')}</td>
         <td>${dt}</td>
-        <td><span class="sts ${r.status === 'approved' ? 'sts-ok' : r.status === 'rejected' ? 'sts-err' : 'sts-warn'}">${esc(r.status)}</span></td>
+        <td><span class="sts ${r.status === 'approved' ? 'sts-ok' : r.status === 'rejected' ? 'sts-err' : r.status === 'incomplete' ? 'sts-info' : 'sts-warn'}">${esc(r.status)}${r.source === 'v2' ? ' (v2)' : ''}</span></td>
       </tr>`;
     }).join('');
   }
