@@ -10,6 +10,9 @@ const api = SPG.api;
 let _step = 1;
 let _email = '';
 let _password = '';
+let _fullName = '';
+let _displayName = '';
+let _phone = '';
 let _resendTimer = 0;
 let _resendInterval = null;
 
@@ -154,9 +157,10 @@ function renderStep3() {
 }
 
 function nextStep3() {
-  const full_name = document.getElementById('reg-fullname')?.value.trim();
-  const display_name = document.getElementById('reg-nickname')?.value.trim();
-  if (!full_name || !display_name) { SPG.showError('reg-error', 'Please fill in name fields'); return; }
+  _fullName = document.getElementById('reg-fullname')?.value.trim();
+  _displayName = document.getElementById('reg-nickname')?.value.trim();
+  _phone = document.getElementById('reg-phone')?.value.trim();
+  if (!_fullName || !_displayName) { SPG.showError('reg-error', 'Please fill in name fields'); return; }
   _step = 4;
   renderCurrentStep();
 }
@@ -185,9 +189,6 @@ async function loadStep4Dropdowns() {
 }
 
 async function submitRegister() {
-  const full_name = document.getElementById('reg-fullname')?.value.trim();
-  const display_name = document.getElementById('reg-nickname')?.value.trim();
-  const phone = document.getElementById('reg-phone')?.value.trim();
   const store = document.getElementById('reg-store')?.value;
   const dept = document.getElementById('reg-dept')?.value;
   if (!store) { SPG.showError('reg-error', 'Please select a store'); return; }
@@ -197,7 +198,7 @@ async function submitRegister() {
   try {
     await api.registerV2({
       email: _email, password: _password,
-      full_name, display_name, phone: phone || '',
+      full_name: _fullName, display_name: _displayName, phone: _phone || '',
       requested_store_id: store, requested_dept_id: dept,
     });
     _step = 5;
@@ -235,7 +236,7 @@ function renderCurrentStep() {
 }
 
 function render() {
-  _step = 1; _email = ''; _password = '';
+  _step = 1; _email = ''; _password = ''; _fullName = ''; _displayName = ''; _phone = '';
   return `<div class="shell-login fade-in">
     <div class="login-header">
       <button class="login-back" onclick="SPG.go('login')">←</button>
