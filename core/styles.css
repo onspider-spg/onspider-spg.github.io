@@ -912,6 +912,30 @@ html, body {
   .sidebar-overlay, .sidebar-panel { display: none !important; }
 }
 
+/* ═══ Register Progress ═══ */
+.reg-progress { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 20px; }
+.reg-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); color: var(--t3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.reg-dot.active { background: var(--acc); color: #fff; }
+.reg-dot.current { background: var(--acc); color: #fff; box-shadow: 0 0 0 3px var(--acc2); }
+.reg-line { width: 24px; height: 2px; background: var(--bd2); }
+.reg-step { animation: fadeIn .3s ease; }
+.reg-step-title { font-size: 13px; font-weight: 700; color: var(--acc); margin-bottom: 16px; }
+
+/* ═══ Employee Form Tabs ═══ */
+.emp-tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 8px; border-bottom: 1px solid var(--bd2); margin-bottom: 8px; }
+.emp-tab { padding: 6px 10px; border-radius: var(--rd); font-size: 11px; cursor: pointer; white-space: nowrap; color: var(--t3); background: var(--bg3); }
+.emp-tab.active { background: var(--acc); color: #fff; }
+.emp-tab.done { background: var(--green-bg); color: var(--green); }
+.max-w-md { max-width: 560px; }
+
+/* ═══ Notification Items ═══ */
+.notif-item { padding: 10px 14px; border-bottom: 1px solid var(--bd2); cursor: pointer; }
+.notif-item:hover { background: var(--bg2); }
+.notif-item.notif-unread { background: var(--acc2); }
+.notif-title { font-size: 13px; font-weight: 600; }
+.notif-body { font-size: 12px; color: var(--t3); margin-top: 2px; }
+.notif-time { font-size: 10px; color: var(--t4); margin-top: 4px; }
+
 /* ═══ PWA Standalone ═══ */
 @media (display-mode: standalone) {
   .topbar { padding-top: calc(var(--sp-sm) + var(--safe-top)); }

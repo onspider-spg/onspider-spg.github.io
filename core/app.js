@@ -70,6 +70,7 @@
     'login': 'home', 'register': 'home',
     'staff-select': 'home', 'store-select': 'home', 'new-staff': 'home',
     'dashboard': 'home', 'profile': 'home',
+    'pending-approval': 'home', 'employee-form': 'home', 'line-connect': 'home',
   };
 
   // Public routes (no auth required)
@@ -246,7 +247,28 @@
       state.modules = data.modules;
       state.homePermission = data.home_permission || 'view_only';
       state.profileComplete = data.profile_complete !== false;
+      state.lineConnected = data.line_connected !== false;
+      state.unreadNotifications = data.unread_notifications || 0;
       state._bundleLoaded = true;
+
+      // Update notification badge
+      const badge = document.getElementById('notif-count');
+      if (badge) {
+        badge.textContent = state.unreadNotifications > 99 ? '99+' : state.unreadNotifications;
+        badge.style.display = state.unreadNotifications > 0 ? 'flex' : 'none';
+      }
+
+      // Start notification polling (every 60s)
+      if (!state._notifPolling) {
+        state._notifPolling = setInterval(async () => {
+          try {
+            const nd = await SPG.api.getNotifications({ limit: 1 });
+            const count = nd.unread_count || 0;
+            const b = document.getElementById('notif-count');
+            if (b) { b.textContent = count > 99 ? '99+' : count; b.style.display = count > 0 ? 'flex' : 'none'; }
+          } catch { /* silent */ }
+        }, 60000);
+      }
 
       // Set home permission
       SPG.perm.set('home', state.homePermission);
@@ -536,19 +558,26 @@
     if (SPG.perm.hasHome('admin')) {
       html += '<div class="sd-divider"></div>';
       html += '<div class="sd-section">Admin</div>';
-      html += sdAccordion('admin', 'Admin',
+      html += sdAccordion('admin', 'Function Access',
         sdSubItem('admin', 'accounts', 'Accounts') +
         sdSubItem('admin', 'base-permissions', 'Base Permissions') +
         sdSubItem('admin', 'dept-overrides', 'Dept Overrides') +
         sdSubItem('admin', 'staff-assignments', 'Staff Assignments') +
         sdSubItem('admin', 'requests', 'Requests') +
-        sdSubItem('admin', 'store-requests', 'Store Requests') +
-        sdSubItem('admin', 'home-settings', 'Home Settings')
+        sdSubItem('admin', 'store-requests', 'Store Requests')
       );
       html += sdAccordion('master', 'Master Data',
         sdSubItem('master', 'modules', 'Modules') +
         sdSubItem('master', 'stores', 'Stores') +
         sdSubItem('master', 'depts', 'Departments')
+      );
+      html += sdAccordion('announce', 'Announcements',
+        sdSubItem('admin', 'announcements', 'All Announcements') +
+        sdSubItem('admin', 'create-announcement', 'Create New')
+      );
+      html += sdAccordion('settings', 'Settings',
+        sdSubItem('settings', 'general', 'General') +
+        sdSubItem('settings', 'notifications', 'Notifications')
       );
     }
     if (SPG.perm.hasHome('edit')) {

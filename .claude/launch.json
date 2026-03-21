@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "spg-hub",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8080", "--directory", "/Users/onjaijang/SPG HUB/onspider-spg.github.io"],
+      "port": 8080
+    }
+  ]
+}

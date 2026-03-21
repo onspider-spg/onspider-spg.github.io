@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPG HUB — LINE Connect</title>
+<style>
+  body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fdfaf4; }
+  .box { text-align: center; padding: 40px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <div id="msg" style="font-size:14px;color:#555">Connecting LINE...</div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    const error = params.get('error');
+
+    if (error) {
+      document.getElementById('msg').textContent = 'LINE connect cancelled';
+      setTimeout(() => { window.location.href = '/#employee-form'; }, 1500);
+    } else if (code) {
+      // Redirect back to main app with code
+      window.location.href = `/?line_code=${encodeURIComponent(code)}&line_state=${encodeURIComponent(state || '')}#employee-form`;
+    } else {
+      document.getElementById('msg').textContent = 'Invalid callback';
+      setTimeout(() => { window.location.href = '/#dashboard'; }, 2000);
+    }
+  </script>
+</body>
+</html>

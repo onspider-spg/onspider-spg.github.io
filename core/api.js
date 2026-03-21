@@ -188,5 +188,27 @@ SPG.api = (() => {
     // Employee Detail (extended profile)
     getEmployeeDetail: () => homePost('get_employee_detail', tb()),
     saveEmployeeDetail: (data) => homePost('save_employee_detail', tb(data)),
+
+    // Register v2 (Phase 2)
+    checkEmail: (email) => homePost('check_email', { email }),
+    sendOtp: (email) => homePost('send_otp', { email }),
+    verifyOtp: (email, code) => homePost('verify_otp', { email, code }),
+    registerV2: (data) => homePost('register_v2', data),
+    submitForApproval: (data = {}) => homePost('submit_for_approval', tb(data)),
+    getRegistrationStatus: () => homePost('get_registration_status', tb()),
+
+    // LINE Connect
+    lineConnect: (data) => homePost('line_connect', tb(data)),
+    lineDisconnect: () => homePost('line_disconnect', tb()),
+    getLineStatus: () => homePost('get_line_status', tb()),
+
+    // Announcements (Admin)
+    adminGetAnnouncements: (f = {}) => homePost('admin_get_announcements', tb(f)),
+    adminCreateAnnouncement: (data) => homePost('admin_create_announcement', tb(data)),
+    adminDeleteAnnouncement: (id) => homePost('admin_delete_announcement', tb({ announcement_id: id })),
+
+    // Settings (Admin)
+    adminGetSettings: () => homePost('admin_get_settings', tb()),
+    adminUpdateSetting: (key, value) => homePost('admin_update_setting', tb({ setting_key: key, setting_value: value })),
   };
 })();

@@ -50,6 +50,14 @@ async function doLogin() {
     if (data.store_selection_required) {
       api.saveAccountTemp({ ...data, _storeSelect: true });
       SPG.go('store-select');
+    } else if (data.account_status === 'incomplete') {
+      // New user flow: account created but employee form not complete
+      api.saveSession(data);
+      SPG.go('employee-form');
+    } else if (data.account_status === 'pending') {
+      // Submitted for approval but not yet approved
+      api.saveSession(data);
+      SPG.go('pending-approval');
     } else if (data.account_type === 'individual') {
       api.saveSession(data);
       SPG.go('dashboard');
@@ -70,6 +78,8 @@ async function doLogin() {
 // REGISTER
 // ════════════════════════════════
 function renderRegister() {
+  // Delegate to Register v2 if available
+  if (typeof RegV2 !== 'undefined') return RegV2.render();
   return shellLogin(`
     <div class="login-header">
       <button class="login-back" onclick="SPG.go('login')">←</button>
@@ -532,12 +542,13 @@ function renderProfileCard(d) {
       <div><div class="lb">Store</div><div class="profile-field-readonly">${esc(d.store_name_th || d.store_id || '-')}</div></div>
       <div><div class="lb">Position</div><div class="profile-field-readonly">${esc(d.position_id ? d.position_name : (d.tier_id + ' · ' + (d.tier_name || '')))}</div></div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:var(--sp-md)">
+    <div style="display:flex;gap:8px;margin-top:var(--sp-md);flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="HomeSection.showEditProfile()">Edit Profile</button>
       ${isGroup
         ? '<button class="btn btn-outline btn-sm" onclick="HomeSection.showChangePinPopup()">Change PIN</button>'
         : '<button class="btn btn-outline btn-sm" onclick="HomeSection.showChangePasswordPopup()">Change Password</button>'
       }
+      <button class="btn btn-outline btn-sm" onclick="SPG.go('employee-form')">Employee Details</button>
     </div>
     ${isGroup ? '<div class="inp-hint" style="margin-top:8px">Group users cannot change password. Contact admin if needed.</div>' : ''}
     <div style="margin-top:16px;border-top:1px solid var(--bd2);padding-top:14px">
@@ -707,7 +718,7 @@ async function submitRequestStore() {
 // ════════════════════════════════
 function renderAdmin(p) {
   const tab = p?.tab || 'accounts';
-  const titles = { accounts: 'Accounts', permissions: 'Permissions (Legacy)', tieraccess: 'Tier Access (Legacy)', requests: 'Registration Requests', 'store-requests': 'Store Requests', 'home-settings': 'Home Settings', 'base-permissions': 'Base Permissions', 'dept-overrides': 'Dept Overrides', 'staff-assignments': 'Staff Assignments' };
+  const titles = { accounts: 'Accounts', permissions: 'Permissions (Legacy)', tieraccess: 'Tier Access (Legacy)', requests: 'Registration Requests', 'store-requests': 'Store Requests', 'home-settings': 'Home Settings', 'base-permissions': 'Base Permissions', 'dept-overrides': 'Dept Overrides', 'staff-assignments': 'Staff Assignments', 'announcements': 'Announcements', 'create-announcement': 'Create Announcement' };
   const title = titles[tab] || 'Admin';
   const isSA = SPG.perm.hasHome('super_admin');
 
@@ -719,6 +730,8 @@ function renderAdmin(p) {
 
   const r = SPG.shell(`${SPG.toolbar(title, actions)}<div class="content"><div id="admin-content">${SPG.ui.skeleton(200)}</div></div>`);
   setTimeout(() => {
+    if (tab === 'announcements' && typeof Announce !== 'undefined') { Announce.renderList(); return; }
+    if (tab === 'create-announcement' && typeof Announce !== 'undefined') { Announce.renderCreate(); return; }
     if (typeof Admin !== 'undefined') Admin.loadAdminTab(tab);
     else SPG.toast('Admin module not loaded', 'error');
   }, 30);
@@ -793,6 +806,14 @@ SPG.section('home', {
     // Main screens
     'dashboard':      { render: renderDashboard,    onLoad: loadDashboard },
     'profile':        { render: renderProfile,      onLoad: loadProfile },
+
+    // New user flow
+    'pending-approval': { render: () => typeof NewUser !== 'undefined' ? NewUser.renderPendingApproval() : renderLogin(), shell: false },
+    'employee-form':    { render: (p) => typeof EmpForm !== 'undefined' ? EmpForm.render(p) : renderLogin(), onLoad: () => typeof EmpForm !== 'undefined' && EmpForm.onLoad() },
+    'line-connect':     { render: (p) => typeof EmpForm !== 'undefined' ? EmpForm.render({ ...p, forced: true }) : renderLogin(), onLoad: () => typeof EmpForm !== 'undefined' && EmpForm.onLoad() },
+
+    // Settings
+    'settings':       { render: (p) => typeof Settings !== 'undefined' ? Settings.render(p) : SPG.shell(SPG.toolbar('Settings') + '<div class="content">Loading...</div>'), onLoad: (p) => typeof Settings !== 'undefined' && Settings.onLoad(p), minPerm: 'super_admin' },
 
     // Admin shells
     'admin':          { render: renderAdmin,        minPerm: 'admin' },
