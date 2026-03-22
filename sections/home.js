@@ -473,18 +473,19 @@ function launchSection(sectionId, externalUrl) {
   if (!s) return;
 
   // Migrated sections → navigate internally via SPG.go()
+  // All modules use 'dashboard' as default route
   const migratedSections = {
     'sales': 'sales/dashboard',
-    'purchase': 'purchase/home',
-    'bakery': 'bakery/home',
-    'finance': 'finance/home',
-    'hr': 'hr/home',
-    'operations': 'operations/home',
-    'foodhub': 'foodhub/home',
-    'marketing': 'marketing/home',
-    'equipment': 'equipment/home',
-    'bi': 'bi/home',
-    'crm': 'crm/home',
+    'purchase': 'purchase/dashboard',
+    'bakery': 'bakery/dashboard',
+    'finance': 'finance/dashboard',
+    'hr': 'hr/dashboard',
+    'operations': 'operations/dashboard',
+    'foodhub': 'foodhub/dashboard',
+    'marketing': 'marketing/dashboard',
+    'equipment': 'equipment/dashboard',
+    'bi': 'bi/dashboard',
+    'crm': 'crm/dashboard',
   };
 
   if (sectionId && migratedSections[sectionId]) {

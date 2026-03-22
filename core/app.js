@@ -36,18 +36,19 @@
   };
 
   // Shared module definitions (used by both desktop + mobile sidebar)
+  // Sorted alphabetically by label
   const MODULE_DEFS = [
-    { id: 'sales',      label: 'Sales Daily' },
-    { id: 'purchase',   label: 'Purchase' },
     { id: 'bakery',     label: 'Bakery' },
-    { id: 'finance',    label: 'Finance' },
-    { id: 'hr',         label: 'HR' },
-    { id: 'operations', label: 'Operations' },
-    { id: 'foodhub',    label: 'Food Hub' },
-    { id: 'marketing',  label: 'Marketing' },
-    { id: 'equipment',  label: 'Equipment' },
     { id: 'bi',         label: 'BI Dashboard' },
     { id: 'crm',        label: 'CRM' },
+    { id: 'equipment',  label: 'Equipment' },
+    { id: 'finance',    label: 'Finance' },
+    { id: 'foodhub',    label: 'Food Hub' },
+    { id: 'hr',         label: 'HR' },
+    { id: 'marketing',  label: 'Marketing' },
+    { id: 'operations', label: 'Operations' },
+    { id: 'purchase',   label: 'Purchase' },
+    { id: 'sales',      label: 'Sales Daily' },
   ];
   const MODULE_MAP = {
     'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
@@ -661,7 +662,7 @@
         if (mod && !mod.is_accessible) return;
         const isActive = mod && mod.status === 'active' && _sections[def.id];
         if (isActive) {
-          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'home');
+          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'dashboard');
           const active = currentSection === def.id ? ' active' : '';
           moduleItems += `<div class="sd-sub-item${active}" onclick="SPG.go('${route}')">${def.label}</div>`;
         } else if (mod) {
@@ -805,7 +806,7 @@
         if (mod && !mod.is_accessible) return;
         const isActive = mod && mod.status === 'active' && _sections[def.id];
         if (isActive) {
-          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'home');
+          const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'dashboard');
           html += `<div class="mob-sd-item" onclick="SPG.closeSidebar();SPG.go('${route}')">${def.label}</div>`;
         } else {
           html += `<div class="mob-sd-item disabled">${def.label} <span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--orange-bg);color:var(--orange)">Soon</span></div>`;
