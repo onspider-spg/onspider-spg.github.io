@@ -602,7 +602,7 @@
         sdSubItem('admin/dept-overrides', null, 'Dept Overrides') +
         sdSubItem('admin/staff-assignments', null, 'Staff Assignments') +
         sdSubItem('admin/requests', null, 'Requests', 'req-badge') +
-        sdSubItem('admin/store-requests', null, 'Store Requests')
+        sdSubItem('admin/store-requests', null, 'Store Requests', 'store-req-badge')
       );
       html += sdAccordion('master', 'Master Data',
         sdSubItem('master/modules', null, 'Modules') +
@@ -664,8 +664,8 @@
   function sdSubItem(route, tab, label, badgeId) {
     const active = currentRoute === route && (!tab || currentParams.tab === tab) ? ' active' : '';
     const onclick = tab ? `SPG.go('${route}',{tab:'${tab}'})` : `SPG.go('${route}')`;
-    const badge = badgeId ? `<span id="${badgeId}" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:50%;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;margin-left:6px"></span>` : '';
-    return `<div class="sd-sub-item${active}" onclick="${onclick}" style="display:flex;align-items:center;justify-content:space-between">${label}${badge}</div>`;
+    const badge = badgeId ? `<span id="${badgeId}" style="display:none;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:50%;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px;margin-left:auto;flex-shrink:0"></span>` : '';
+    return `<div class="sd-sub-item${active}" onclick="${onclick}" style="display:flex;align-items:center;gap:6px">${label}${badge}</div>`;
   }
 
   // ═══ ACCORDION ═══

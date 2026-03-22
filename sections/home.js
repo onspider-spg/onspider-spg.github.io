@@ -376,15 +376,26 @@ async function loadDashboard() {
   fillDashboard(st.session, st.modules);
   SPG.buildSidebar();
 
-  // Update pending requests badge
+  // Update pending requests badges (registration + store requests)
   if (SPG.perm.hasHome('admin')) {
     try {
-      const regData = await SPG.api.adminGetRegistrations();
+      const [regData, storeData] = await Promise.all([
+        SPG.api.adminGetRegistrations(),
+        SPG.api.adminGetStoreRequests().catch(() => ({ requests: [] })),
+      ]);
+      // Registration requests badge
       const pendingCount = (regData.requests || []).filter(r => r.status === 'pending' || r.status === 'incomplete').length;
       const badge = document.getElementById('req-badge');
-      if (badge && pendingCount > 0) {
+      if (badge) {
         badge.textContent = pendingCount;
-        badge.style.display = 'inline-block';
+        badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+      }
+      // Store requests badge
+      const storeReqCount = (storeData.requests || []).filter(r => r.status === 'pending').length;
+      const storeBadge = document.getElementById('store-req-badge');
+      if (storeBadge) {
+        storeBadge.textContent = storeReqCount;
+        storeBadge.style.display = storeReqCount > 0 ? 'inline-block' : 'none';
       }
     } catch {}
   }
