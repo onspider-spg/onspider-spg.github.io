@@ -51,12 +51,12 @@ function _curMonth() {
 
 /** Get month options (last 12 months) */
 function _monthOpts(selected) {
-  const now = new Date();
+  const now = FIN.sydneyNow();
   let html = '';
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = d.toLocaleDateString('en-CA').substring(0, 7);
-    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const val = d.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }).substring(0, 7);
+    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'Australia/Sydney' });
     html += `<option value="${val}"${val === selected ? ' selected' : ''}>${esc(label)}</option>`;
   }
   return html;

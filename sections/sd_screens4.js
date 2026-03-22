@@ -36,7 +36,7 @@ function monthLabel(m) { const p = m.split('-'); const ms = ['','Jan','Feb','Mar
 let ar = { days: [], stores: [], kpis: {}, month: '', brand: '' };
 
 function renderAccReview(p) {
-  ar.month = ar.month || new Date().toISOString().substring(0, 7);
+  ar.month = ar.month || SD.todayStr().substring(0, 7);
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Account Review</div></div>
   <div class="content" id="ar-content">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0 10px;font-size:13px;font-weight:600">
@@ -391,7 +391,7 @@ function auLoadMore() { au.offset += 50; auLoad(true); }
 let rd = { data: null, month: '', brand: '' };
 
 function renderReportDash(p) {
-  rd.month = rd.month || new Date().toISOString().substring(0, 7);
+  rd.month = rd.month || SD.todayStr().substring(0, 7);
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Report Dashboard</div></div>
   <div class="content" id="rd-content">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0 10px;font-size:13px;font-weight:600">

@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════
+ * SPG HUB — Sales Daily Extra Styles
+ * Classes from legacy styles_sd.css
+ * that core/styles.css does NOT have
+ * ═══════════════════════════════════════ */
+
+/* ═══ WELCOME ═══ */
+.welcome-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.welcome-meta{font-size:11px;color:var(--t3)}
+
+/* ═══ KPI ═══ */
+.kpi-row{display:grid;gap:8px;margin-bottom:12px}
+.kpi-4{grid-template-columns:repeat(4,1fr)}
+.kpi-3{grid-template-columns:repeat(3,1fr)}
+.kpi-2{grid-template-columns:repeat(2,1fr)}
+.kpi-box{background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rd);padding:10px;text-align:center}
+.kpi-val{font-size:18px;font-weight:700;margin-bottom:2px}
+.kpi-label{font-size:10px;color:var(--t3)}
+
+/* ═══ SECTION LABEL ═══ */
+.sl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin:12px 0 6px;display:flex;align-items:center;gap:4px}
+
+/* ═══ QUICK BUTTON ═══ */
+.qb{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rd);margin-bottom:6px;cursor:pointer;border-left:3px solid transparent}
+.qb:hover{border-color:var(--acc);background:var(--bg2)}
+.qb-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.qb-label{font-size:12px;font-weight:600}
+.qb-sub{font-size:10px;color:var(--t3)}
+.qb-arr{color:var(--t4);font-size:12px;margin-left:auto}
+
+/* ═══ FORM (legacy SD classes) ═══ */
+.fi{width:100%;padding:8px 10px;border:1px solid var(--bd);border-radius:var(--rd);font-size:12px;font-family:var(--font);color:var(--t1);background:var(--bg)}
+.fi:focus{outline:none;border-color:var(--acc)}
+.fi-lg{font-size:16px;padding:10px 12px;font-weight:700;text-align:right}
+.fl{font-size:10px;font-weight:600;color:var(--t3);margin-bottom:3px;display:block}
+.req{color:var(--r)}
+.divider{height:1px;background:var(--bd2);margin:10px 0}
+
+/* ═══ CHIPS ═══ */
+.chips{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--bg);color:var(--t2);font-family:var(--font)}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ═══ ALERT ═══ */
+.alert{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--rd);font-size:12px;margin-bottom:8px}
+.alert-info{background:var(--bbg,#dbeafe);color:var(--b,#2563eb)}
+.alert-ok{background:var(--gbg,#ecfdf5);color:var(--g,#059669)}
+.alert-err{background:var(--rbg,#fef2f2);color:var(--r,#dc2626)}
+.alert-lock{background:var(--bg3);color:var(--t3);border:1.5px solid var(--bd)}
+
+/* ═══ DATE BAR ═══ */
+.dbar{display:flex;align-items:center;gap:8px;padding:8px 0;margin-bottom:10px}
+.dbar-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--bd);background:var(--bg);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);font-family:var(--font)}
+.dbar-label{flex:1;text-align:center;font-size:13px;font-weight:600}
+.dbar-picker{width:auto;padding:4px 8px;font-size:11px;border:1px solid var(--acc);color:var(--acc);border-radius:var(--rd);background:var(--bg);font-family:var(--font)}
+
+/* ═══ STORE SELECTOR ═══ */
+.store-sel{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.store-pill{padding:5px 10px;border-radius:16px;font-size:11px;font-weight:600;border:1.5px solid var(--bd);background:var(--bg);color:var(--t2);cursor:pointer;font-family:var(--font)}
+.store-pill.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* ═══ CHANNEL ROW ═══ */
+.ch-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rd);margin-bottom:4px}
+.ch-icon{font-size:14px}
+.ch-name{font-size:12px;font-weight:600}
+.ch-sub{font-size:10px;color:var(--t3)}
+.ch-input{width:80px;padding:6px 8px;border:1px solid var(--bd);border-radius:6px;font-size:13px;font-weight:700;text-align:right;font-family:var(--font);margin-left:auto}
+.ch-input:focus{outline:none;border-color:var(--acc)}
+
+/* ═══ LIST ITEM ═══ */
+.li-card{padding:10px 12px;background:var(--bg);border:1px solid var(--bd2);border-radius:0 var(--rd) var(--rd) 0;margin-bottom:6px;border-left:3px solid var(--o,#d97706)}
+
+/* ═══ TOTAL BAR ═══ */
+.total-bar{padding:10px 14px;border-radius:var(--rd);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;margin:8px 0}
+
+/* ═══ STATUS TAG ═══ */
+.sts{font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;display:inline-block}
+.sts-ok{background:var(--gbg,#ecfdf5);color:var(--g,#059669)}
+.sts-pend{background:var(--obg,#fffbeb);color:var(--o,#d97706)}
+.sts-err{background:var(--rbg,#fef2f2);color:var(--r,#dc2626)}
+.sts-lock{background:var(--bg3);color:var(--t3)}
+
+/* ═══ TAG ═══ */
+.tag{font-size:9px;font-weight:600;padding:2px 8px;border-radius:12px;display:inline-block}
+.tag-acc{background:var(--acc2);color:var(--acc)}
+.tag-g{background:var(--gbg,#ecfdf5);color:var(--g,#059669)}
+.tag-r{background:var(--rbg,#fef2f2);color:var(--r,#dc2626)}
+.tag-o{background:var(--obg,#fffbeb);color:var(--o,#d97706)}
+.tag-b{background:var(--bbg,#dbeafe);color:var(--b,#2563eb)}
+.tag-gray{background:var(--bg3);color:var(--t3)}
+
+/* ═══ PHOTO BOX ═══ */
+.pbox{width:70px;height:70px;border:2px dashed var(--bd);border-radius:var(--rd);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--t3);gap:2px}
+
+/* ═══ TAB PILLS ═══ */
+.tab-row{display:flex;gap:0;background:#fff;border:1px solid var(--bd);border-radius:8px;padding:2px;margin-bottom:10px}
+.tab-pill{flex:1;padding:5px;text-align:center;font-size:10px;font-weight:600;border-radius:6px;border:none;background:#fff;color:var(--t3);cursor:pointer;font-family:var(--font)}
+.tab-pill.on{background:var(--acc);color:#fff;box-shadow:var(--sh)}
+.tab-row-sm{display:flex;gap:0;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:2px;margin-top:12px}
+.tab-sm{flex:1;padding:4px;text-align:center;font-size:9px;font-weight:600;border-radius:4px;background:#fff;color:var(--t3);cursor:pointer;font-family:var(--font)}
+.tab-sm.on{background:var(--acc);color:#fff}
+
+/* ═══ TOGGLE ═══ */
+.toggle-sw{width:36px;height:20px;border-radius:10px;background:var(--bd);position:relative;cursor:pointer;flex-shrink:0}
+.toggle-sw.on{background:var(--acc)}
+.toggle-sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle-sw.on::after{left:18px}
+
+/* ═══ COUNTER BUTTON ═══ */
+.cnt-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bg);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font);flex-shrink:0}
+.cnt-btn:active{background:var(--bg3)}
+
+/* ═══ CHECKBOX ═══ */
+.ua-cb{width:18px;height:18px;accent-color:var(--acc);cursor:pointer}
+
+/* ═══ BUTTONS (SD extras) ═══ */
+.btn-gold{background:var(--gold,#d4960a);color:#fff}
+.btn-gold:hover{opacity:.9}
+
+/* ═══ SKELETON (SD specific) ═══ */
+.sk-kpi{height:72px}
+.sk-card{height:100px;margin-bottom:10px}
+.sk-qb{height:52px;margin-bottom:6px;border-radius:var(--rd)}
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state{text-align:center;padding:40px 20px;color:var(--t3);font-size:13px}
+
+/* ═══ TOOLBAR (SD back button) ═══ */
+.toolbar-back{border:none;background:none;font-size:16px;color:var(--t2);cursor:pointer;padding:0}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){.kpi-4{grid-template-columns:repeat(2,1fr)}}

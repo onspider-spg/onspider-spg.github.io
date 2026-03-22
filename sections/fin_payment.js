@@ -299,7 +299,10 @@ async function _savePayment() {
   if (S._pySaving) return;
 
   // Check if any selected bills have been partially/fully paid
-  const alreadyPaid = S._pyBills.filter(b => S._pySelected.has(b.id) && b.amount_paid > 0);
+  const alreadyPaid = S._pyBills.filter(b =>
+    S._pySelected.has(b.id) &&
+    (Number(b.amount_paid || 0) > 0 || b.payment_status === 'partial' || b.payment_status === 'paid')
+  );
   if (alreadyPaid.length > 0 && !S._pyDupConfirmed) {
     SPG.showDialog(`<div class="popup-sheet" style="width:400px">
       <div class="popup-header"><div class="popup-title">Duplicate Payment Warning</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>

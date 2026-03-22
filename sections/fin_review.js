@@ -34,7 +34,7 @@ function _fmtShort(n) {
 function _daysDiff(dateStr) {
   if (!dateStr) return 0;
   const d = new Date(dateStr + 'T00:00:00');
-  const now = new Date();
+  const now = FIN.sydneyNow();
   now.setHours(0, 0, 0, 0);
   return Math.round((now - d) / 86400000);
 }
@@ -478,12 +478,12 @@ function _reloadCurrentScreen() {
 function _populateMonthFilter() {
   const sel = document.getElementById('rv_month');
   if (!sel) return;
-  const now = new Date();
+  const now = FIN.sydneyNow();
   let opts = '<option value="">All Months</option>';
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = d.toISOString().substring(0, 7);
-    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const val = d.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }).substring(0, 7);
+    const label = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'Australia/Sydney' });
     opts += `<option value="${val}"${val === _filterMonth ? ' selected' : ''}>${label}</option>`;
   }
   sel.innerHTML = opts;

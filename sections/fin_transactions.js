@@ -19,9 +19,11 @@ const fd = FIN.fmtDate;
 // SHARED HELPERS
 // ═══════════════════════════════════════
 function dateRange() {
-  const t = new Date(), f = new Date(t);
+  const todayStr = FIN.sydneyToday();
+  const f = new Date(todayStr + 'T00:00:00');
   f.setDate(f.getDate() - 30);
-  return { from: f.toISOString().split('T')[0], to: t.toISOString().split('T')[0] };
+  const fromStr = f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0') + '-' + String(f.getDate()).padStart(2, '0');
+  return { from: fromStr, to: todayStr };
 }
 
 function reconBadge(v) {
@@ -1074,7 +1076,7 @@ async function _confirmDeleteSale(saleId) {
 // 6. SD BRIDGE
 // ═══════════════════════════════════════
 let _sdFilter = 'all';
-let _sdMonth = new Date().toISOString().substring(0, 7);
+let _sdMonth = FIN.sydneyToday().substring(0, 7);
 let _sdChecked = new Set();
 let _sdBrandFilter = '';
 let _sdRows = [];
@@ -1083,9 +1085,9 @@ function renderTxSd() {
   _sdChecked = new Set();
 
   const monthOpts = (() => {
-    let o = '', d = new Date();
+    let o = '', d = FIN.sydneyNow();
     for (let i = 0; i < 6; i++) {
-      let m = new Date(d.getFullYear(), d.getMonth() - i, 1), v = m.toISOString().substring(0, 7);
+      let m = new Date(d.getFullYear(), d.getMonth() - i, 1), v = m.toLocaleDateString('en-CA', { timeZone: 'Australia/Sydney' }).substring(0, 7);
       o += `<option value="${v}"${v === _sdMonth ? ' selected' : ''}>${v}</option>`;
     }
     return o;

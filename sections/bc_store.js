@@ -1769,7 +1769,7 @@ async function saveReturn() {
         status: action === 'discard_at_store' ? 'Wasted' : 'Reported',
         product_name: prod?.product_name || productId, unit: prod?.unit || '',
         reported_by_name: SPG.api.getSession()?.display_name || '',
-        resolved_by_name: '', created_at: new Date().toISOString(),
+        resolved_by_name: '', created_at: new Date().toLocaleString('sv-SE', { timeZone: 'Australia/Sydney' }).replace(' ', 'T'),
       });
       if (action === 'discard_at_store') S._wasteLoaded = false;
       fillReturns();

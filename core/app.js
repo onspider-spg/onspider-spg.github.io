@@ -96,7 +96,6 @@
     profileComplete: true,
     profile: null,
     _bundleLoaded: false,
-    _bundleLoading: false,
     _profileLoaded: false,
     sidebarCollapsed: false,
   };
@@ -351,61 +350,64 @@
   }
 
   // ═══ INIT BUNDLE ═══
+  let _bundlePromise = null;
   async function loadBundle() {
     if (state._bundleLoaded) {
       // Data in memory → let section handle it
       return state;
     }
-    if (state._bundleLoading) return null;
-    state._bundleLoading = true;
-    try {
-      const data = await SPG.api.initBundle();
-      state.session = data.session;
-      state.modules = data.modules;
-      state.homePermission = data.home_permission || 'view_only';
-      state.profileComplete = data.profile_complete !== false;
-      state.lineConnected = data.line_connected !== false;
-      state.unreadNotifications = data.unread_notifications || 0;
-      state._bundleLoaded = true;
+    if (_bundlePromise) return _bundlePromise; // Wait for in-flight request instead of returning null
+    _bundlePromise = (async () => {
+      try {
+        const data = await SPG.api.initBundle();
+        state.session = data.session;
+        state.modules = data.modules;
+        state.homePermission = data.home_permission || 'view_only';
+        state.profileComplete = data.profile_complete !== false;
+        state.lineConnected = data.line_connected !== false;
+        state.unreadNotifications = data.unread_notifications || 0;
+        state._bundleLoaded = true;
 
-      // Update notification badge
-      const badge = document.getElementById('notif-count');
-      if (badge) {
-        badge.textContent = state.unreadNotifications > 99 ? '99+' : state.unreadNotifications;
-        badge.style.display = state.unreadNotifications > 0 ? 'flex' : 'none';
+        // Update notification badge
+        const badge = document.getElementById('notif-count');
+        if (badge) {
+          badge.textContent = state.unreadNotifications > 99 ? '99+' : state.unreadNotifications;
+          badge.style.display = state.unreadNotifications > 0 ? 'flex' : 'none';
+        }
+
+        // Start notification polling (every 90s — count only, lightweight)
+        // Skips when tab is hidden to avoid wasting API calls
+        if (!state._notifPolling) {
+          state._notifPolling = setInterval(async () => {
+            if (document.hidden) return; // Skip when tab is backgrounded
+            if (!SPG.api.getToken()) return; // Don't poll if logged out
+            try {
+              const nd = await SPG.api.getNotifications({ limit: 1 });
+              const count = nd.unread_count || 0;
+              const b = document.getElementById('notif-count');
+              if (b) { b.textContent = count > 99 ? '99+' : count; b.style.display = count > 0 ? 'flex' : 'none'; }
+            } catch { /* silent — may be logged out */ }
+          }, 90000);
+        }
+
+        // Set home permission
+        SPG.perm.set('home', state.homePermission);
+
+        // v2.0: Load function-level permissions (canDo)
+        const fnPerms = data.function_permissions || {};
+        for (const [moduleId, keys] of Object.entries(fnPerms)) {
+          SPG.perm.setFunctions(moduleId, keys);
+        }
+
+        return state;
+      } catch (e) {
+        toast(e.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');
+        return null;
+      } finally {
+        _bundlePromise = null;
       }
-
-      // Start notification polling (every 90s — count only, lightweight)
-      // Skips when tab is hidden to avoid wasting API calls
-      if (!state._notifPolling) {
-        state._notifPolling = setInterval(async () => {
-          if (document.hidden) return; // Skip when tab is backgrounded
-          if (!SPG.api.getToken()) return; // Don't poll if logged out
-          try {
-            const nd = await SPG.api.getNotifications({ limit: 1 });
-            const count = nd.unread_count || 0;
-            const b = document.getElementById('notif-count');
-            if (b) { b.textContent = count > 99 ? '99+' : count; b.style.display = count > 0 ? 'flex' : 'none'; }
-          } catch { /* silent — may be logged out */ }
-        }, 90000);
-      }
-
-      // Set home permission
-      SPG.perm.set('home', state.homePermission);
-
-      // v2.0: Load function-level permissions (canDo)
-      const fnPerms = data.function_permissions || {};
-      for (const [moduleId, keys] of Object.entries(fnPerms)) {
-        SPG.perm.setFunctions(moduleId, keys);
-      }
-
-      return state;
-    } catch (e) {
-      toast(e.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');
-      return null;
-    } finally {
-      state._bundleLoading = false;
-    }
+    })();
+    return _bundlePromise;
   }
 
   // ═══ TOAST ═══
@@ -675,7 +677,7 @@
     state.profile = null;
     state.homePermission = null;
     state._bundleLoaded = false;
-    state._bundleLoading = false;
+    _bundlePromise = null;
     state._profileLoaded = false;
     // Clear notification polling
     if (state._notifPolling) { clearInterval(state._notifPolling); state._notifPolling = null; }

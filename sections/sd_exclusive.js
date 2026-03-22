@@ -51,18 +51,16 @@ async function ensureExecData() {
     const today = SD.todayStr();
     const yest = SD.addDays(today, -1);
     // Monday of this week
-    const d = new Date(now);
-    const dow = d.getDay();
+    const dow = now.getDay();
     const mondayOff = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(d); monday.setDate(d.getDate() + mondayOff);
-    const mondayStr = SD.addDays(today, mondayOff - (dow === 0 ? 0 : 0));
+    const mondayStr = SD.addDays(today, mondayOff);
 
     const stores = Object.values(storeMap).map(s => {
       s.today = s.dates[today] || { rev: 0, exp: 0 };
       s.yest = s.dates[yest] || { rev: 0, exp: 0 };
       s.week = [];
       for (let i = 0; i < 7; i++) {
-        const wd = SD.addDays(mondayStr.substring ? mondayStr : today, i - (dow === 0 ? 6 : dow - 1));
+        const wd = SD.addDays(mondayStr, i);
         s.week.push(s.dates[wd] || { rev: 0, exp: 0 });
       }
       return s;

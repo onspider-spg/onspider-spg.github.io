@@ -643,7 +643,7 @@ async function _loadDetail() {
     }
 
     ct.innerHTML = brandKeys.map(brand => {
-      const lines = _detailBrands[brand];
+      const lines = _detailBrands[brand] || [];
       const emps = lines.length;
       const totals = lines.reduce((acc, l) => ({
         payroll_hrs: acc.payroll_hrs + Number(l.payroll_hrs || 0),

@@ -242,7 +242,7 @@ function calcSaleGST() {
   if (!amtEl || !gstEl) return;
   const val = parseFloat(amtEl.value.replace(/,/g, '')) || 0;
   if (hasGst && hasGst.checked && val > 0) {
-    gstEl.value = (val / 11).toFixed(2);
+    gstEl.value = FIN.calcGst(val, true).toFixed(2);
   } else {
     gstEl.value = '0.00';
   }
@@ -260,7 +260,7 @@ async function saveSale(btnEl, mode) {
 
   // Backdate warning
   const dateVal = document.getElementById('cs_date')?.value;
-  const daysDiff = Math.round((new Date() - new Date(dateVal + 'T00:00:00')) / 86400000);
+  const daysDiff = Math.round((FIN.sydneyNow() - new Date(dateVal + 'T00:00:00')) / 86400000);
   if (daysDiff > 7) {
     SPG.showDialog(`<div class="popup-sheet" style="width:360px">
       <div class="popup-header"><div class="popup-title">Backdate Warning</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>
@@ -295,7 +295,7 @@ async function _doSaveSale(btnEl, mode, inputAmt) {
     const hasGst = document.getElementById('cs_has_gst')?.checked;
     let amountExGst, gst;
     if (hasGst) {
-      gst = parseFloat((inputAmt / 11).toFixed(2));
+      gst = parseFloat(FIN.calcGst(inputAmt, true).toFixed(2));
       amountExGst = parseFloat((inputAmt - gst).toFixed(2));
     } else {
       gst = 0;
@@ -1069,7 +1069,7 @@ async function saveBill(mode, btnEl) {
 
   // Backdate warning
   const dateVal = issueDateCheck.value;
-  const daysDiff = Math.round((new Date() - new Date(dateVal + 'T00:00:00')) / 86400000);
+  const daysDiff = Math.round((FIN.sydneyNow() - new Date(dateVal + 'T00:00:00')) / 86400000);
   if (daysDiff > 7) {
     SPG.showDialog(`<div class="popup-sheet" style="width:360px">
       <div class="popup-header"><div class="popup-title">Backdate Warning</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>
