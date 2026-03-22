@@ -847,8 +847,14 @@
 
   function openSidebar() {
     if (!_sidebarBuilt) buildSidebar();
+    // Sync mobile sidebar from desktop sidebar (works for all modules)
+    const desktopSd = document.querySelector('.sidebar');
+    const mobilePanel = document.getElementById('sidebar-panel');
+    if (desktopSd && mobilePanel && desktopSd.innerHTML) {
+      mobilePanel.innerHTML = desktopSd.innerHTML;
+    }
     document.getElementById('sidebar-overlay')?.classList.add('open');
-    document.getElementById('sidebar-panel')?.classList.add('open');
+    mobilePanel?.classList.add('open');
   }
   function closeSidebar() {
     document.getElementById('sidebar-overlay')?.classList.remove('open');
