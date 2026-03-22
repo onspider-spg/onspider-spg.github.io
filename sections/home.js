@@ -370,28 +370,19 @@ async function loadDashboard() {
   fillDashboard(st.session, st.modules);
   SPG.buildSidebar();
 
-  // Update pending requests badges (registration + store requests)
+  // Update pending requests badges — fire-and-forget (non-blocking)
   if (SPG.perm.hasHome('admin')) {
-    try {
-      const [regData, storeData] = await Promise.all([
-        SPG.api.adminGetRegistrations(),
-        SPG.api.adminGetStoreRequests().catch(() => ({ requests: [] })),
-      ]);
-      // Registration requests badge
+    Promise.all([
+      SPG.api.adminGetRegistrations(),
+      SPG.api.adminGetStoreRequests().catch(() => ({ requests: [] })),
+    ]).then(([regData, storeData]) => {
       const pendingCount = (regData.requests || []).filter(r => r.status === 'pending' || r.status === 'incomplete').length;
       const badge = document.getElementById('req-badge');
-      if (badge) {
-        badge.textContent = pendingCount;
-        badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
-      }
-      // Store requests badge
+      if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? 'inline-block' : 'none'; }
       const storeReqCount = (storeData.requests || []).filter(r => r.status === 'pending').length;
       const storeBadge = document.getElementById('store-req-badge');
-      if (storeBadge) {
-        storeBadge.textContent = storeReqCount;
-        storeBadge.style.display = storeReqCount > 0 ? 'inline-block' : 'none';
-      }
-    } catch {}
+      if (storeBadge) { storeBadge.textContent = storeReqCount; storeBadge.style.display = storeReqCount > 0 ? 'inline-block' : 'none'; }
+    }).catch(() => {});
   }
 
   // Profile completion alert — handled globally in app.js go() guard (→ employee-form)
@@ -547,26 +538,24 @@ function renderProfileCard(d) {
     </div>
     <div style="margin-top:16px;border-top:1px solid var(--bd2);padding-top:14px">
       <div style="font-weight:700;font-size:12px;margin-bottom:8px">Store Assignments</div>
-      <div id="profile-stores" style="margin-bottom:10px"></div>
+      <div style="margin-bottom:10px">${_buildStoreAssignments(d)}</div>
       <button class="btn btn-outline btn-sm" onclick="HomeSection.showRequestStore()">+ Request Additional Store</button>
     </div>`;
+}
 
-  setTimeout(() => {
-    const el = document.getElementById('profile-stores');
-    if (!el) return;
-    const s = api.getSession();
-    const assignments = s?.store_assignments || [];
-    if (assignments.length === 0) {
-      el.innerHTML = `<div style="font-size:11px;color:var(--t3)">Store: ${esc(d.store_id || '-')}</div>`;
-    } else {
-      el.innerHTML = assignments.map(a => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px">
-        <span style="font-weight:600">${esc(a.store_id)}</span>
-        <span style="color:var(--t3)">${esc(a.dept_id || '-')}</span>
-        <span style="color:var(--acc)">${esc(a.position_name || '')}</span>
-        ${a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:var(--rd-pill);background:var(--acc-bg);color:var(--acc)">Primary</span>' : ''}
-      </div>`).join('');
-    }
-  }, 50);
+// Build store assignments HTML inline (no setTimeout needed)
+function _buildStoreAssignments(d) {
+  const s = api.getSession();
+  const assignments = s?.store_assignments || [];
+  if (assignments.length === 0) {
+    return `<div style="font-size:11px;color:var(--t3)">Store: ${esc(d.store_id || '-')}</div>`;
+  }
+  return assignments.map(a => `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px">
+    <span style="font-weight:600">${esc(a.store_id)}</span>
+    <span style="color:var(--t3)">${esc(a.dept_id || '-')}</span>
+    <span style="color:var(--acc)">${esc(a.position_name || '')}</span>
+    ${a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:var(--rd-pill);background:var(--acc-bg);color:var(--acc)">Primary</span>' : ''}
+  </div>`).join('');
 }
 
 // Profile edit popup

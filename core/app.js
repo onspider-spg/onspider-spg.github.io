@@ -453,6 +453,9 @@
 
   // ═══ NOTIFICATIONS ═══
   let _notifOpen = false;
+  let _notifLastFetch = 0; // timestamp of last successful fetch
+  const NOTIF_CACHE_MS = 30000; // 30s cache — avoid API spam on open/close
+
   function toggleNotifications() {
     const dd = document.getElementById('notif-dropdown');
     if (!dd) return;
@@ -461,9 +464,12 @@
     if (_notifOpen) loadNotifications();
   }
 
-  async function loadNotifications() {
+  async function loadNotifications(force) {
+    // Skip if recently fetched (unless forced by mark-read actions)
+    if (!force && Date.now() - _notifLastFetch < NOTIF_CACHE_MS) return;
     try {
       const data = await SPG.api.getNotifications({ limit: 20 });
+      _notifLastFetch = Date.now();
       const list = document.getElementById('notif-list');
       if (!list) return;
       const items = data.notifications || [];
