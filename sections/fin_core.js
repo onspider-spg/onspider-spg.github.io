@@ -579,7 +579,7 @@ SPG.section('finance', {
     'tx-find':        { render: (p) => FIN.renderTxFind(p),         onLoad: (p) => FIN.loadTxFind(p) },
 
     // ── Create (fin_input.js) ──
-    'cr-sale':        { render: (p) => FIN.renderCrSale(p),         onLoad: (p) => FIN.loadCrSale(p) },
+    'cr-sale':        { render: (p) => { console.log('[FIN] render cr-sale called'); return FIN.renderCrSale(p); }, onLoad: (p) => { console.log('[FIN] load cr-sale called'); FIN.loadCrSale(p); } },
     'cr-bill':        { render: (p) => FIN.renderCrBill(p),         onLoad: (p) => FIN.loadCrBill(p) },
     'cr-transfer':    { render: (p) => FIN.renderCrTransfer(p),     onLoad: (p) => FIN.loadCrTransfer(p) },
     'cr-debit':       { render: (p) => FIN.renderCrDebit(p),        onLoad: (p) => FIN.loadCrDebit(p) },
