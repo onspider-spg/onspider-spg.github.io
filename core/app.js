@@ -291,12 +291,14 @@
     const ct = appEl.querySelector('.content');
     if (ct) ct.scrollTop = 0;
 
-    // URL hash
-    history.replaceState(
-      { section, route: resolvedRoute, params: resolvedParams },
-      '',
-      buildHash(section, resolvedRoute, resolvedParams)
-    );
+    // URL hash — pushState creates history entry so Back button works
+    const newHash = buildHash(section, resolvedRoute, resolvedParams);
+    const stateObj = { section, route: resolvedRoute, params: resolvedParams };
+    if (location.hash === newHash || !location.hash) {
+      history.replaceState(stateObj, '', newHash);
+    } else {
+      history.pushState(stateObj, '', newHash);
+    }
   }
 
   function updateHash(route, params = {}) {
@@ -907,7 +909,9 @@
 
     if (route && _sections[section]?.routes?.[route]) {
       if (PUBLIC_ROUTES.includes(route) || session) {
-        go(route, params);
+        // Use full path for non-home sections: 'bakery/dashboard' not just 'dashboard'
+        const fullRoute = (section && section !== 'home') ? `${section}/${route}` : route;
+        go(fullRoute, params);
       } else {
         go('login');
       }
@@ -917,11 +921,15 @@
 
     // Browser back/forward
     window.addEventListener('popstate', (e) => {
-      if (e.state?.route) {
-        go(e.state.route, e.state.params || {});
+      if (e.state?.section && e.state?.route) {
+        const fullRoute = (e.state.section !== 'home') ? `${e.state.section}/${e.state.route}` : e.state.route;
+        go(fullRoute, e.state.params || {});
       } else {
         const parsed = parseHash(location.hash);
-        if (parsed.route) go(parsed.route, parsed.params);
+        if (parsed.route) {
+          const fullRoute = (parsed.section && parsed.section !== 'home') ? `${parsed.section}/${parsed.route}` : parsed.route;
+          go(fullRoute, parsed.params);
+        }
       }
     });
   }
