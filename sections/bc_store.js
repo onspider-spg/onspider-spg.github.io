@@ -567,8 +567,19 @@ function _fillQuota() {
 // 7. STOCK
 // ═══════════════════════════════════════
 BK.renderStock = function(p) {
+  const sp = BK.getStockPoints();
   return SPG.shell(SPG.toolbar('Stock Entry') + `
     <div class="content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-size:13px;font-weight:700">Current Stock Levels</div>
+          <div style="font-size:10px;color:var(--t3)">${sp === 2 ? '2-point entry (Point 1 + Point 2)' : 'Single point entry'}</div>
+        </div>
+        <button class="btn btn-sm btn-primary" id="bk-stock-save" onclick="BakerySection.saveStockEntry()">Save All</button>
+      </div>
+      <div style="margin-bottom:10px">
+        <input class="inp" placeholder="Search products..." id="bk-stock-search" oninput="BakerySection.filterStockList()" style="font-size:12px;padding:8px 12px">
+      </div>
       <div id="bk-stock-body">${SPG.ui.skeleton(60, 5)}</div>
     </div>`, 'Bakery');
 };
@@ -577,15 +588,112 @@ BK.loadStock = async function(p) {
   await BK.initBakery();
   BK.buildBakerySidebar();
   await BK.ensureProducts();
-  // Stock screen — same as browse stock inputs but dedicated
+
+  // Load current stock from API
+  try {
+    const data = await BK.api('get_stock');
+    S._stockData = Array.isArray(data) ? data : (data?.stock || []);
+  } catch (e) {
+    S._stockData = [];
+    console.error('Stock load:', e);
+  }
   _fillStock();
 };
 
 function _fillStock() {
   const el = document.getElementById('bk-stock-body');
   if (!el) return;
-  el.innerHTML = SPG.ui.empty('📦', 'Stock entry is integrated into Create Order', 'Enter stock levels when browsing products') +
-    `<button class="btn btn-primary" style="margin-top:12px" onclick="BakerySection.goToBrowse()">Go to Create Order</button>`;
+
+  const prods = S.products;
+  if (!prods.length) { el.innerHTML = SPG.ui.empty('📦', 'No products found'); return; }
+
+  const search = (document.getElementById('bk-stock-search')?.value || '').toLowerCase();
+  let filtered = prods;
+  if (search) filtered = filtered.filter(p => (p.product_name || '').toLowerCase().includes(search));
+  if (!filtered.length) { el.innerHTML = SPG.ui.empty('🔍', 'No products match'); return; }
+
+  const sp = BK.getStockPoints();
+  const stockData = S._stockData || [];
+
+  // Build lookup: product_id → stock_on_hand
+  const stockMap = {};
+  stockData.forEach(s => { stockMap[s.product_id] = s.stock_on_hand; });
+
+  // Merge with stockInputs (user edits in memory)
+  el.innerHTML = filtered.map(p => {
+    const pid = p.product_id;
+    const existing = stockMap[pid];
+    const edited = S.stockInputs[pid];
+
+    let inputHtml;
+    if (sp === 2) {
+      const v1 = edited?.s1 ?? (existing != null ? String(existing) : '');
+      const v2 = edited?.s2 ?? '';
+      const sum = (v1 !== '' || v2 !== '') ? (parseFloat(v1) || 0) + (parseFloat(v2) || 0) : '—';
+      inputHtml = `<div style="display:flex;gap:6px;align-items:center">
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 1</div><input type="number" step="any" class="inp" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v1}" oninput="BakerySection.onStockEntry('${pid}',1,this.value)"></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 2</div><input type="number" step="any" class="inp" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v2}" oninput="BakerySection.onStockEntry('${pid}',2,this.value)"></div>
+        <div style="font-size:11px;color:var(--t3);min-width:40px;text-align:center">= <strong>${sum}</strong></div>
+      </div>`;
+    } else {
+      const v = (typeof edited === 'string') ? edited : (existing != null ? String(existing) : '');
+      inputHtml = `<input type="number" step="any" class="inp" style="width:80px;padding:6px;font-size:12px;text-align:center" value="${v}" placeholder="—" oninput="BakerySection.onStockEntry('${pid}',0,this.value)">`;
+    }
+
+    return `<div class="card" style="padding:10px 14px;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(p.product_name)}</div><div style="font-size:10px;color:var(--t3)">${esc(p.unit || '')}${existing != null ? ' · Last: ' + existing : ''}</div></div>
+        ${inputHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Stock entry handlers
+function _onStockEntry(pid, pt, val) {
+  const sp = BK.getStockPoints();
+  if (sp === 2) {
+    if (!S.stockInputs[pid] || typeof S.stockInputs[pid] !== 'object') {
+      S.stockInputs[pid] = { s1: '', s2: '' };
+    }
+    S.stockInputs[pid][pt === 1 ? 's1' : 's2'] = val;
+  } else {
+    S.stockInputs[pid] = val;
+  }
+}
+
+async function _saveStockEntry() {
+  const entries = [];
+  const sp = BK.getStockPoints();
+
+  for (const [pid, val] of Object.entries(S.stockInputs)) {
+    let soh = null;
+    if (sp === 2 && typeof val === 'object') {
+      const v1 = parseFloat(val.s1) || 0;
+      const v2 = parseFloat(val.s2) || 0;
+      if (val.s1 !== '' || val.s2 !== '') soh = v1 + v2;
+    } else if (typeof val === 'string' && val !== '') {
+      soh = parseFloat(val) || 0;
+    }
+    if (soh !== null) entries.push({ product_id: pid, stock_on_hand: soh });
+  }
+
+  if (!entries.length) { SPG.toast('No stock data to save', 'error'); return; }
+
+  SPG.showLoader();
+  try {
+    // Stock is saved per delivery — use today as reference
+    await BK.api('save_stock', { entries, date: BK.todaySydney() });
+    SPG.toast('Stock saved! (' + entries.length + ' items)', 'success');
+  } catch (e) {
+    SPG.toast(e.message || 'Save failed', 'error');
+  } finally {
+    SPG.hideLoader();
+  }
+}
+
+function _filterStockList() {
+  _fillStock();
 }
 
 
@@ -1021,6 +1129,11 @@ Object.assign(window.BakerySection, {
   // Quota
   onQuotaInput,
   saveQuotas,
+
+  // Stock Entry
+  onStockEntry: _onStockEntry,
+  saveStockEntry: _saveStockEntry,
+  filterStockList: _filterStockList,
 
   // Stock History
   reloadStockHistory,
