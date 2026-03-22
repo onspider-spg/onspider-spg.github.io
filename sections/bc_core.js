@@ -652,6 +652,7 @@ SPG.section('bakery', {
   buildSidebar: buildBakerySidebar,
   routes: {
     // ── Store routes (bc_store.js) ──
+    'home':           { render: (p) => BK.renderDashboard(p),     onLoad: (p) => BK.loadDashboard(p) },  // alias for Home link
     'dashboard':      { render: (p) => BK.renderDashboard(p),     onLoad: (p) => BK.loadDashboard(p) },
     'browse':         { render: (p) => BK.renderBrowse(p),        onLoad: (p) => BK.loadBrowse(p) },
     'cart':           { render: (p) => BK.renderCart(p),           onLoad: (p) => BK.loadCart(p) },
