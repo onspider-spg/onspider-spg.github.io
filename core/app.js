@@ -438,7 +438,50 @@
       const badge = document.getElementById('notif-count');
       if (badge) badge.style.display = 'none';
       document.querySelectorAll('.notif-item.notif-unread').forEach(el => el.classList.remove('notif-unread'));
+      // Remove all "Mark read" buttons
+      document.querySelectorAll('.notif-item span[onclick*="markNotificationRead"]').forEach(el => el.remove());
     } catch { /* silent */ }
+  }
+
+  async function markNotificationRead(notifId, btnEl) {
+    try {
+      await SPG.api.markNotificationRead({ notification_id: notifId });
+      // Update UI
+      const item = btnEl?.closest('.notif-item');
+      if (item) item.classList.remove('notif-unread');
+      if (btnEl) btnEl.remove();
+      // Update badge count
+      const unread = document.querySelectorAll('.notif-item.notif-unread').length;
+      const badge = document.getElementById('notif-count');
+      if (badge) {
+        badge.textContent = unread > 99 ? '99+' : unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+      }
+    } catch { /* silent */ }
+  }
+
+  function showNotifDetail(n) {
+    // Mark as read when opening detail
+    if (n.nid) {
+      SPG.api.markNotificationRead({ notification_id: n.nid }).catch(() => {});
+      const item = document.querySelector(`.notif-item[data-nid="${n.nid}"]`);
+      if (item) {
+        item.classList.remove('notif-unread');
+        const btn = item.querySelector('span[onclick*="markNotificationRead"]');
+        if (btn) btn.remove();
+      }
+    }
+    showDialog(`<div class="popup-sheet" style="max-width:400px">
+      <div class="popup-header">
+        <div class="popup-title">${esc(n.title || 'Notification')}</div>
+        <button class="popup-close" onclick="SPG.closeDialog()">✕</button>
+      </div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:16px;white-space:pre-wrap">${esc(n.body || '')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);padding-top:12px;border-top:1px solid var(--bd2)">
+        <span>📤 From: <strong style="color:var(--t1)">${esc(n.sender || 'System')}</strong></span>
+        <span>${esc(n.time || '')}</span>
+      </div>
+    </div>`);
   }
 
   function toolbar(title, actions) {
@@ -889,7 +932,7 @@
     setTheme,
 
     // Notifications
-    toggleNotifications, loadNotifications, markAllNotificationsRead,
+    toggleNotifications, loadNotifications, markAllNotificationsRead, markNotificationRead, showNotifDetail,
 
     // Sidebar
     buildSidebar, openSidebar, closeSidebar, toggleSidebar,

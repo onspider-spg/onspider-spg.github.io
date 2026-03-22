@@ -141,12 +141,17 @@ SPG.ui = (() => {
 
   // ═══ NOTIFICATION ITEM ═══
   function notifItem(n) {
-    // n = { id, title, body, type, is_read, created_at, onClick }
+    // n = { notification_id, title, body, type, is_read, created_at, sender_name }
     const unreadCls = n.is_read ? '' : ' notif-unread';
     const time = n.created_at ? new Date(n.created_at).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-    return `<div class="notif-item${unreadCls}" onclick="${n.onClick || ''}">
-      <div class="notif-title">${esc(n.title || '')}</div>
-      <div class="notif-body">${esc(n.body || '')}</div>
+    const nid = n.notification_id || n.id || '';
+    const markBtn = !n.is_read ? `<span style="font-size:9px;color:var(--acc);cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();SPG.markNotificationRead('${esc(nid)}',this)">Mark read</span>` : '';
+    return `<div class="notif-item${unreadCls}" data-nid="${esc(nid)}" onclick="SPG.showNotifDetail(${esc(JSON.stringify({title:n.title||'',body:n.body||'',type:n.type||'',time,sender:n.sender_name||'System',nid}))})">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+        <div class="notif-title">${esc(n.title || '')}</div>
+        ${markBtn}
+      </div>
+      <div class="notif-body">${esc(n.body || '').substring(0, 80)}${(n.body || '').length > 80 ? '...' : ''}</div>
       <div class="notif-time">${esc(time)}</div>
     </div>`;
   }

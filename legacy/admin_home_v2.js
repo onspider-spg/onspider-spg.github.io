@@ -262,7 +262,7 @@ function renderStaffAssignments(ct) {
     rows = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--t3)">${searchTerm ? 'No results found' : 'No assignments found'}</td></tr>`;
   } else {
     rows = sorted.map(a => {
-      const primary = a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:3px;background:var(--acc2);color:var(--acc)">Primary</span>' : '';
+      const primary = a.is_primary ? '<span style="font-size:9px;padding:2px 8px;border-radius:var(--rd-pill);background:var(--acc-bg);color:var(--acc);font-weight:600">Primary</span>' : '';
       return `<tr>
         <td style="font-weight:600">${esc(a.display_name || a.account_id)}<div style="font-size:10px;color:var(--t3);font-weight:400">${esc(a.account_id)}</div></td>
         <td>${esc(a.store_name)}</td>
