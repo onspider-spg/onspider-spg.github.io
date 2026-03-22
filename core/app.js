@@ -596,9 +596,8 @@
     html += sdItem('profile', 'Profile');
 
     html += '<div class="sd-divider"></div>';
-    html += '<div class="sd-section">Sections</div>';
 
-    // ── Sections ──
+    // ── Modules (accordion — expand/collapse) ──
     const sectionDefs = [
       { id: 'sales',      label: 'Sales Daily' },
       { id: 'purchase',   label: 'Purchase' },
@@ -621,6 +620,8 @@
     };
 
     if (state.modules) {
+      let moduleItems = '';
+      const isModuleActive = sectionDefs.some(def => currentSection === def.id);
       sectionDefs.forEach(def => {
         const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
@@ -628,11 +629,14 @@
         if (isActive) {
           const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'home');
           const active = currentSection === def.id ? ' active' : '';
-          html += `<div class="sd-item${active}" onclick="SPG.go('${route}')">${def.label}</div>`;
+          moduleItems += `<div class="sd-sub-item${active}" onclick="SPG.go('${route}')">${def.label}</div>`;
         } else if (mod) {
-          html += `<div class="sd-item" style="opacity:.35;cursor:default">${def.label}</div>`;
+          moduleItems += `<div class="sd-sub-item" style="opacity:.35;cursor:default">${def.label}</div>`;
         }
       });
+      if (moduleItems) {
+        html += sdAccordion('modules', 'Modules', moduleItems);
+      }
     }
 
     // ── Admin (accordion, not flyout) ──
@@ -696,7 +700,8 @@
 
   function sdAccordion(id, label, items) {
     const routes = id === 'admin' ? ['admin'] : id === 'master' ? ['master'] : id === 'reports' ? ['audit'] : [];
-    const isActive = routes.includes(currentRoute);
+    const isModuleSection = id === 'modules' && currentSection && currentSection !== 'home';
+    const isActive = routes.includes(currentRoute) || isModuleSection;
     const open = isActive ? ' open' : '';
     return `<div class="sd-group${open}" data-group="${id}">
       <div class="sd-group-head${isActive ? ' active' : ''}">${label}<span class="sd-group-arr">›</span></div>
@@ -755,7 +760,7 @@
     html += mobItem('profile', 'Profile');
 
     // Sections
-    html += '<div class="mob-sidebar-section">Sections</div>';
+    html += '<div class="mob-sidebar-section">Modules</div>';
     const mobSectionDefs = [
       { id: 'sales',      label: 'Sales Daily' },
       { id: 'purchase',   label: 'Purchase' },

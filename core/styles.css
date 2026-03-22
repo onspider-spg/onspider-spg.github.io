@@ -528,11 +528,11 @@ html, body {
   flex: 1;
   padding: 40px var(--sp-lg);
   padding-top: calc(40px + var(--safe-top));
-  background: linear-gradient(180deg, #fdfaf4 0%, #fff 50%);
+  background: var(--bg);
   width: 100%;
 }
 .login-logo { font-size: 48px; margin-bottom: 6px; }
-.login-title { font-size: 24px; font-weight: 800; color: var(--gold); letter-spacing: -1px; }
+.login-title { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
 .login-brand {
   font-size: var(--fs-xs); font-weight: 600;
   color: var(--t3); letter-spacing: 2px;
@@ -550,18 +550,19 @@ html, body {
   margin-bottom: var(--sp-sm);
   color: var(--t1);
 }
-.login-inp:focus { outline: none; border-color: var(--gold); }
+.login-inp:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
 .login-btn {
   width: 100%;
   padding: 12px;
   border: none;
   border-radius: var(--rd);
-  background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+  background: var(--grad-brand);
   color: #fff;
   font-size: var(--fs-body);
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(124,58,237,.25);
 }
 .login-btn:hover { opacity: .9; }
 .login-btn:disabled { opacity: .4; cursor: not-allowed; }

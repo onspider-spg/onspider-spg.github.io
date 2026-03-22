@@ -59,7 +59,7 @@ function renderDetail(ct) {
     <div class="card" style="max-width:800px">
       <div class="profile-header">
         <div class="profile-avatar" style="background:var(--acc2);color:var(--acc)">${esc((a.display_label || '?').charAt(0).toUpperCase())}</div>
-        <div><div class="profile-name">${esc(a.display_label)}</div><div class="profile-meta">${esc(a.account_id)} · ${esc(a.account_type)} · ${esc(a.tier_id)}</div></div>
+        <div><div class="profile-name">${esc(a.display_label)}</div><div class="profile-meta">${esc(a.account_id)} · ${esc(a.tier_id)}</div></div>
         <span class="sts ${stsCls}" style="margin-left:auto">${esc(a.status)}</span>
       </div>
       <div class="profile-grid" style="margin-top:12px">
@@ -195,7 +195,6 @@ async function renderCreateAccountForm() {
       <div class="fg"><label class="lb">Username / Email *</label><input class="inp" id="ca-user" placeholder="username or email"></div>
       <div class="fg"><label class="lb">Password * (min 8)</label><input class="inp" id="ca-pass" type="password" placeholder="••••••••"></div>
       <div class="fg"><label class="lb">Display Label *</label><input class="inp" id="ca-label" placeholder="e.g. Mango Coco Mac"></div>
-      <div class="fg"><label class="lb">Account Type *</label><select class="inp" id="ca-type"><option value="individual">Individual</option><option value="group">Group</option></select></div>
       <div class="fg"><label class="lb">Tier *</label><select class="inp" id="ca-tier"><option>T1</option><option>T2</option><option>T3</option><option>T4</option><option selected>T5</option><option>T6</option><option>T7</option></select></div>
       <div style="display:flex;gap:8px">
         <div class="fg" style="flex:1"><label class="lb">Store</label><select class="inp" id="ca-store">${storeOpts}</select></div>
@@ -220,7 +219,7 @@ async function doCreateAccount() {
   try {
     const data = await API.adminCreateAccount({
       username, password, display_label,
-      account_type: document.getElementById('ca-type')?.value || 'individual',
+      account_type: 'individual',
       tier_id: document.getElementById('ca-tier')?.value || 'T5',
       store_id: document.getElementById('ca-store')?.value || '',
       dept_id: document.getElementById('ca-dept')?.value || '',

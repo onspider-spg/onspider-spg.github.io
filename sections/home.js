@@ -18,16 +18,16 @@ function shellLogin(inner) {
 // LOGIN
 // ════════════════════════════════
 function renderLogin() {
-  return shellLogin(`<div class="login-shell">
+  return shellLogin(`<div class="login-shell" style="background:var(--bg)">
     <div class="login-logo">🎨</div>
-    <div class="login-title">SPG HUB</div>
-    <div class="login-brand">SIAM PALETTE GROUP</div>
-    <div class="login-sub">Hospo Management System</div>
+    <div class="login-title grad-text" style="font-size:28px;font-weight:900;letter-spacing:-1px">SPG HUB</div>
+    <div class="login-brand" style="color:var(--t3)">SIAM PALETTE GROUP</div>
+    <div class="login-sub" style="color:var(--t4)">Hospo Management System</div>
     <div class="login-form">
-      <input class="login-inp" id="inp-user" placeholder="Email / Username" autocomplete="username" autofocus>
-      <input class="login-inp" id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      <input class="login-inp" id="inp-user" placeholder="Email / Username" autocomplete="username" autofocus style="border-color:var(--bd);border-radius:var(--rd)">
+      <input class="login-inp" id="inp-pass" type="password" placeholder="••••••••" autocomplete="current-password" style="border-color:var(--bd);border-radius:var(--rd)">
       <div class="error-msg" id="login-error"></div>
-      <button class="login-btn" id="btn-login" onclick="HomeSection.doLogin()">Sign In</button>
+      <button class="btn-primary" id="btn-login" onclick="HomeSection.doLogin()" style="width:100%;padding:12px;border:none;border-radius:var(--rd);background:var(--grad-brand);color:#fff;font-size:var(--fs-body);font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(124,58,237,.25)">Sign In</button>
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--t3)">
         Don't have an account? <a class="lk" style="color:var(--acc);cursor:pointer;font-weight:600" onclick="SPG.go('register')">Register</a>
       </div>
@@ -47,23 +47,15 @@ async function doLogin() {
 
   try {
     const data = await api.login(user, pass);
-    if (data.store_selection_required) {
-      api.saveAccountTemp({ ...data, _storeSelect: true });
-      SPG.go('store-select');
-    } else if (data.account_status === 'incomplete') {
-      // New user flow: account created but employee form not complete
+    if (data.account_status === 'incomplete') {
       api.saveSession(data);
       SPG.go('employee-form');
     } else if (data.account_status === 'pending') {
-      // Submitted for approval but not yet approved
       api.saveSession(data);
       SPG.go('pending-approval');
-    } else if (data.account_type === 'individual') {
+    } else {
       api.saveSession(data);
       SPG.go('dashboard');
-    } else {
-      api.saveAccountTemp(data);
-      SPG.go('staff-select');
     }
   } catch (e) {
     SPG.showError('login-error', e.message || 'Sign in failed');
@@ -363,7 +355,7 @@ function renderDashboard() {
         <div style="font-size:16px;font-weight:900;letter-spacing:-.5px;margin-bottom:var(--sp-xs)" id="dash-greeting" class="grad-text">Welcome, ${esc(s.display_name || s.display_label)}</div>
         <div style="font-size:11px;color:var(--t3)" id="dash-meta">${esc(s.position_id ? s.position_name : s.tier_id)} · ${esc(s.store_id || 'HQ')}</div>
       </div>
-      <div class="sec-title">Sections</div>
+      <div class="sec-title">Modules</div>
       <div class="sec-grid" id="sec-grid">
         ${SPG.ui.skeleton(60, 4)}
       </div>
@@ -544,37 +536,25 @@ function renderProfileCard(d) {
   const card = document.getElementById('profile-card');
   if (!card) return;
   const initial = (d.display_name || d.full_name || '?').charAt(0).toUpperCase();
-  const isGroup = d.account_type === 'group';
-  const avatarBg = isGroup ? 'var(--orange-bg)' : 'var(--acc2)';
-  const avatarColor = isGroup ? 'var(--orange)' : 'var(--acc)';
-  const badgeBg = isGroup ? 'var(--orange-bg)' : 'var(--acc2)';
-  const badgeColor = isGroup ? 'var(--orange)' : 'var(--acc)';
-  const badgeText = isGroup ? 'Group User' : 'Individual';
 
   card.innerHTML = `
     <div class="profile-header">
-      <div class="profile-avatar" style="background:${avatarBg};color:${avatarColor}">${esc(initial)}</div>
+      <div class="profile-avatar" style="background:var(--acc-bg);color:var(--acc)">${esc(initial)}</div>
       <div><div class="profile-name">${esc(d.display_name || d.full_name)}</div><div class="profile-meta">${esc(d.position_id ? d.position_name : d.tier_id)} · ${esc(d.store_id || 'HQ')}</div></div>
-      <div class="profile-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</div>
     </div>
-    ${isGroup ? `<div style="padding:8px 12px;background:var(--bg3);border-radius:var(--rd);font-size:11px;color:var(--t2);margin-bottom:14px">Account: <strong>${esc(d.display_label)}</strong></div>` : ''}
     <div class="fg"><label class="lb">Display Name</label><div class="profile-field-value">${esc(d.display_name)}</div></div>
     <div class="fg"><label class="lb">Full Name</label><div class="profile-field-value">${esc(d.full_name)}</div></div>
     <div class="fg"><label class="lb">Phone</label><div class="profile-field-value">${esc(d.phone || '-')}</div></div>
-    ${!isGroup && d.email ? `<div class="fg"><label class="lb">Email / Username</label><div class="profile-field-readonly">${esc(d.email || d.username)}</div></div>` : ''}
+    ${d.email ? `<div class="fg"><label class="lb">Email / Username</label><div class="profile-field-readonly">${esc(d.email || d.username)}</div></div>` : ''}
     <div class="profile-grid">
       <div><div class="lb">Store</div><div class="profile-field-readonly">${esc(d.store_name_th || d.store_id || '-')}</div></div>
       <div><div class="lb">Position</div><div class="profile-field-readonly">${esc(d.position_id ? d.position_name : (d.tier_id + ' · ' + (d.tier_name || '')))}</div></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:var(--sp-md);flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="HomeSection.showEditProfile()">Edit Profile</button>
-      ${isGroup
-        ? '<button class="btn btn-outline btn-sm" onclick="HomeSection.showChangePinPopup()">Change PIN</button>'
-        : '<button class="btn btn-outline btn-sm" onclick="HomeSection.showChangePasswordPopup()">Change Password</button>'
-      }
+      <button class="btn btn-outline btn-sm" onclick="HomeSection.showChangePasswordPopup()">Change Password</button>
       <button class="btn btn-outline btn-sm" onclick="SPG.go('employee-form')">Employee Details</button>
     </div>
-    ${isGroup ? '<div class="inp-hint" style="margin-top:8px">Group users cannot change password. Contact admin if needed.</div>' : ''}
     <div style="margin-top:16px;border-top:1px solid var(--bd2);padding-top:14px">
       <div style="font-weight:700;font-size:12px;margin-bottom:8px">Store Assignments</div>
       <div id="profile-stores" style="margin-bottom:10px"></div>
@@ -824,9 +804,7 @@ SPG.section('home', {
     // Auth flow (no shell)
     'login':          { render: renderLogin,        shell: false, public: true },
     'register':       { render: renderRegister,     shell: false, public: true, onLoad: loadRegisterDropdowns },
-    'staff-select':   { render: renderStaffSelect,  shell: false, onLoad: loadStaffList },
-    'store-select':   { render: renderStoreSelect,  shell: false },
-    'new-staff':      { render: renderNewStaff,     shell: false },
+    // Group login routes removed (no longer used)
 
     // Main screens
     'dashboard':      { render: renderDashboard,    onLoad: loadDashboard },
@@ -865,8 +843,7 @@ SPG.section('home', {
 // ═══ PUBLIC API (for onclick handlers) ═══
 window.HomeSection = {
   doLogin, doRegister,
-  selectStaff, submitPin, submitSetPin,
-  doCreateStaff, doSelectStore,
+  // Group login exports removed
   launchSection,
   showEditProfile, doSaveProfile,
   showChangePasswordPopup, doChangePassword,
