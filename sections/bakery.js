@@ -3,6 +3,12 @@
  * sections/bakery.js — Bakery Center Order Module
  * Branch stores order bakery products from Bakery Center (BC)
  * Roles: Store, BC Staff, Admin, Executive
+ *
+ * ⚠️ REWORK NEEDED: This module needs migration to:
+ *    - Use SPG.perm.canDo() for function-level permissions
+ *    - bc_ prefix for API actions (backend now supports both)
+ *    - Remove admin/config/audit routes (moved to Home)
+ *    - Apply Gen Z Design Guide (see MODULE-DEV-GUIDE.md)
  */
 
 (() => {

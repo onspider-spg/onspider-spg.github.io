@@ -2,6 +2,12 @@
  * SPG HUB v1.0.0 | 21 MAR 2026 | Siam Palette Group
  * sections/hr.js — HR & Roster Module
  * Employees, Attendance, Roster, Pay Runs, Reports, Settings
+ *
+ * ⚠️ REWORK NEEDED: This module needs migration to:
+ *    - Use SPG.perm.canDo() for function-level permissions
+ *    - Use hr_ prefix for all API actions
+ *    - Remove admin/config/audit routes (moved to Home)
+ *    - Apply Gen Z Design Guide (see MODULE-DEV-GUIDE.md)
  */
 
 (() => {

@@ -2,6 +2,12 @@
  * SPG HUB v1.0.0 | 21 MAR 2026 | Siam Palette Group
  * sections/purchase.js — Purchase Module
  * Store ordering, receiving, invoices | Warehouse pick, pack, dispatch
+ *
+ * ⚠️ REWORK NEEDED: This module needs migration to:
+ *    - Use SPG.perm.canDo() for function-level permissions
+ *    - Use pur_ prefix for all API actions
+ *    - Remove admin/config/audit routes (moved to Home)
+ *    - Apply Gen Z Design Guide (see MODULE-DEV-GUIDE.md)
  */
 
 (() => {

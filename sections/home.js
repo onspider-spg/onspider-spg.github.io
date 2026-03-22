@@ -360,7 +360,7 @@ function renderDashboard() {
     ${SPG.toolbar('Dashboard')}
     <div class="content">
       <div style="margin-bottom:20px">
-        <div style="font-size:var(--fs-body);font-weight:700;margin-bottom:var(--sp-xs)" id="dash-greeting">Welcome, ${esc(s.display_name || s.display_label)}</div>
+        <div style="font-size:16px;font-weight:900;letter-spacing:-.5px;margin-bottom:var(--sp-xs)" id="dash-greeting" class="grad-text">Welcome, ${esc(s.display_name || s.display_label)}</div>
         <div style="font-size:11px;color:var(--t3)" id="dash-meta">${esc(s.position_id ? s.position_name : s.tier_id)} · ${esc(s.store_id || 'HQ')}</div>
       </div>
       <div class="sec-title">Sections</div>

@@ -4,8 +4,6 @@
  * Clean · Minimal · Gen Z — Gradient accents, soft shadows, Inter font
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 /* ═══ DESIGN TOKENS ═══ */
 :root {
   /* Background */
@@ -88,7 +86,7 @@
 html, body {
   background: var(--bg);
   color: var(--t1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: var(--fs-body);
   line-height: 1.5;
   height: 100vh; height: 100dvh;

@@ -3,6 +3,12 @@
  * sections/sales.js — Sale Daily Report Section
  * Daily sales reporting for Australian restaurant/bakery chain
  * Timezone: Australia/Sydney | Currency: AUD ($)
+ *
+ * ⚠️ REWORK NEEDED: This module needs migration to:
+ *    - Use SPG.perm.canDo() for function-level permissions
+ *    - Use sd_ prefix for all API actions
+ *    - Remove admin/config/audit routes (moved to Home)
+ *    - Apply Gen Z Design Guide (see MODULE-DEV-GUIDE.md)
  */
 
 (() => {

@@ -3,6 +3,12 @@
  * sections/finance.js — Finance Module
  * Comprehensive accounting/finance system for restaurant chain
  * AUD currency, GST 10%, Sydney timezone
+ *
+ * ⚠️ REWORK NEEDED: This module needs migration to:
+ *    - Use SPG.perm.canDo() for function-level permissions
+ *    - Use fin_ prefix for all API actions
+ *    - Remove admin/config/audit routes (moved to Home)
+ *    - Apply Gen Z Design Guide (see MODULE-DEV-GUIDE.md)
  */
 
 (() => {
@@ -269,6 +275,11 @@ function renderCreateTx(p) {
         <div class="fg"><label class="lb">Description</label>
           <textarea class="inp" id="tx-desc" rows="2" style="width:100%;box-sizing:border-box" placeholder="Optional notes"></textarea>
         </div>
+        <div class="fg" style="margin-top:10px">
+          <label class="lb">HQ Bill Attachment</label>
+          <div id="bhq-attached" style="margin-bottom:6px"></div>
+          <button class="btn btn-outline btn-sm" type="button" onclick="FinanceSection.openBhqPicker()">📎 Attach HQ Bill</button>
+        </div>
         <div class="sec-title" style="margin-top:14px">Line Items</div>
         <div id="tx-lines"></div>
         <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="FinanceSection.addLine()">+ Add Line</button>
@@ -396,6 +407,13 @@ async function saveTx(status) {
         tax_code: gst_mode === 'none' ? 'NONE' : (l.tax_code || 'NONE'),
       })),
     }));
+    // Link attached HQ bills
+    if (_bhqAttached.length > 0 && result.tx_id) {
+      for (const billId of _bhqAttached) {
+        try { await SPG.api.bhqLinkBill(billId, result.tx_id); } catch (_) {}
+      }
+      _bhqAttached = [];
+    }
     SPG.toast('Transaction created', 'success');
     SPG.go('finance/tx-detail', { id: result.tx_id });
   } catch (e) {
@@ -2642,6 +2660,83 @@ SPG.section('finance', {
 });
 
 
+// ═══ Bill HQ Attachment Picker ═══
+let _bhqAttached = []; // linked bill IDs for current tx
+
+async function openBhqPicker() {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'bhq-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9990;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `<div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:80vh;overflow:auto;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="font-size:16px;font-weight:600;">Attach HQ Bill</h3>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;" onclick="document.getElementById('bhq-modal').remove()">✕</button>
+    </div>
+    <div id="bhq-picker-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <div style="grid-column:1/-1;text-align:center;padding:24px;color:#999;">Loading bills...</div>
+    </div>
+  </div>`;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+
+  try {
+    const res = await SPG.api.bhqGetBills({});
+    const grid = document.getElementById('bhq-picker-grid');
+    if (!res.bills || res.bills.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:#999;">No unattached bills available</div>';
+      return;
+    }
+    grid.innerHTML = res.bills.map(b => `
+      <div style="cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid ${_bhqAttached.includes(b.id) ? 'var(--acc)' : '#e5e7eb'};position:relative;" onclick="FinanceSection.selectBhqBill('${esc(b.id)}','${esc(b.photo_url)}','${esc(b.account_name)}')">
+        <img src="${esc(b.photo_url)}" alt="Bill" style="width:100%;aspect-ratio:3/4;object-fit:cover;display:block;">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;padding:12px 6px 4px;font-size:10px;">
+          <div>${esc(b.account_name)}</div>
+          <div>${new Date(b.captured_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',timeZone:'Australia/Sydney'})}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    document.getElementById('bhq-picker-grid').innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:#dc2626;">${e.message}</div>`;
+  }
+}
+
+function selectBhqBill(billId, photoUrl, accountName) {
+  if (!_bhqAttached.includes(billId)) {
+    _bhqAttached.push(billId);
+  }
+  // Update attached display
+  const el = document.getElementById('bhq-attached');
+  if (el) {
+    el.innerHTML = _bhqAttached.map((id, i) => `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--acc2);padding:4px 10px;border-radius:20px;font-size:12px;margin:2px;">
+        📎 Bill ${id}
+        <button style="background:none;border:none;cursor:pointer;font-size:14px;color:#999;" onclick="FinanceSection.removeBhqBill(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+  // Close modal
+  const modal = document.getElementById('bhq-modal');
+  if (modal) modal.remove();
+  SPG.toast('Bill attached', 'success');
+}
+
+function removeBhqBill(index) {
+  _bhqAttached.splice(index, 1);
+  const el = document.getElementById('bhq-attached');
+  if (el && _bhqAttached.length === 0) el.innerHTML = '';
+  else selectBhqBill._refresh?.();
+  // Re-render
+  if (el) {
+    el.innerHTML = _bhqAttached.map((id, i) => `
+      <div style="display:inline-flex;align-items:center;gap:6px;background:var(--acc2);padding:4px 10px;border-radius:20px;font-size:12px;margin:2px;">
+        📎 Bill ${id}
+        <button style="background:none;border:none;cursor:pointer;font-size:14px;color:#999;" onclick="FinanceSection.removeBhqBill(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+}
+
 // ═══ PUBLIC API (for onclick handlers) ═══
 window.FinanceSection = {
   // Create TX
@@ -2677,6 +2772,8 @@ window.FinanceSection = {
   saveSettings,
   // Audit
   fetchAudit, auditPage,
+  // Bill HQ
+  openBhqPicker, selectBhqBill, removeBhqBill,
 };
 
 })();

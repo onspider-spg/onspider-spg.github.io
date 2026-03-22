@@ -304,6 +304,12 @@
       // Set home permission
       SPG.perm.set('home', state.homePermission);
 
+      // v2.0: Load function-level permissions (canDo)
+      const fnPerms = data.function_permissions || {};
+      for (const [moduleId, keys] of Object.entries(fnPerms)) {
+        SPG.perm.setFunctions(moduleId, keys);
+      }
+
       return state;
     } catch (e) {
       toast(e.message || 'โหลดข้อมูลไม่สำเร็จ', 'error');

@@ -1,11 +1,15 @@
 /**
- * SPG HUB v1.0.0 | 20 MAR 2026 | Siam Palette Group
+ * SPG HUB v2.0.0 | 22 MAR 2026 | Siam Palette Group
  * core/permission.js — One Permission Engine
  * Single source of truth for all permission checks across all sections
  *
  * Permission levels: no_access(0) < view_only(1) < edit(2) < admin(3) < super_admin(4)
  * Resolution: position → dept override → account override
  * Fallback: tier_id if no position assigned
+ *
+ * v2.0: Added canDo() for function-level permission checks
+ *       setFunctions() to store allowed function keys from init_bundle
+ *       getUserRole() to derive role from position_level
  */
 
 SPG.perm = (() => {
@@ -56,6 +60,76 @@ SPG.perm = (() => {
   // Clear all (on logout)
   function clear() {
     for (const k in _perms) delete _perms[k];
+    _functions = {};
+  }
+
+  // ═══ FUNCTION-LEVEL PERMISSIONS (canDo) ═══
+  // Stores allowed function keys per module: { 'home': ['fn_key1','fn_key2'], 'bc_order': [...] }
+  let _functions = {};
+
+  /**
+   * Store allowed function keys from init_bundle or module init
+   * @param {string} moduleId - e.g., 'home', 'bc_order', 'sd'
+   * @param {string[]} allowedKeys - array of function keys user can access
+   */
+  function setFunctions(moduleId, allowedKeys) {
+    _functions[moduleId] = new Set(allowedKeys || []);
+  }
+
+  /**
+   * Check if current user can execute a specific function
+   * Used for UI show/hide and frontend guards
+   * Backend always does its own check — this is for UX only
+   *
+   * @param {string} functionKey - e.g., 'fn_create_order', 'fn_manage_config'
+   * @param {string} [moduleId] - module to check in (default: current section or 'home')
+   * @returns {boolean}
+   */
+  function canDo(functionKey, moduleId) {
+    // super_admin bypasses everything
+    const s = SPG.api.getSession();
+    if (!s) return false;
+    const pl = s.position_id ? (s.position_level || 99) : parseInt((s.tier_id || 'T9').replace('T', ''));
+    if (pl === 1) return true; // Owner/CEO = super_admin
+
+    // Determine which module to check
+    const mod = moduleId || SPG.state?.currentSection || 'home';
+
+    // If we have function permissions loaded for this module, check the set
+    const fnSet = _functions[mod];
+    if (fnSet) return fnSet.has(functionKey);
+
+    // Fallback: if no function permissions loaded, allow based on access level
+    // (write functions need at least 'edit', read functions need 'view_only')
+    const isWrite = functionKey.includes('create') || functionKey.includes('edit')
+      || functionKey.includes('delete') || functionKey.includes('manage')
+      || functionKey.includes('update') || functionKey.includes('save');
+    return has(mod, isWrite ? 'edit' : 'view_only');
+  }
+
+  /**
+   * Get user's derived role based on position_level
+   * @returns {string} 'super_admin' | 'admin' | 'manager' | 'staff' | 'viewer'
+   */
+  function getUserRole() {
+    const s = SPG.api.getSession();
+    if (!s) return 'viewer';
+    const pl = s.position_id ? (s.position_level || 99) : parseInt((s.tier_id || 'T9').replace('T', ''));
+    if (pl === 1) return 'super_admin';
+    if (pl === 2) return 'admin';
+    if (pl === 3) return 'manager';
+    if (pl <= 5) return 'staff';
+    return 'viewer';
+  }
+
+  /**
+   * Get all allowed function keys for a module
+   * @param {string} moduleId
+   * @returns {string[]}
+   */
+  function getFunctions(moduleId) {
+    const fnSet = _functions[moduleId];
+    return fnSet ? [...fnSet] : [];
   }
 
   // ═══ STORES / DEPTS CACHE (shared across all sections) ═══
@@ -103,5 +177,7 @@ SPG.perm = (() => {
     LEVELS,
     set, get, has, hasHome, getLevel, clear,
     getStoresCache, getDeptsCache, clearCache,
+    // v2.0: Function-level permissions
+    canDo, setFunctions, getFunctions, getUserRole,
   };
 })();
