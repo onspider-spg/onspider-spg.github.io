@@ -380,8 +380,6 @@ const BHQ = (() => {
         <div class="home-header" ${headerGrad}>
           <div class="home-greeting">${greeting}</div>
           <div class="home-name">${esc(displayName)}</div>
-        </div>
-        <div class="home-actions">
           <button class="home-logout" onclick="BHQ.logout()">Sign out</button>
         </div>
 
