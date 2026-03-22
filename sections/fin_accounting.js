@@ -70,7 +70,7 @@ async function loadAcCoa() {
     await FIN.initModule();
     FIN.buildSidebar();
     _buildCoaTabs();
-    const result = await FIN.api('getCoa', {
+    const result = await FIN.api('get_coa', {
       type_filter: _coaFilter,
       search: _coaSearch,
       show_inactive: _coaShowInactive,
@@ -174,7 +174,7 @@ function resetCoaFilters() {
 async function _reloadCoa() {
   _buildCoaTabs();
   try {
-    const result = await FIN.api('getCoa', {
+    const result = await FIN.api('get_coa', {
       type_filter: _coaFilter,
       search: _coaSearch,
       show_inactive: _coaShowInactive,
@@ -304,7 +304,7 @@ function _categoryForm(cat) {
 
 function _onCatFormLoad() {
   if (_coaRows.length === 0) {
-    FIN.api('getCoa', { show_inactive: false }).then(res => {
+    FIN.api('get_coa', { show_inactive: false }).then(res => {
       _coaRows = res.rows || [];
       _populateMainCategories();
     });
@@ -376,10 +376,10 @@ async function saveCat(id, btnEl) {
     if (id) {
       data.id = id;
       if (_editingCat) data.expected_updated_at = _editingCat.updated_at;
-      await FIN.api('updateCategory', data);
+      await FIN.api('update_category', data);
       SPG.toast('Category updated', 'success');
     } else {
-      await FIN.api('createCategory', data);
+      await FIN.api('create_category', data);
       SPG.toast('Category created', 'success');
     }
     SPG.go('finance/ac-coa');
@@ -393,7 +393,7 @@ async function saveCat(id, btnEl) {
 
 async function toggleActive(id, newActive) {
   try {
-    await FIN.api('updateCategory', { id, is_active: newActive });
+    await FIN.api('update_category', { id, is_active: newActive });
     SPG.toast(newActive ? 'Category activated' : 'Category deactivated', 'success');
     SPG.go('finance/ac-coa');
   } catch (e) {
@@ -408,13 +408,13 @@ function deleteCat(id) {
 async function confirmDeleteCat(id) {
   SPG.closeDialog();
   try {
-    await FIN.api('deleteCategory', { id, hard: true });
+    await FIN.api('delete_category', { id, hard: true });
     SPG.toast('Category deleted', 'success');
     SPG.go('finance/ac-coa');
   } catch (e) {
     if (e.message && e.message.includes('IN_USE')) {
       try {
-        await FIN.api('deleteCategory', { id, hard: false });
+        await FIN.api('delete_category', { id, hard: false });
         SPG.toast('Category marked as inactive (in use)', 'success');
         SPG.go('finance/ac-coa');
       } catch (e2) {
@@ -444,7 +444,7 @@ async function loadAcTax() {
   try {
     await FIN.initModule();
     FIN.buildSidebar();
-    _taxRows = await FIN.api('getTaxCodes', {});
+    _taxRows = await FIN.api('get_tax_codes', {});
     _renderTaxRows();
   } catch (e) {
     SPG.toast(e.message, 'error');
@@ -489,9 +489,9 @@ async function saveTax(id, code) {
   const description = document.getElementById('dlg_tax_desc')?.value?.trim() || '';
   SPG.closeDialog();
   try {
-    await FIN.api('updateTaxCode', { id, code, name, rate, description });
+    await FIN.api('update_tax_code', { id, code, name, rate, description });
     SPG.toast('Tax code updated', 'success');
-    _taxRows = await FIN.api('getTaxCodes', {});
+    _taxRows = await FIN.api('get_tax_codes', {});
     _renderTaxRows();
   } catch (e) {
     SPG.toast(e.message || 'Update failed', 'error');

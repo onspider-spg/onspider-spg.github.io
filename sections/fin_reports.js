@@ -212,7 +212,7 @@ async function _loadPnlDashboard() {
   if (!el) return;
 
   try {
-    _pnlData = await FIN.api('getPnlSummary', {
+    _pnlData = await FIN.api('get_pnl_summary', {
       month: _filters.month,
       brand: _filters.brand === 'All' ? null : _filters.brand,
     });
@@ -366,7 +366,7 @@ async function _loadPnlBrand() {
   if (!el) return;
 
   try {
-    _pnlBrandData = await FIN.api('getPnlBrandCompare', { month: _filters.month });
+    _pnlBrandData = await FIN.api('get_pnl_brand_compare', { month: _filters.month });
   } catch (e) {
     console.warn('getPnlBrandCompare failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load brand comparison data. Please try again.</div>';
@@ -494,7 +494,7 @@ async function _loadPnlFlow() {
   if (!el) return;
 
   try {
-    _flowData = await FIN.api('getProfitFlow', {
+    _flowData = await FIN.api('get_profit_flow', {
       month: _filters.month,
       brand: _filters.brand === 'All' ? null : _filters.brand,
     });
@@ -592,7 +592,7 @@ async function _loadPnlFull() {
   el.innerHTML = '<div class="empty" style="padding:30px"><div class="fin-spinner" style="margin:0 auto 8px"></div>Loading...</div>';
 
   try {
-    _fullData = await FIN.api('getPnlFull', {
+    _fullData = await FIN.api('get_pnl_full', {
       from, to,
       brand: brand === 'All' ? null : brand,
     });
@@ -722,7 +722,7 @@ async function _loadBalanceSheet() {
   if (!el) return;
 
   try {
-    _bsData = await FIN.api('getBalanceSheet', {
+    _bsData = await FIN.api('get_balance_sheet', {
       month: _filters.month,
       brand: _filters.brand === 'All' ? null : _filters.brand,
     });
@@ -819,7 +819,7 @@ async function _loadCashFlow() {
   if (!el) return;
 
   try {
-    _cfData = await FIN.api('getCashFlow', {
+    _cfData = await FIN.api('get_cash_flow', {
       month: _filters.month,
       brand: _filters.brand === 'All' ? null : _filters.brand,
     });
@@ -904,7 +904,7 @@ async function loadRpApar() {
 
 async function _loadApar() {
   try {
-    _aparData = await FIN.api('getApArTracker', { brand: _filters.brand === 'All' ? null : _filters.brand });
+    _aparData = await FIN.api('get_ap_ar_tracker', { brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getApArTracker failed:', e.message);
     const el = document.getElementById('rp_apar_content');
@@ -1001,7 +1001,7 @@ async function _loadAsset() {
   const el = document.getElementById('rp_asset_content');
   if (!el) return;
   try {
-    _assetData = await FIN.api('getAssetSummary', {});
+    _assetData = await FIN.api('get_asset_summary', {});
   } catch (e) {
     console.warn('getAssetSummary failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load asset data. Please try again.</div>';
@@ -1060,7 +1060,7 @@ async function _loadBank() {
   const el = document.getElementById('rp_bank_content');
   if (!el) return;
   try {
-    _bankData = await FIN.api('getBankSummary', { brand: _filters.brand === 'All' ? null : _filters.brand });
+    _bankData = await FIN.api('get_bank_summary', { brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getBankSummary failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load bank summary data. Please try again.</div>';
@@ -1122,7 +1122,7 @@ async function _loadCash() {
   const el = document.getElementById('rp_cash_content');
   if (!el) return;
   try {
-    _cashData = await FIN.api('getCashSummary', { brand: _filters.brand === 'All' ? null : _filters.brand });
+    _cashData = await FIN.api('get_cash_summary', { brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getCashSummary failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load cash summary data. Please try again.</div>';
@@ -1182,7 +1182,7 @@ async function loadRpLoan() {
 
 async function _loadLoan() {
   try {
-    _loanData = await FIN.api('getLoanReport', {});
+    _loanData = await FIN.api('get_loan_report', {});
   } catch (e) {
     console.warn('getLoanReport failed:', e.message);
     const el = document.getElementById('rp_loan_content');
@@ -1282,7 +1282,7 @@ async function _loadFpBrand() {
   const el = document.getElementById('fp_brand_content');
   if (!el) return;
   try {
-    _fpBrandData = await FIN.api('getBrandComparison', { month: _filters.month });
+    _fpBrandData = await FIN.api('get_brand_comparison', { month: _filters.month });
   } catch (e) {
     console.warn('getBrandComparison failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load brand comparison data. Please try again.</div>';
@@ -1362,7 +1362,7 @@ async function _loadFpBudget() {
   const el = document.getElementById('fp_budget_content');
   if (!el) return;
   try {
-    _fpBudgetData = await FIN.api('getBudgetVsActual', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
+    _fpBudgetData = await FIN.api('get_budget_vs_actual', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getBudgetVsActual failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load budget data. Please try again.</div>';
@@ -1431,7 +1431,7 @@ async function _loadFpRev() {
   const el = document.getElementById('fp_rev_content');
   if (!el) return;
   try {
-    _fpRevData = await FIN.api('getRevenueAnalysis', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
+    _fpRevData = await FIN.api('get_revenue_analysis', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getRevenueAnalysis failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load revenue analysis data. Please try again.</div>';
@@ -1497,7 +1497,7 @@ async function _loadFpExp() {
   const el = document.getElementById('fp_exp_content');
   if (!el) return;
   try {
-    _fpExpData = await FIN.api('getExpenseTrend', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
+    _fpExpData = await FIN.api('get_expense_trend', { month: _filters.month, brand: _filters.brand === 'All' ? null : _filters.brand });
   } catch (e) {
     console.warn('getExpenseTrend failed:', e.message);
     if (el) el.innerHTML = '<div class="empty" style="padding:40px;color:var(--red)">Failed to load expense trend data. Please try again.</div>';
@@ -1566,7 +1566,7 @@ async function _loadDashboard() {
   if (!el) return;
 
   try {
-    _dashData = await FIN.api('getCfoDashboard', {
+    _dashData = await FIN.api('get_cfo_dashboard', {
       month: _filters.month,
       brand: _filters.brand === 'All' ? null : _filters.brand,
     });

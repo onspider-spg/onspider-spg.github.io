@@ -120,7 +120,7 @@ async function loadPrRuns() {
 
 async function _loadPayRuns() {
   try {
-    const data = await FIN.api('getPayRuns', _filters);
+    const data = await FIN.api('get_pay_runs', _filters);
     S._payRuns = data.rows || [];
     S._payRunKpi = data.kpi || S._payRunKpi;
     _renderPayRunKpi();
@@ -224,7 +224,7 @@ async function loadPrCreateS1() {
     // If no existing wizard, fetch next PR number
     if (!_wizardPayRun) {
       try {
-        const data = await FIN.api('getNextPayRunNo', {});
+        const data = await FIN.api('get_next_pay_run_no', {});
         const el = document.getElementById('pr_s1_no');
         if (el) el.value = data.pay_run_no || 'PR-???';
       } catch (e) { /* ignore */ }
@@ -255,7 +255,7 @@ async function saveStep1() {
     }
 
     SPG.showLoader();
-    const data = await FIN.api('createPayRun', {
+    const data = await FIN.api('create_pay_run', {
       pay_cycle: cycle.toLowerCase(),
       period_start: start,
       period_end: end,
@@ -435,7 +435,7 @@ async function importAndNext() {
   try {
     if (_wizardLines.length > 0) {
       SPG.showLoader();
-      await FIN.api('importPayRun', {
+      await FIN.api('import_pay_run', {
         pay_run_id: _wizardPayRun.id,
         lines: _wizardLines,
       });
@@ -508,7 +508,7 @@ async function _loadCreateS3() {
   if (!_wizardPayRun?.id) return;
 
   try {
-    const data = await FIN.api('getPayRunDetail', { pay_run_id: _wizardPayRun.id });
+    const data = await FIN.api('get_pay_run_detail', { pay_run_id: _wizardPayRun.id });
     _wizardPayRun = data.pay_run || _wizardPayRun;
     const brands = data.brands || {};
 
@@ -570,7 +570,7 @@ async function confirmApprove() {
   SPG.closeDialog();
   try {
     SPG.showLoader();
-    await FIN.api('approvePayRun', { pay_run_id: _wizardPayRun.id });
+    await FIN.api('approve_pay_run', { pay_run_id: _wizardPayRun.id });
     SPG.toast('Pay run approved ✔', 'success');
     _wizardPayRun = null;
     _wizardLines = [];
@@ -614,7 +614,7 @@ async function _loadDetail() {
   }
 
   try {
-    const data = await FIN.api('getPayRunDetail', { pay_run_id: prId });
+    const data = await FIN.api('get_pay_run_detail', { pay_run_id: prId });
     _detailPayRun = data.pay_run;
     _detailBrands = data.brands || {};
 
@@ -715,7 +715,7 @@ async function confirmMarkPaid() {
   SPG.closeDialog();
   try {
     SPG.showLoader();
-    await FIN.api('markPayRunPaid', { pay_run_id: _detailPayRun.id });
+    await FIN.api('mark_pay_run_paid', { pay_run_id: _detailPayRun.id });
     SPG.toast('Pay run marked as Paid ✔', 'success');
     SPG.go('finance/pr-runs');
   } catch (e) {
@@ -765,7 +765,7 @@ async function loadPrEmp() {
 
 async function _loadEmployees() {
   try {
-    const data = await FIN.api('getEmployees', _empFilters);
+    const data = await FIN.api('get_employees', _empFilters);
     _employees = data.rows || [];
     _renderEmpRows();
   } catch (e) {
@@ -916,7 +916,7 @@ async function loadPrEmpDetail() {
     await FIN.initModule();
     FIN.buildSidebar();
     if (!_empDetail?.employee?.id) return; // new employee — nothing to load
-    const data = await FIN.api('getEmployeeDetail', { employee_id: _empDetail.employee.id });
+    const data = await FIN.api('get_employee_detail', { employee_id: _empDetail.employee.id });
     _empDetail = data;
     _renderEmpBalances();
     _renderEmpHistory();
@@ -1062,7 +1062,7 @@ async function saveEmployee() {
 
   try {
     SPG.showLoader();
-    await FIN.api('saveEmployee', data);
+    await FIN.api('save_employee', data);
     SPG.toast(data.employee_id ? 'Employee updated ✔' : 'Employee created ✔', 'success');
     SPG.go('finance/pr-emp');
   } catch (e) {
@@ -1083,7 +1083,7 @@ async function confirmDeleteEmployee() {
   SPG.closeDialog();
   try {
     SPG.showLoader();
-    await FIN.api('deleteEmployee', { employee_id: _empDetail.employee.id });
+    await FIN.api('delete_employee', { employee_id: _empDetail.employee.id });
     SPG.toast('Employee deactivated', 'success');
     SPG.go('finance/pr-emp');
   } catch (e) {
