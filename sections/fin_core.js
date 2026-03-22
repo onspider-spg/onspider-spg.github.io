@@ -381,6 +381,12 @@ function buildFinanceSidebar() {
   const s = SPG.api.getSession();
   if (!s) return;
 
+  // If FIN hasn't initialized yet, show loading sidebar then rebuild after init
+  if (!S.initLoaded) {
+    sd.innerHTML = '<div style="padding:1rem"><div style="height:24px;background:var(--bg2);border-radius:8px;margin-bottom:12px"></div>'.repeat(6) + '</div>';
+    return;
+  }
+
   const cur = SPG.currentRoute;
   let html = '';
 
