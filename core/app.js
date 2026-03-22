@@ -164,8 +164,8 @@
     }
 
     // Section route: #sales/daily → section=sales, route=daily
-    if (_sections[first]) {
-      const route = rest || _sections[first].defaultRoute || 'home';
+    if (_sections[first] || SECTION_SCRIPTS[first]) {
+      const route = rest || (_sections[first]?.defaultRoute) || 'dashboard';
       return { section: first, route, params: parseRouteParams(route, parts.slice(2).join('/')) };
     }
 
