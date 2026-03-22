@@ -957,7 +957,9 @@
     const session = SPG.api.getSession();
     const { section, route, params } = parseHash(location.hash);
 
-    if (route && _sections[section]?.routes?.[route]) {
+    // Check registered sections OR lazy-loadable sections
+    const hasRoute = _sections[section]?.routes?.[route] || (SECTION_SCRIPTS[section] && route);
+    if (route && hasRoute) {
       if (PUBLIC_ROUTES.includes(route) || session) {
         // Use full path for non-home sections: 'bakery/dashboard' not just 'dashboard'
         const fullRoute = (section && section !== 'home') ? `${section}/${route}` : route;
