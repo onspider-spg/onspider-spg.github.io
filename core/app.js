@@ -57,6 +57,30 @@
     'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
   };
 
+  // ═══ LAZY LOAD MANIFEST — scripts per section (loaded on first navigate) ═══
+  const SECTION_SCRIPTS = {
+    sales:      ['sd_core.js','sd_screens.js','sd_screens2.js','sd_screens3.js','sd_screens4.js','sd_exclusive.js'],
+    purchase:   ['purchase.js'],
+    bakery:     ['bc_core.js','bc_store.js','bc_staff.js','bc_admin.js','bc_exec.js'],
+    finance:    ['fin_core.js','fin_transactions.js','fin_input.js','fin_payment.js','fin_payroll.js','fin_accounting.js','fin_reconcile.js','fin_review.js','fin_reports.js','fin_contacts.js','fin_settings.js'],
+    hr:         ['hr.js'],
+    operations: ['operations.js'],
+    foodhub:    ['foodhub.js'],
+    marketing:  ['marketing.js'],
+    equipment:  ['equipment.js'],
+    bi:         ['bi.js'],
+    crm:        ['crm.js'],
+  };
+
+  // Load all scripts for a section in order (sub-files depend on core)
+  async function loadSectionScripts(sectionId) {
+    const scripts = SECTION_SCRIPTS[sectionId];
+    if (!scripts) return;
+    for (const file of scripts) {
+      await loadSectionScript(file);
+    }
+  }
+
   function setTheme(sectionId) {
     const t = THEME_COLORS[sectionId] || THEME_COLORS.home;
     document.documentElement.style.setProperty('--theme', t.theme);
@@ -189,7 +213,7 @@
   }
 
   // ═══ NAVIGATE ═══
-  function go(route, params = {}) {
+  async function go(route, params = {}) {
     const parsed = parseHash(`#${route}`);
     let section = parsed.section;
     let resolvedRoute = parsed.route;
@@ -206,8 +230,24 @@
       section = ROOT_ROUTES[route] || section;
     }
 
-    // Find the section
-    const sec = _sections[section];
+    // Find the section — lazy load if not registered yet
+    let sec = _sections[section];
+    if (!sec && SECTION_SCRIPTS[section]) {
+      showLoader();
+      try {
+        await loadSectionScripts(section);
+        sec = _sections[section];
+      } catch (e) {
+        hideLoader();
+        toast('Failed to load module', 'error');
+        return go('dashboard');
+      }
+      hideLoader();
+      if (!sec) {
+        toast('Module not available', 'error');
+        return go('dashboard');
+      }
+    }
     if (!sec) {
       console.warn(`[SPG] Section not found: ${section}`);
       return go('login');
@@ -667,7 +707,7 @@
       MODULE_DEFS.forEach(def => {
         const mod = state.modules.find(m => MODULE_MAP[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
-        const isActive = mod && mod.status === 'active' && _sections[def.id];
+        const isActive = mod && mod.status === 'active' && (SECTION_SCRIPTS[def.id] || _sections[def.id]);
         if (isActive) {
           const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'dashboard');
           const active = currentSection === def.id ? ' active' : '';
@@ -811,7 +851,7 @@
       MODULE_DEFS.forEach(def => {
         const mod = state.modules.find(m => MODULE_MAP[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
-        const isActive = mod && mod.status === 'active' && _sections[def.id];
+        const isActive = mod && mod.status === 'active' && (SECTION_SCRIPTS[def.id] || _sections[def.id]);
         if (isActive) {
           const route = def.id + '/' + (_sections[def.id]?.defaultRoute || 'dashboard');
           html += `<div class="mob-sd-item" onclick="SPG.closeSidebar();SPG.go('${route}')">${def.label}</div>`;
