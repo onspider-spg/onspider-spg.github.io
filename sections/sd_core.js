@@ -370,7 +370,13 @@ function buildSDSidebar() {
 
   const s = SPG.api.getSession();
   if (!s) return;
-  const cur = SPG.currentRoute;
+
+  // Get current route — SPG.currentRoute first, fallback to hash parsing
+  let cur = SPG.currentRoute;
+  if (!cur || cur === 'dashboard') {
+    const hash = (location.hash || '').replace(/^#/, '');
+    if (hash.startsWith('sales/')) cur = hash.split('/')[1] || cur;
+  }
 
   let html = '';
 
@@ -486,10 +492,24 @@ function buildSDSidebar() {
   sd.innerHTML = html;
   if (SPG.state.sidebarCollapsed) sd.classList.add('closed');
 
-  // Auto-expand current accordion
+  // Auto-expand ONLY the accordion that contains the active item
   sd.querySelectorAll('.sd-group').forEach(sg => {
-    if (sg.querySelector('.sd-sub-item.active')) sg.classList.add('open');
+    if (sg.querySelector('.sd-sub-item.active')) {
+      sg.classList.add('open');
+    }
+    // Others stay closed (no .open class = max-height:0)
   });
+
+  // Ensure accordion click handler is set up (event delegation — safe to call multiple times)
+  if (!window._sdAccordionSetup) {
+    window._sdAccordionSetup = true;
+    document.addEventListener('click', (e) => {
+      const head = e.target.closest('.sd-group-head');
+      if (!head) return;
+      const sg = head.closest('.sd-group');
+      if (sg) sg.classList.toggle('open');
+    });
+  }
 }
 
 // Sidebar helpers (same pattern as Bakery bc_core.js)
