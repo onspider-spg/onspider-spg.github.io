@@ -35,6 +35,27 @@
     crm:        { theme: '#8b5cf6', bg: '#ede9fe', dark: '#7c3aed' },
   };
 
+  // Shared module definitions (used by both desktop + mobile sidebar)
+  const MODULE_DEFS = [
+    { id: 'sales',      label: 'Sales Daily' },
+    { id: 'purchase',   label: 'Purchase' },
+    { id: 'bakery',     label: 'Bakery' },
+    { id: 'finance',    label: 'Finance' },
+    { id: 'hr',         label: 'HR' },
+    { id: 'operations', label: 'Operations' },
+    { id: 'foodhub',    label: 'Food Hub' },
+    { id: 'marketing',  label: 'Marketing' },
+    { id: 'equipment',  label: 'Equipment' },
+    { id: 'bi',         label: 'BI Dashboard' },
+    { id: 'crm',        label: 'CRM' },
+  ];
+  const MODULE_MAP = {
+    'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
+    'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
+    'foodhub': 'foodhub', 'marketing': 'marketing',
+    'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
+  };
+
   function setTheme(sectionId) {
     const t = THEME_COLORS[sectionId] || THEME_COLORS.home;
     document.documentElement.style.setProperty('--theme', t.theme);
@@ -289,16 +310,17 @@
         badge.style.display = state.unreadNotifications > 0 ? 'flex' : 'none';
       }
 
-      // Start notification polling (every 60s)
+      // Start notification polling (every 90s — count only, lightweight)
       if (!state._notifPolling) {
         state._notifPolling = setInterval(async () => {
+          if (!SPG.api.getToken()) return; // Don't poll if logged out
           try {
             const nd = await SPG.api.getNotifications({ limit: 1 });
             const count = nd.unread_count || 0;
             const b = document.getElementById('notif-count');
             if (b) { b.textContent = count > 99 ? '99+' : count; b.style.display = count > 0 ? 'flex' : 'none'; }
-          } catch { /* silent */ }
-        }, 60000);
+          } catch { /* silent — may be logged out */ }
+        }, 90000);
       }
 
       // Set home permission
@@ -445,7 +467,7 @@
 
   async function markNotificationRead(notifId, btnEl) {
     try {
-      await SPG.api.markNotificationRead({ notification_id: notifId });
+      await SPG.api.markNotificationRead(notifId);
       // Update UI
       const item = btnEl?.closest('.notif-item');
       if (item) item.classList.remove('notif-unread');
@@ -460,16 +482,21 @@
     } catch { /* silent */ }
   }
 
-  function showNotifDetail(n) {
+  function showNotifDetail(nid) {
+    const n = SPG.ui.getNotifData(nid) || { title: 'Notification', body: '', sender: 'System', time: '' };
     // Mark as read when opening detail
-    if (n.nid) {
-      SPG.api.markNotificationRead({ notification_id: n.nid }).catch(() => {});
-      const item = document.querySelector(`.notif-item[data-nid="${n.nid}"]`);
+    if (nid) {
+      SPG.api.markNotificationRead(nid).catch(() => {});
+      const item = document.querySelector(`.notif-item[data-nid="${nid}"]`);
       if (item) {
         item.classList.remove('notif-unread');
         const btn = item.querySelector('span[onclick*="markNotificationRead"]');
         if (btn) btn.remove();
       }
+      // Update badge
+      const unread = document.querySelectorAll('.notif-item.notif-unread').length;
+      const badge = document.getElementById('notif-count');
+      if (badge) { badge.textContent = unread > 99 ? '99+' : unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
     }
     showDialog(`<div class="popup-sheet" style="max-width:400px">
       <div class="popup-header">
@@ -577,6 +604,9 @@
     state._bundleLoaded = false;
     state._bundleLoading = false;
     state._profileLoaded = false;
+    // Clear notification polling
+    if (state._notifPolling) { clearInterval(state._notifPolling); state._notifPolling = null; }
+    _notifOpen = false;
   }
 
   // ═══ SIDEBAR — Desktop (Clean Text, Accordion) ═══
@@ -598,32 +628,11 @@
     html += '<div class="sd-divider"></div>';
 
     // ── Modules (accordion — expand/collapse) ──
-    const sectionDefs = [
-      { id: 'sales',      label: 'Sales Daily' },
-      { id: 'purchase',   label: 'Purchase' },
-      { id: 'bakery',     label: 'Bakery' },
-      { id: 'finance',    label: 'Finance' },
-      { id: 'hr',         label: 'HR' },
-      { id: 'operations', label: 'Operations' },
-      { id: 'foodhub',    label: 'Food Hub' },
-      { id: 'marketing',  label: 'Marketing' },
-      { id: 'equipment',  label: 'Equipment' },
-      { id: 'bi',         label: 'BI Dashboard' },
-      { id: 'crm',        label: 'CRM' },
-    ];
-
-    const moduleToSection = {
-      'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
-      'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
-      'foodhub': 'foodhub', 'marketing': 'marketing',
-      'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
-    };
-
     if (state.modules) {
       let moduleItems = '';
       const isModuleActive = sectionDefs.some(def => currentSection === def.id);
-      sectionDefs.forEach(def => {
-        const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
+      MODULE_DEFS.forEach(def => {
+        const mod = state.modules.find(m => MODULE_MAP[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
         const isActive = mod && mod.status === 'active' && _sections[def.id];
         if (isActive) {
@@ -716,15 +725,17 @@
     return `<div class="sd-sub-item${active}" onclick="${onclick}" style="display:flex;align-items:center;gap:6px">${label}${badge}</div>`;
   }
 
-  // ═══ ACCORDION ═══
+  // ═══ ACCORDION (event delegation — no listener leak) ═══
+  let _accordionDelegated = false;
   function setupAccordion() {
-    document.querySelectorAll('.sd-group').forEach(sg => {
-      const head = sg.querySelector('.sd-group-head');
+    if (_accordionDelegated) return; // Only bind once
+    _accordionDelegated = true;
+    document.addEventListener('click', (e) => {
+      const head = e.target.closest('.sd-group-head');
       if (!head) return;
-      head.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sg.classList.toggle('open');
-      });
+      e.stopPropagation();
+      const sg = head.closest('.sd-group');
+      if (sg) sg.classList.toggle('open');
     });
   }
 
@@ -761,30 +772,11 @@
 
     // Sections
     html += '<div class="mob-sidebar-section">Modules</div>';
-    const mobSectionDefs = [
-      { id: 'sales',      label: 'Sales Daily' },
-      { id: 'purchase',   label: 'Purchase' },
-      { id: 'bakery',     label: 'Bakery Order' },
-      { id: 'operations', label: 'Operations' },
-      { id: 'finance',    label: 'Finance' },
-      { id: 'hr',         label: 'HR' },
-      { id: 'foodhub',    label: 'Food Hub' },
-      { id: 'marketing',  label: 'Marketing' },
-      { id: 'equipment',  label: 'Equipment' },
-      { id: 'bi',         label: 'BI Dashboard' },
-      { id: 'crm',        label: 'CRM' },
-    ];
-
-    const moduleToSection = {
-      'bakery_order': 'bakery', 'saledaily_report': 'sales', 'finance': 'finance',
-      'purchase': 'purchase', 'hr': 'hr', 'operations': 'operations',
-      'foodhub': 'foodhub', 'marketing': 'marketing',
-      'equipment': 'equipment', 'bi': 'bi', 'crm': 'crm',
-    };
+    // Uses shared MODULE_DEFS + MODULE_MAP
 
     if (state.modules) {
-      mobSectionDefs.forEach(def => {
-        const mod = state.modules.find(m => moduleToSection[m.module_id] === def.id);
+      MODULE_DEFS.forEach(def => {
+        const mod = state.modules.find(m => MODULE_MAP[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
         const isActive = mod && mod.status === 'active' && _sections[def.id];
         if (isActive) {

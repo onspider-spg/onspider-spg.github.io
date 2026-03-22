@@ -140,13 +140,17 @@ SPG.ui = (() => {
   }
 
   // ═══ NOTIFICATION ITEM ═══
+  // Notification data store (avoid XSS via onclick JSON)
+  const _notifData = {};
+
   function notifItem(n) {
-    // n = { notification_id, title, body, type, is_read, created_at, sender_name }
     const unreadCls = n.is_read ? '' : ' notif-unread';
     const time = n.created_at ? new Date(n.created_at).toLocaleString('en-AU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     const nid = n.notification_id || n.id || '';
+    // Store data safely — no JSON in onclick
+    _notifData[nid] = { title: n.title || '', body: n.body || '', type: n.type || '', time, sender: n.sender_name || 'System', nid };
     const markBtn = !n.is_read ? `<span style="font-size:9px;color:var(--acc);cursor:pointer;flex-shrink:0" onclick="event.stopPropagation();SPG.markNotificationRead('${esc(nid)}',this)">Mark read</span>` : '';
-    return `<div class="notif-item${unreadCls}" data-nid="${esc(nid)}" onclick="SPG.showNotifDetail(${esc(JSON.stringify({title:n.title||'',body:n.body||'',type:n.type||'',time,sender:n.sender_name||'System',nid}))})">
+    return `<div class="notif-item${unreadCls}" data-nid="${esc(nid)}" onclick="SPG.showNotifDetail('${esc(nid)}')">
       <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
         <div class="notif-title">${esc(n.title || '')}</div>
         ${markBtn}
@@ -156,10 +160,12 @@ SPG.ui = (() => {
     </div>`;
   }
 
+  function getNotifData(nid) { return _notifData[nid] || null; }
+
   return {
     esc,
     badge, STATUS_MAP,
     sortData, sortTh, toggleSort, getSortState,
-    empty, filterBar, card, skeleton, sectionCard, notifItem,
+    empty, filterBar, card, skeleton, sectionCard, notifItem, getNotifData,
   };
 })();
