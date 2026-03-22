@@ -1,9 +1,9 @@
 /**
- * SPG HUB v1.1.0 | 23 MAR 2026 | Siam Palette Group
+ * SPG HUB v2.0.0 | 23 MAR 2026 | Siam Palette Group
  * sections/bc_store.js — Store Screens (10 pages)
  * Dashboard, Browse, Cart, Orders, Order Detail, Quota, Stock Entry, Stock History, Waste, Returns
  *
- * Ported from legacy screens_bcorder.js with EXACT layout/HTML
+ * Wireframe v4 HTML/CSS classes — function logic preserved from v1.1.0
  * Depends on: bc_core.js (BK global)
  */
 
@@ -24,6 +24,22 @@ function sortIco(activeKey, key, dir) {
   return '<span class="sort-ico sort-on">' + (dir > 0 ? '\u25B2' : '\u25BC') + '</span>';
 }
 
+// ─── STATUS BADGE HELPER ───
+function statusBadge(status) {
+  const map = {
+    Pending:    'background:var(--orange-bg);color:var(--orange)',
+    Ordered:    'background:var(--blue-bg);color:var(--blue)',
+    InProgress: 'background:var(--blue-bg);color:var(--blue)',
+    Fulfilled:  'background:var(--green-bg);color:var(--green)',
+    Delivered:  'background:var(--green-bg);color:var(--green)',
+    Cancelled:  'background:var(--red-bg);color:var(--red)',
+    Rejected:   'background:var(--red-bg);color:var(--red)',
+  };
+  const s = map[status] || 'background:var(--bg3);color:var(--t2)';
+  return '<span class="wf-badge" style="' + s + '">' + esc(status) + '</span>';
+}
+
+
 // ═══════════════════════════════════════
 // 1. DASHBOARD
 // ═══════════════════════════════════════
@@ -38,30 +54,37 @@ BK.renderDashboard = function(p) {
       : SPG.shell(SPG.toolbar('BC Dashboard') + '<div class="content">Loading BC Dashboard...</div>', 'Bakery');
   }
 
+  const initial = (s.display_name || s.display_label || '?').charAt(0).toUpperCase();
+  const roleBadge = S.deptMapping?.module_role || S.role || '';
+
   return SPG.shell(SPG.toolbar('Dashboard') + `
-    <div class="content" id="mainContent">
-      <div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;margin-bottom:2px">Welcome, ${esc(s.display_name || s.display_label)}</div><div style="font-size:11px;color:var(--t3)">${esc(s.position_id ? s.position_name : s.tier_id)} \u00B7 ${esc(S.deptMapping?.module_role || S.role)} \u00B7 ${esc(BK.getStoreName(s.store_id))} \u00B7 ${esc(s.dept_id || '')}</div></div>
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Orders</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
+    <div class="content" style="max-width:900px" id="mainContent">
+      <div class="welcome-card">
+        <div class="welcome-avatar">${initial}</div>
+        <div>
+          <div class="welcome-name">${esc(s.display_name || s.display_label)}</div>
+          <div class="welcome-meta">${esc(BK.getStoreName(s.store_id))} | ${esc(s.dept_id || '')} | ${esc(s.position_id ? s.position_name : s.tier_id)}</div>
+          <div class="welcome-badge" style="background:var(--acc2);color:var(--acc)">${esc(roleBadge)}</div>
+        </div>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)" id="dashStatsRow">
+        <div class="stat-card"><div class="stat-num" style="color:var(--orange)">-</div><div class="stat-label">Pending Orders</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--green)">-</div><div class="stat-label">Fulfilled Today</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--acc)">-</div><div class="stat-label">Quota Used</div></div>
+      </div>
+      <div class="sec-title">Quick Actions</div>
+      <div class="quick-actions">
         ${S.cart.length > 0
-          ? dCard('\uD83D\uDCDD', 'Continue Order (' + S.cart.length + ')', "BakerySection.goToBrowse()", true)
-          : dCard('\uD83D\uDCDD', 'Create Order', "BakerySection.goToBrowse()", true)}
-        ${dCard('\uD83D\uDCCB', 'View Orders', "SPG.go('bakery/orders')")}
-        ${dCard('\uD83D\uDCCA', 'Set Quota', "SPG.go('bakery/quota')")}
-        ${dCard('\uD83D\uDCC8', 'Stock History', "SPG.go('bakery/stock-history')")}
+          ? '<div class="quick-btn" onclick="BakerySection.goToBrowse()"><div class="quick-btn-icon">+</div>Continue Order (' + S.cart.length + ')</div>'
+          : '<div class="quick-btn" onclick="BakerySection.goToBrowse()"><div class="quick-btn-icon">+</div>Create Order</div>'}
+        <div class="quick-btn" onclick="SPG.go('bakery/orders')"><div class="quick-btn-icon">&#128196;</div>My Orders</div>
+        <div class="quick-btn" onclick="SPG.go('bakery/waste')"><div class="quick-btn-icon">&#9888;</div>Report Waste</div>
+        <div class="quick-btn" onclick="SPG.go('bakery/returns')"><div class="quick-btn-icon">&#8634;</div>Report Return</div>
       </div>
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Records</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        ${dCard('\uD83D\uDDD1\uFE0F', 'Record Waste', "SPG.go('bakery/waste')")}
-        ${dCard('\u21A9\uFE0F', 'Returns', "SPG.go('bakery/returns')")}
-      </div>
-      <div id="dashStats" style="margin-top:20px"></div>
+      <div class="sec-title">Recent Orders</div>
+      <div id="dashRecentOrders"><div class="skel skel-card"></div></div>
     </div>`, 'Bakery');
 };
-
-function dCard(icon, label, onclick, accent) {
-  return `<div class="card${accent ? ' card-accent' : ''}" onclick="${onclick}"><div class="card-row"><span>${icon}</span><div class="card-label">${label}</div><span class="card-arrow">\u203A</span></div></div>`;
-}
 
 BK.loadDashboard = async function(p) {
   await BK.initBakery();
@@ -87,17 +110,39 @@ BK.loadDashboard = async function(p) {
 };
 
 function fillDashboard() {
-  const el = document.getElementById('dashStats'); if (!el) return;
-  const d = S.dashboard; if (!d?.by_status) { el.innerHTML = ''; return; }
-  const bs = d.by_status;
-  el.innerHTML = `<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Today</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-      ${sCard('Pending', bs.Pending || 0, 'var(--orange)')}${sCard('Ordered', bs.Ordered || 0, 'var(--blue)')}${sCard('Fulfilled', bs.Fulfilled || 0, 'var(--green)')}
-    </div>`;
-}
+  // Stats row
+  const statsEl = document.getElementById('dashStatsRow');
+  if (statsEl) {
+    const d = S.dashboard;
+    const bs = d?.by_status || {};
+    const pending = bs.Pending || 0;
+    const fulfilled = bs.Fulfilled || 0;
+    const quotaPct = d?.quota_pct != null ? d.quota_pct + '%' : '-';
+    statsEl.innerHTML =
+      '<div class="stat-card"><div class="stat-num" style="color:var(--orange)">' + pending + '</div><div class="stat-label">Pending Orders</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--green)">' + fulfilled + '</div><div class="stat-label">Fulfilled Today</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--acc)">' + quotaPct + '</div><div class="stat-label">Quota Used</div></div>';
+  }
 
-function sCard(label, count, color) {
-  return `<div style="background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rd);padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:${color}">${count}</div><div style="font-size:10px;color:var(--t3)">${label}</div></div>`;
+  // Recent orders table
+  const tblEl = document.getElementById('dashRecentOrders');
+  if (!tblEl) return;
+  const orders = S.dashboard?.recent_orders || S.orders || [];
+  const recent = orders.slice(0, 5);
+  if (!recent.length) {
+    tblEl.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:16px">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 Order</div>';
+    return;
+  }
+  tblEl.innerHTML = '<table class="wf-table" style="max-width:900px;margin-bottom:16px">' +
+    '<thead><tr><th>Order ID</th><th>Date</th><th>Items</th><th>Status</th></tr></thead>' +
+    '<tbody>' + recent.map(o => {
+      const itemCount = o.items ? o.items.length : (o.item_count || 0);
+      return '<tr onclick="SPG.go(\'bakery/order-detail\',{id:\'' + esc(o.order_id) + '\'})" style="cursor:pointer">' +
+        '<td style="color:var(--acc);font-weight:600">' + esc(o.order_id) + '</td>' +
+        '<td>' + BK.fmtDateAU(o.order_date || o.delivery_date) + '</td>' +
+        '<td>' + itemCount + ' items</td>' +
+        '<td>' + statusBadge(o.status) + '</td></tr>';
+    }).join('') + '</tbody></table>';
 }
 
 
@@ -127,18 +172,20 @@ BK.renderBrowse = function(p) {
   return SPG.shell(SPG.toolbar(isEditMode ? 'Edit Order' : 'Create Order') + `
     <div class="browse-header">
       ${editBanner}${resumeBar}
-      <div class="date-pills">
-        <span class="date-label">\u0E2A\u0E48\u0E07\u0E27\u0E31\u0E19</span>
-        <div class="chip${isToday ? ' active' : ''}" onclick="BakerySection.setDate('today')">\u0E27\u0E31\u0E19\u0E19\u0E35\u0E49</div>
-        <div class="chip${isTmr ? ' active' : ''}" onclick="BakerySection.setDate('tomorrow')">\u0E1E\u0E23\u0E38\u0E48\u0E07\u0E19\u0E35\u0E49</div>
-        <div class="chip${isCustom ? ' active' : ''}" onclick="document.getElementById('customDate').showPicker?.();document.getElementById('customDate').focus()">\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E27\u0E31\u0E19</div>
-        <input type="date" id="customDate" value="${dd}" min="${today}" style="position:absolute;opacity:0;pointer-events:none" onchange="BakerySection.setDate(this.value)">
-        <span class="date-display">${BK.fmtDateThai(dd)}</span>
+      <div class="wf-filter-bar">
+        <input class="wf-input wf-search" style="border-radius:var(--rd-pill);width:300px;padding:8px 16px" placeholder="\uD83D\uDD0D \u0E04\u0E49\u0E19\u0E2B\u0E32\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32..." value="${esc(S.productSearch)}" oninput="S.productSearch=this.value;BakerySection.dFilterProducts()">
+        <div style="margin-left:auto">
+          <div class="date-pills">
+            <span class="date-label">\u0E2A\u0E48\u0E07\u0E27\u0E31\u0E19</span>
+            <div class="chip${isToday ? ' active' : ''}" onclick="BakerySection.setDate('today')">\u0E27\u0E31\u0E19\u0E19\u0E35\u0E49</div>
+            <div class="chip${isTmr ? ' active' : ''}" onclick="BakerySection.setDate('tomorrow')">\u0E1E\u0E23\u0E38\u0E48\u0E07\u0E19\u0E35\u0E49</div>
+            <div class="chip${isCustom ? ' active' : ''}" onclick="document.getElementById('customDate').showPicker?.();document.getElementById('customDate').focus()">\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E27\u0E31\u0E19</div>
+            <input type="date" id="customDate" value="${dd}" min="${today}" style="position:absolute;opacity:0;pointer-events:none" onchange="BakerySection.setDate(this.value)">
+            <span class="date-display">${BK.fmtDateThai(dd)}</span>
+          </div>
+        </div>
       </div>
-      <div class="search-bar">
-        <input class="search-input" placeholder="\uD83D\uDD0D \u0E04\u0E49\u0E19\u0E2B\u0E32\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32..." value="${esc(S.productSearch)}" oninput="S.productSearch=this.value;BakerySection.dFilterProducts()">
-      </div>
-      <div class="cat-chips" id="catChips"></div>
+      <div style="margin-bottom:12px" id="catChips"></div>
     </div>
     <div class="content" id="productList">
       <div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div>
@@ -194,8 +241,8 @@ function fillBrowse() {
   if (chipEl) {
     const cats = S.categories;
     const f = S.productFilter;
-    chipEl.innerHTML = `<div class="chip${f === 'all' ? ' active' : ''}" onclick="BakerySection.setProductFilter('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</div>` +
-      cats.map(c => `<div class="chip${f === c.cat_id ? ' active' : ''}" onclick="BakerySection.setProductFilter('${c.cat_id}')">${esc(c.cat_name)}</div>`).join('');
+    chipEl.innerHTML = `<span class="wf-chip${f === 'all' ? ' active' : ''}" onclick="BakerySection.setProductFilter('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</span>` +
+      cats.map(c => `<span class="wf-chip${f === c.cat_id ? ' active' : ''}" onclick="BakerySection.setProductFilter('${c.cat_id}')">${esc(c.cat_name)}</span>`).join('');
   }
   filterProducts();
 }
@@ -216,7 +263,8 @@ function filterProducts() {
 
   const sp = BK.getStockPoints();
   const quotas = S.quotas || {};
-  el.innerHTML = '<div class="product-grid">' + filtered.map(p => renderProductCard(p, sp, quotas[p.product_id])).join('') + '</div>';
+  el.innerHTML = '<div class="product-grid">' + filtered.map(p => renderProductCard(p, sp, quotas[p.product_id])).join('') + '</div>' +
+    '<div style="margin-top:16px;text-align:right"><button class="wf-btn-gradient" onclick="SPG.go(\'bakery/cart\')">Add to Cart</button></div>';
   updateCartFooter();
 }
 
@@ -450,45 +498,48 @@ function setProductFilter(catId) {
 BK.renderCart = function(p) {
   const items = S.cart;
   if (items.length === 0) {
-    return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/browse')">\u2190</button><div class="toolbar-title">\u0E15\u0E30\u0E01\u0E23\u0E49\u0E32</div></div>
+    return SPG.shell(SPG.toolbar('Cart') + `
       <div class="content"><div class="empty"><div class="empty-icon">\uD83D\uDED2</div><div class="empty-title">\u0E15\u0E30\u0E01\u0E23\u0E49\u0E32\u0E27\u0E48\u0E32\u0E07</div><div class="empty-desc">\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32</div></div></div>`, 'Bakery');
   }
 
   const dd = S.deliveryDate;
-  const cartHtml = items.map((c, i) => `<div class="cart-item">
-    <div class="cart-item-hd">
-      <div class="cart-item-name">${esc(c.product_name)}</div>
-      <div class="cart-item-qty">${c.qty} ${esc(c.unit)}</div>
-    </div>
-    <div class="cart-item-meta">
-      ${c.is_urgent ? '<span class="cart-urg">\u26A1 URGENT</span>' : ''}
-      ${c.stock_on_hand != null ? '<span class="cart-stock">\u0E2A\u0E15\u0E47\u0E2D\u0E01: ' + c.stock_on_hand + '</span>' : ''}
-    </div>
-    <div class="cart-item-note">
-      <input class="inp" placeholder="Note..." value="${esc(c.note || '')}" oninput="BK.setCartNote('${c.product_id}',this.value)">
-    </div>
-    <div class="cart-item-actions">
-      <span class="cart-edit" onclick="SPG.go('bakery/browse')">\u2190 \u0E41\u0E01\u0E49\u0E44\u0E02</span>
-      <span class="cart-remove" onclick="BakerySection.removeCartItem('${c.product_id}')">\uD83D\uDDD1\uFE0F \u0E25\u0E1A</span>
-    </div>
-  </div>`).join('');
-
   const isEditMode = !!S.editingOrderId;
-  const editBar = isEditMode ? `<div style="background:var(--orange-bg,#fff3cd);padding:8px 14px;font-size:12px;font-weight:700;color:var(--orange)">\u270F\uFE0F \u0E01\u0E33\u0E25\u0E31\u0E07\u0E41\u0E01\u0E49\u0E44\u0E02 ${esc(S.editingOrderId)}</div>` : '';
+  const editBar = isEditMode ? `<div style="background:var(--orange-bg,#fff3cd);padding:8px 14px;font-size:12px;font-weight:700;color:var(--orange);border-radius:var(--rd);margin-bottom:8px">\u270F\uFE0F \u0E01\u0E33\u0E25\u0E31\u0E07\u0E41\u0E01\u0E49\u0E44\u0E02 ${esc(S.editingOrderId)}</div>` : '';
+
+  const cartRows = items.map((c, i) =>
+    '<tr>' +
+      '<td>' + esc(c.product_name) + (c.is_urgent ? ' <span style="color:var(--orange)">\u26A1</span>' : '') + '</td>' +
+      '<td><input class="product-qty" type="number" value="' + c.qty + '" min="0" style="width:60px" onchange="BakerySection.updateCartQty(\'' + c.product_id + '\',this.value)"></td>' +
+      '<td><span style="color:var(--red);cursor:pointer;font-size:11px" onclick="BakerySection.removeCartItem(\'' + c.product_id + '\')">Remove</span></td>' +
+    '</tr>'
+  ).join('');
+
+  const totalItems = items.reduce((s, c) => s + c.qty, 0);
   const submitLabel = isEditMode
     ? '\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E01\u0E32\u0E23\u0E41\u0E01\u0E49\u0E44\u0E02 (' + items.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)'
-    : '\uD83D\uDCE4 \u0E2A\u0E48\u0E07 Order (' + items.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)';
-  const submitClass = isEditMode ? 'btn btn-primary btn-full cart-submit' : 'btn btn-green btn-full cart-submit';
+    : 'Submit Order';
 
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/browse')">\u2190</button><div class="toolbar-title">\u0E15\u0E30\u0E01\u0E23\u0E49\u0E32 (${items.length})</div><div class="toolbar-sub">\u0E2A\u0E48\u0E07 ${BK.fmtDateThai(dd)}</div></div>
-    <div class="content" id="cartContent">
+  return SPG.shell(SPG.toolbar('Cart (' + items.length + ')') + `
+    <div class="content" style="max-width:900px" id="cartContent">
       ${editBar}
-      ${cartHtml}
-      <div class="cart-note-section">
-        <div class="lb">\u0E2B\u0E21\u0E32\u0E22\u0E40\u0E2B\u0E15\u0E38 (\u0E17\u0E31\u0E49\u0E07 Order)</div>
-        <textarea class="inp" rows="2" placeholder="\u0E40\u0E0A\u0E48\u0E19 \u0E2A\u0E48\u0E07\u0E01\u0E48\u0E2D\u0E19 8 \u0E42\u0E21\u0E07..." oninput="BK.S.headerNote=this.value">${esc(S.headerNote)}</textarea>
+      <div class="wf-card">
+        <div class="wf-section-title" style="margin-top:0">Cart Items</div>
+        <table class="wf-table">
+          <thead><tr><th>Product</th><th>Qty</th><th style="width:80px">Edit</th></tr></thead>
+          <tbody>${cartRows}</tbody>
+        </table>
       </div>
-      <button class="${submitClass}" id="submitBtn" onclick="BakerySection.submitOrder()">${submitLabel}</button>
+      <div class="wf-card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="wf-form-group"><label class="wf-label">Delivery Date</label><input class="wf-input" type="date" value="${dd || ''}" onchange="BakerySection.setCartDeliveryDate(this.value)"></div>
+          <div class="wf-form-group"><label class="wf-label">Total Items</label><div style="font-size:20px;font-weight:800;color:var(--acc);padding-top:4px">${totalItems}</div></div>
+        </div>
+        <div class="wf-form-group"><label class="wf-label">Note</label><textarea class="wf-input" rows="2" placeholder="\u0E40\u0E0A\u0E48\u0E19 \u0E2A\u0E48\u0E07\u0E01\u0E48\u0E2D\u0E19 8 \u0E42\u0E21\u0E07..." oninput="BK.S.headerNote=this.value">${esc(S.headerNote)}</textarea></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="wf-btn wf-btn-outline" onclick="BakerySection.clearCart()">Clear All</button>
+        <button class="wf-btn-gradient" id="submitBtn" onclick="BakerySection.submitOrder()">${submitLabel}</button>
+      </div>
     </div>`, 'Bakery');
 };
 
@@ -500,6 +551,23 @@ BK.loadCart = async function(p) {
 function removeCartItem(pid) {
   BK.setCartQty(pid, 0);
   SPG.go('bakery/cart'); // re-render cart
+}
+
+function updateCartQty(pid, val) {
+  const qty = parseInt(val) || 0;
+  BK.setCartQty(pid, qty);
+  if (qty === 0) SPG.go('bakery/cart');
+}
+
+function clearCart() {
+  S.cart = [];
+  S.stockInputs = {};
+  S.headerNote = '';
+  SPG.go('bakery/cart');
+}
+
+function setCartDeliveryDate(val) {
+  S.deliveryDate = val;
 }
 
 // ─── Stock validation: ALL products must have stock filled before submit ───
@@ -605,7 +673,7 @@ async function submitOrder() {
       btn.disabled = false;
       btn.textContent = isEditMode
         ? '\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E01\u0E32\u0E23\u0E41\u0E01\u0E49\u0E44\u0E02 (' + S.cart.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)'
-        : '\uD83D\uDCE4 \u0E2A\u0E48\u0E07 Order (' + S.cart.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)';
+        : 'Submit Order';
     }
   } catch (e) {
     SPG.toast('Network error: ' + e.message, 'error');
@@ -613,7 +681,7 @@ async function submitOrder() {
     btn.disabled = false;
     btn.textContent = isEdit
       ? '\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E01\u0E32\u0E23\u0E41\u0E01\u0E49\u0E44\u0E02 (' + S.cart.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)'
-      : '\uD83D\uDCE4 \u0E2A\u0E48\u0E07 Order (' + S.cart.length + ' \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23)';
+      : 'Submit Order';
   }
 }
 
@@ -639,19 +707,22 @@ BK.renderOrders = function(p) {
   _orderShowCount = 5;
 
   const isBC = S.role === 'bc';
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/dashboard')">\u2190</button><div class="toolbar-title">View Orders</div></div>
-    <div class="order-date-bar">
-      <span class="date-label">\uD83D\uDCC5 \u0E2A\u0E48\u0E07:</span>
-      <input type="date" class="date-inp" value="${_orderDateFrom}" onchange="BakerySection.setOrderDate('from',this.value)">
-      <span style="color:var(--t4)">\u2192</span>
-      <input type="date" class="date-inp" value="${_orderDateTo}" onchange="BakerySection.setOrderDate('to',this.value)">
-      <span class="date-link" onclick="BakerySection.setOrderDatePreset('today')">\u0E27\u0E31\u0E19\u0E19\u0E35\u0E49</span>
-      <span class="date-link" onclick="BakerySection.setOrderDatePreset('3day')">3 \u0E27\u0E31\u0E19</span>
-      <span class="date-link" onclick="BakerySection.setOrderDatePreset('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</span>
-    </div>
-    ${isBC ? '<div class="order-chips" id="sectionChips"></div>' : ''}
-    <div class="order-chips" id="orderChips"></div>
-    <div class="content" id="ordersContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+  return SPG.shell(SPG.toolbar('My Orders') + `
+    <div class="content" style="max-width:900px">
+      <div class="wf-filter-bar">
+        <select class="wf-select" onchange="BakerySection.setOrderDatePreset(this.value)">
+          <option value="3day">3 \u0E27\u0E31\u0E19</option>
+          <option value="today">\u0E27\u0E31\u0E19\u0E19\u0E35\u0E49</option>
+          <option value="all">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</option>
+        </select>
+        <input type="date" class="wf-input" value="${_orderDateFrom}" style="width:150px" onchange="BakerySection.setOrderDate('from',this.value)">
+        <span style="color:var(--t3);font-size:12px">to</span>
+        <input type="date" class="wf-input" value="${_orderDateTo}" style="width:150px" onchange="BakerySection.setOrderDate('to',this.value)">
+      </div>
+      ${isBC ? '<div id="sectionChips" style="margin-bottom:8px"></div>' : ''}
+      <div id="orderChips" style="margin-bottom:12px"></div>
+      <div id="ordersContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
+    </div>`, 'Bakery');
 };
 
 BK.loadOrders = async function(p) {
@@ -687,8 +758,8 @@ function fillOrders() {
   // BC: Populate section chips
   if (secEl && isBC) {
     const sorted = [...new Set(S.categories.map(c => c.section_id).filter(Boolean))].sort();
-    secEl.innerHTML = `<div class="chip${_orderSectionFilter === 'all' ? ' active' : ''}" onclick="BakerySection.setOrderSection('all')">All</div>` +
-      sorted.map(s => `<div class="chip${_orderSectionFilter === s ? ' active' : ''}" onclick="BakerySection.setOrderSection('${s}')">${esc(s)}</div>`).join('');
+    secEl.innerHTML = `<span class="wf-chip${_orderSectionFilter === 'all' ? ' active' : ''}" onclick="BakerySection.setOrderSection('all')">All</span>` +
+      sorted.map(s => `<span class="wf-chip${_orderSectionFilter === s ? ' active' : ''}" onclick="BakerySection.setOrderSection('${s}')">${esc(s)}</span>`).join('');
   }
 
   // Count by status
@@ -703,13 +774,13 @@ function fillOrders() {
   // Status chips
   if (chipEl) {
     const chips = [
-      { k: 'all', l: '\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14', c: counts.all },
+      { k: 'all', l: 'All', c: counts.all },
       { k: 'Pending', l: 'Pending', c: counts.Pending },
       { k: 'Ordered', l: 'Ordered', c: counts.Ordered },
-      { k: 'Done', l: 'Done', c: counts.Done },
-      { k: 'Cancelled', l: 'Cancel', c: counts.Cancelled },
+      { k: 'Done', l: 'Fulfilled', c: counts.Done },
+      { k: 'Cancelled', l: 'Cancelled', c: counts.Cancelled },
     ];
-    chipEl.innerHTML = chips.map(f => `<div class="chip${_orderFilter === f.k ? ' active' : ''}" onclick="BakerySection.setOrderFilter('${f.k}')">${f.l}${f.c ? ' (' + f.c + ')' : ''}</div>`).join('');
+    chipEl.innerHTML = chips.map(f => `<span class="wf-chip${_orderFilter === f.k ? ' active' : ''}" onclick="BakerySection.setOrderFilter('${f.k}')">${f.l}${f.c ? ' (' + f.c + ')' : ''}</span>`).join('');
   }
 
   // Apply status filter
@@ -726,44 +797,32 @@ function fillOrders() {
 
   // Sort
   shown = sortArr(shown, _orderSortKey, _orderSortDir);
-
   const visible = shown.slice(0, _orderShowCount);
   const hasMore = shown.length > _orderShowCount;
 
-  const sb = (k, lbl) => `<span class="sort-btn${_orderSortKey === k ? ' sort-active' : ''}" onclick="BakerySection.sortOrders('${k}')">${lbl} ${sortIco(_orderSortKey, k, _orderSortDir)}</span>`;
-
-  el.innerHTML = `<div class="list-header"><div style="font-size:11px;color:var(--t3)">${shown.length} \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23</div>
-      <div class="sort-bar">Sort: ${sb('delivery_date','\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07')} ${sb('order_id','ID')} ${sb('status','Status')}</div>
-    </div>
-    <div class="order-list">${visible.map(o => renderOrderCard(o)).join('')}</div>
-    ${hasMore ? `<div class="load-more" onclick="BakerySection.showMoreOrders()">\u0E41\u0E2A\u0E14\u0E07 ${_orderShowCount} \u0E08\u0E32\u0E01 ${shown.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : ''}`;
-}
-
-function renderOrderCard(o) {
-  const items = (o.items || []);
-  const summary = items.slice(0, 3).map(i => {
-    const rawName = i.product_name || '';
-    const name = rawName.length > 20 ? rawName.substring(0, 18) + '\u2026' : rawName;
-    return name + ' \u00D7' + i.qty_ordered + (i.is_urgent ? '\u26A1' : '');
-  }).join(', ');
-  const isDone = ['Fulfilled', 'Delivered'].includes(o.status);
-  const stsClass = { Pending: 'sts-pending', Ordered: 'sts-ordered', InProgress: 'sts-ordered', Fulfilled: 'sts-fulfilled', Delivered: 'sts-fulfilled', Cancelled: 'sts-cancelled', Rejected: 'sts-cancelled' }[o.status] || '';
-  const borderColor = { Pending: 'var(--red)', Ordered: 'var(--blue)', InProgress: 'var(--orange)', Fulfilled: 'var(--green)', Delivered: 'var(--green)' }[o.status] || 'var(--bd)';
-
-  let onclick;
-  if (S.role === 'bc') {
-    if (o.status === 'Pending') onclick = `SPG.go('bakery/accept',{id:'${o.order_id}'})`;
-    else if (o.status === 'Ordered' || o.status === 'InProgress') onclick = `SPG.go('bakery/fulfil',{id:'${o.order_id}'})`;
-    else onclick = `SPG.go('bakery/order-detail',{id:'${o.order_id}'})`;
-  } else {
-    onclick = `SPG.go('bakery/order-detail',{id:'${o.order_id}'})`;
-  }
-
-  return `<div class="ocard${isDone ? ' ocard-done' : ''}" style="border-left-color:${borderColor}" onclick="${onclick}">
-    <div class="ocard-hd"><span class="ocard-id">${esc(o.order_id)}</span><span class="sts ${stsClass}">${o.status}</span></div>
-    <div class="ocard-sub">\u0E2A\u0E48\u0E07 ${BK.fmtDateThai(o.delivery_date)} \u00B7 ${esc(BK.getStoreName(o.store_id))}${o.dept_id ? ' \u00B7 ' + esc(o.dept_id) : ''}</div>
-    <div class="ocard-items">${esc(summary)}</div>
-  </div>`;
+  // Render as wf-table
+  el.innerHTML = '<table class="wf-table">' +
+    '<thead><tr>' +
+      '<th>Order ID</th><th>Date</th><th>Delivery</th><th>Items</th><th>Status</th>' +
+    '</tr></thead>' +
+    '<tbody>' + visible.map(o => {
+      const itemCount = (o.items || []).length || o.item_count || 0;
+      let onclick;
+      if (isBC) {
+        if (o.status === 'Pending') onclick = `SPG.go('bakery/accept',{id:'${o.order_id}'})`;
+        else if (o.status === 'Ordered' || o.status === 'InProgress') onclick = `SPG.go('bakery/fulfil',{id:'${o.order_id}'})`;
+        else onclick = `SPG.go('bakery/order-detail',{id:'${o.order_id}'})`;
+      } else {
+        onclick = `SPG.go('bakery/order-detail',{id:'${o.order_id}'})`;
+      }
+      return '<tr onclick="' + onclick + '" style="cursor:pointer">' +
+        '<td style="color:var(--acc);font-weight:600">' + esc(o.order_id) + '</td>' +
+        '<td>' + BK.fmtDateAU(o.order_date) + '</td>' +
+        '<td>' + BK.fmtDateAU(o.delivery_date) + '</td>' +
+        '<td>' + itemCount + '</td>' +
+        '<td>' + statusBadge(o.status) + '</td></tr>';
+    }).join('') + '</tbody></table>' +
+    (hasMore ? `<div class="load-more" onclick="BakerySection.showMoreOrders()">\u0E41\u0E2A\u0E14\u0E07 ${_orderShowCount} \u0E08\u0E32\u0E01 ${shown.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : '');
 }
 
 function setOrderSection(sec) { _orderSectionFilter = sec; _orderShowCount = 5; fillOrders(); }
@@ -781,11 +840,11 @@ function showMoreOrders() { _orderShowCount += 5; fillOrders(); }
 
 
 // ═══════════════════════════════════════
-// 5. ORDER DETAIL
+// 5. ORDER DETAIL (no wireframe — use wf-card, wf-table, wf-badge)
 // ═══════════════════════════════════════
 BK.renderOrderDetail = function(params) {
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/orders')">\u2190</button><div class="toolbar-title">Order Detail</div></div>
-    <div class="content" id="detailContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+  return SPG.shell(SPG.toolbar('Order Detail') + `
+    <div class="content" style="max-width:900px" id="detailContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
 };
 
 BK.loadOrderDetail = async function(p) {
@@ -809,40 +868,42 @@ function fillOrderDetail() {
   const o = data.order;
   const items = data.items || [];
   const canEdit = ['Pending', 'Ordered'].includes(o.status);
-  const stsClass = { Pending: 'sts-pending', Ordered: 'sts-ordered', InProgress: 'sts-ordered', Fulfilled: 'sts-fulfilled', Delivered: 'sts-fulfilled', Cancelled: 'sts-cancelled', Rejected: 'sts-cancelled' }[o.status] || '';
 
   el.innerHTML = `
-    <div class="detail-info">
-      <div class="detail-hd"><span class="detail-id">${esc(o.order_id)}</span><span class="sts ${stsClass}">${o.status}</span></div>
-      <div class="detail-grid">
-        <div><div class="detail-label">\u0E27\u0E31\u0E19\u0E2A\u0E31\u0E48\u0E07</div><div class="detail-val">${BK.fmtDateThai(o.order_date)}</div></div>
-        <div><div class="detail-label">\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07</div><div class="detail-val">${BK.fmtDateThai(o.delivery_date)}${canEdit ? ' <span style="font-size:10px;color:var(--blue);cursor:pointer;text-decoration:underline" onclick="BakerySection.showChangeDate(\'' + o.order_id + '\',\'' + o.delivery_date + '\')">\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19</span>' : ''}</div></div>
-        <div><div class="detail-label">\u0E42\u0E14\u0E22</div><div class="detail-val">${esc(o.display_name)}</div></div>
-        <div><div class="detail-label">\u0E23\u0E49\u0E32\u0E19</div><div class="detail-val">${esc(BK.getStoreName(o.store_id))}${o.dept_id ? ' \u00B7 ' + esc(o.dept_id) : ''}</div></div>
+    <div class="wf-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:16px;font-weight:700;color:var(--acc)">${esc(o.order_id)}</span>
+        ${statusBadge(o.status)}
       </div>
-      ${o.header_note ? '<div class="detail-note">\uD83D\uDCDD ' + esc(o.header_note) + '</div>' : ''}
+      <table class="wf-table" style="margin-bottom:0">
+        <tbody>
+          <tr><td style="font-weight:600;width:120px">\u0E27\u0E31\u0E19\u0E2A\u0E31\u0E48\u0E07</td><td>${BK.fmtDateThai(o.order_date)}</td></tr>
+          <tr><td style="font-weight:600">\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07</td><td>${BK.fmtDateThai(o.delivery_date)}${canEdit ? ' <span style="font-size:10px;color:var(--blue);cursor:pointer;text-decoration:underline" onclick="BakerySection.showChangeDate(\'' + o.order_id + '\',\'' + o.delivery_date + '\')">\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19</span>' : ''}</td></tr>
+          <tr><td style="font-weight:600">\u0E42\u0E14\u0E22</td><td>${esc(o.display_name)}</td></tr>
+          <tr><td style="font-weight:600">\u0E23\u0E49\u0E32\u0E19</td><td>${esc(BK.getStoreName(o.store_id))}${o.dept_id ? ' \u00B7 ' + esc(o.dept_id) : ''}</td></tr>
+        </tbody>
+      </table>
+      ${o.header_note ? '<div style="margin-top:8px;font-size:12px;color:var(--t2)"><strong>Note:</strong> ' + esc(o.header_note) + '</div>' : ''}
     </div>
 
-    <div class="detail-section-title">\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23 (${items.length})</div>
-    <div class="detail-items">${items.map(i => renderDetailItem(i, canEdit)).join('')}</div>
+    <div class="wf-section-title">\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23 (${items.length})</div>
+    <div class="wf-card">
+      <table class="wf-table">
+        <thead><tr><th>Product</th><th>Qty</th><th>Stock</th><th>Status</th></tr></thead>
+        <tbody>${items.map(i => {
+          const isFulfilled = !!i.fulfilment_status;
+          return '<tr' + (canEdit && !isFulfilled ? ' onclick="BakerySection.showEditItem(\'' + i.item_id + '\')" style="cursor:pointer"' : '') + '>' +
+            '<td style="font-weight:600">' + esc(i.product_name) + (i.is_urgent ? ' <span style="color:var(--orange)">\u26A1</span>' : '') + '</td>' +
+            '<td>' + i.qty_ordered + ' ' + esc(i.unit) + '</td>' +
+            '<td>' + (i.stock_on_hand != null ? i.stock_on_hand : '\u2014') + '</td>' +
+            '<td>' + (isFulfilled ? '<span class="wf-badge" style="background:var(--green-bg);color:var(--green)">\u2713 ' + i.fulfilment_status + ' (' + i.qty_sent + ')</span>' : (canEdit ? '<span style="font-size:10px;color:var(--acc);cursor:pointer">\u0E41\u0E01\u0E49\u0E44\u0E02 \u203A</span>' : '\u2014')) + '</td></tr>';
+        }).join('')}</tbody>
+      </table>
+    </div>
 
-    ${canEdit && S.role === 'store' ? '<div style="margin-top:14px"><button class="btn btn-primary btn-full" onclick="BakerySection.enterEditMode(\'' + o.order_id + '\')">\u270F\uFE0F Add More</button></div>' : ''}
-    ${canEdit ? '<div style="margin-top:8px"><button class="btn btn-danger btn-full" onclick="BakerySection.confirmCancel(\'' + o.order_id + '\')">\uD83D\uDEAB \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01 Order</button></div>' : ''}
+    ${canEdit && S.role === 'store' ? '<div style="margin-top:14px"><button class="wf-btn-gradient" style="width:100%" onclick="BakerySection.enterEditMode(\'' + o.order_id + '\')">\u270F\uFE0F Add More</button></div>' : ''}
+    ${canEdit ? '<div style="margin-top:8px"><button class="wf-btn wf-btn-outline" style="width:100%;color:var(--red);border-color:var(--red)" onclick="BakerySection.confirmCancel(\'' + o.order_id + '\')">\uD83D\uDEAB \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01 Order</button></div>' : ''}
     ${o.status === 'Cancelled' ? '<div style="margin-top:8px;font-size:12px;color:var(--red)">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E21\u0E37\u0E48\u0E2D ' + BK.fmtDateThai(o.cancelled_at?.substring(0, 10)) + (o.cancel_reason ? ' \u2014 ' + esc(o.cancel_reason) : '') + '</div>' : ''}`;
-}
-
-function renderDetailItem(i, canEdit) {
-  const isFulfilled = !!i.fulfilment_status;
-  return `<div class="ditem${isFulfilled ? ' ditem-done' : ''}" onclick="${canEdit && !isFulfilled ? "BakerySection.showEditItem('" + i.item_id + "')" : ''}">
-    <div class="ditem-hd">
-      <div><div class="ditem-name">${esc(i.product_name)}</div>
-      <div class="ditem-meta">${i.qty_ordered} ${esc(i.unit)}${i.is_urgent ? ' \u00B7 <span style="color:var(--orange)">\u26A1 URGENT</span>' : ''}</div>
-      ${i.stock_on_hand != null ? '<div class="ditem-stock">\u0E2A\u0E15\u0E47\u0E2D\u0E01: ' + i.stock_on_hand + ' \u2192 \u0E2A\u0E31\u0E48\u0E07: ' + i.qty_ordered + '</div>' : ''}
-      ${i.item_note ? '<div class="ditem-note">\uD83D\uDCDD ' + esc(i.item_note) + '</div>' : ''}
-      </div>
-      ${isFulfilled ? '<span class="ditem-ful">\u2713 ' + (i.fulfilment_status === 'full' ? 'full (' + i.qty_sent + ')' : i.fulfilment_status + ' (' + i.qty_sent + ')') + '</span>' : (canEdit ? '<span class="ditem-edit">\u0E41\u0E01\u0E49\u0E44\u0E02 \u203A</span>' : '')}
-    </div>
-  </div>`;
 }
 
 // ─── Edit Item Popup ───
@@ -857,11 +918,11 @@ function showEditItem(itemId) {
     <div style="padding:10px 14px;background:var(--bg3);border-radius:var(--rd);margin-bottom:12px;font-size:12px">
       <div style="display:flex;justify-content:space-between"><span style="color:var(--t3)">\u0E40\u0E14\u0E34\u0E21</span><span style="font-weight:700">${item.qty_ordered} ${esc(item.unit)}</span></div>
     </div>
-    <div class="fg"><label class="lb">\u0E2A\u0E15\u0E47\u0E2D\u0E01</label><input class="inp" type="number" id="editStock" value="${item.stock_on_hand != null ? item.stock_on_hand : ''}" min="0" step="0.1" style="width:120px;font-size:16px;font-weight:700;text-align:center" placeholder="\u2014"></div>
-    <div class="fg"><label class="lb">\u0E08\u0E33\u0E19\u0E27\u0E19\u0E43\u0E2B\u0E21\u0E48 *</label><input class="inp" type="number" id="editQty" value="${item.qty_ordered}" min="0" style="width:120px;font-size:16px;font-weight:700;text-align:center"><div style="font-size:10px;color:var(--t4);margin-top:4px">\u0E43\u0E2A\u0E48 0 = \u0E25\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23</div></div>
-    <div class="fg"><label class="lb">Urgent</label><div style="display:flex;gap:8px"><div class="chip${item.is_urgent ? ' active' : ''}" id="editUrg1" onclick="document.getElementById('editUrg1').classList.add('active');document.getElementById('editUrg0').classList.remove('active')">\u26A1</div><div class="chip${!item.is_urgent ? ' active' : ''}" id="editUrg0" onclick="document.getElementById('editUrg0').classList.add('active');document.getElementById('editUrg1').classList.remove('active')">\u0E1B\u0E01\u0E15\u0E34</div></div></div>
-    <div class="fg"><label class="lb">Note</label><input class="inp" id="editNote" value="${esc(item.item_note || '')}"></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="editSaveBtn" onclick="BakerySection.saveEditItem('${item.item_id}','${data.order.order_id}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2A\u0E15\u0E47\u0E2D\u0E01</label><input class="wf-input" type="number" id="editStock" value="${item.stock_on_hand != null ? item.stock_on_hand : ''}" min="0" step="0.1" style="width:120px;font-size:16px;font-weight:700;text-align:center" placeholder="\u2014"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E08\u0E33\u0E19\u0E27\u0E19\u0E43\u0E2B\u0E21\u0E48 *</label><input class="wf-input" type="number" id="editQty" value="${item.qty_ordered}" min="0" style="width:120px;font-size:16px;font-weight:700;text-align:center"><div style="font-size:10px;color:var(--t4);margin-top:4px">\u0E43\u0E2A\u0E48 0 = \u0E25\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23</div></div>
+    <div class="wf-form-group"><label class="wf-label">Urgent</label><div style="display:flex;gap:8px"><div class="wf-chip${item.is_urgent ? ' active' : ''}" id="editUrg1" onclick="document.getElementById('editUrg1').classList.add('active');document.getElementById('editUrg0').classList.remove('active')">\u26A1</div><div class="wf-chip${!item.is_urgent ? ' active' : ''}" id="editUrg0" onclick="document.getElementById('editUrg0').classList.add('active');document.getElementById('editUrg1').classList.remove('active')">\u0E1B\u0E01\u0E15\u0E34</div></div></div>
+    <div class="wf-form-group"><label class="wf-label">Note</label><input class="wf-input" id="editNote" value="${esc(item.item_note || '')}"></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="editSaveBtn" onclick="BakerySection.saveEditItem('${item.item_id}','${data.order.order_id}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
   </div>`);
 }
 
@@ -909,8 +970,8 @@ function showChangeDate(orderId, currentDate) {
   SPG.showDialog(`<div class="popup-sheet" style="width:340px">
     <div class="popup-title" style="margin-bottom:12px">\uD83D\uDCC5 \u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07</div>
     <div style="font-size:12px;color:var(--t2);margin-bottom:12px">${esc(orderId)}</div>
-    <div class="fg"><label class="lb">\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07\u0E43\u0E2B\u0E21\u0E48</label><input type="date" class="inp" id="newDeliveryDate" value="${currentDate}" min="${minDate}"></div>
-    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="changeDateBtn" onclick="BakerySection.doChangeDate('${orderId}')">\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E27\u0E31\u0E19\u0E2A\u0E48\u0E07\u0E43\u0E2B\u0E21\u0E48</label><input type="date" class="wf-input" id="newDeliveryDate" value="${currentDate}" min="${minDate}"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="changeDateBtn" onclick="BakerySection.doChangeDate('${orderId}')">\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
   </div>`);
 }
 
@@ -944,8 +1005,8 @@ function confirmCancel(orderId) {
   SPG.showDialog(`<div class="popup-sheet" style="width:340px">
     <div class="popup-title" style="margin-bottom:12px">\uD83D\uDEAB \u0E22\u0E01\u0E40\u0E25\u0E34\u0E01 Order?</div>
     <div style="font-size:13px;color:var(--t2);margin-bottom:12px">${esc(orderId)}</div>
-    <div class="fg"><label class="lb">\u0E40\u0E2B\u0E15\u0E38\u0E1C\u0E25 (\u0E16\u0E49\u0E32\u0E21\u0E35)</label><input class="inp" id="cancelReason" placeholder="\u0E40\u0E0A\u0E48\u0E19 \u0E2A\u0E31\u0E48\u0E07\u0E1C\u0E34\u0E14..."></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48</button><button class="btn btn-danger" style="flex:1" id="cancelBtn" onclick="BakerySection.doCancel('${orderId}')">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E25\u0E22</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E40\u0E2B\u0E15\u0E38\u0E1C\u0E25 (\u0E16\u0E49\u0E32\u0E21\u0E35)</label><input class="wf-input" id="cancelReason" placeholder="\u0E40\u0E0A\u0E48\u0E19 \u0E2A\u0E31\u0E48\u0E07\u0E1C\u0E34\u0E14..."></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48</button><button class="wf-btn wf-btn-outline" style="flex:1;color:var(--red);border-color:var(--red)" id="cancelBtn" onclick="BakerySection.doCancel('${orderId}')">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01\u0E40\u0E25\u0E22</button></div>
   </div>`);
 }
 
@@ -976,163 +1037,7 @@ async function doCancel(orderId) {
 
 
 // ═══════════════════════════════════════
-// 6. STOCK HISTORY
-// ═══════════════════════════════════════
-let _shDateFrom = '';
-let _shDateTo = '';
-let _shShowCount = 10;
-
-BK.renderStockHistory = function(p) {
-  const y = BK.sydneyNow(); y.setDate(y.getDate() - 1);
-  const t = BK.sydneyNow(); t.setDate(t.getDate() + 1);
-  _shDateFrom = S.stockHistDateFrom || BK.fmtDate(y);
-  _shDateTo = S.stockHistDateTo || BK.fmtDate(t);
-  S.stockHistDateFrom = _shDateFrom;
-  S.stockHistDateTo = _shDateTo;
-  _shShowCount = 10;
-
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/dashboard')">\u2190</button><div class="toolbar-title">Stock History</div></div>
-    <div class="order-date-bar">
-      <span class="date-label">\uD83D\uDCC5 Delivery:</span>
-      <input type="date" class="date-inp" value="${_shDateFrom}" onchange="BakerySection.setShDate('from',this.value)">
-      <span style="color:var(--t4)">\u2192</span>
-      <input type="date" class="date-inp" value="${_shDateTo}" onchange="BakerySection.setShDate('to',this.value)">
-      <span class="date-link" onclick="BakerySection.setShDatePreset('3day')">3 \u0E27\u0E31\u0E19</span>
-      <span class="date-link" onclick="BakerySection.setShDatePreset('7day')">7 \u0E27\u0E31\u0E19</span>
-    </div>
-    <div class="content" id="shContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
-};
-
-BK.loadStockHistory = async function(p) {
-  await BK.initBakery();
-  BK.buildBakerySidebar();
-  try {
-    const data = await BK.api('get_stock_history', {
-      date_from: S.stockHistDateFrom || '',
-      date_to: S.stockHistDateTo || '',
-    });
-    S.stockHistory = Array.isArray(data) ? data : (data?.history || []);
-  } catch (e) { console.error('Stock history:', e); }
-  fillStockHistory();
-};
-
-function fillStockHistory() {
-  const el = document.getElementById('shContent');
-  if (!el) return;
-  const all = S.stockHistory || [];
-
-  if (!all.length) {
-    el.innerHTML = '<div class="empty"><div class="empty-icon">\uD83D\uDCC8</div><div class="empty-title">\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25</div><div class="empty-desc">\u0E25\u0E2D\u0E07\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E0A\u0E48\u0E27\u0E07\u0E27\u0E31\u0E19</div></div>';
-    return;
-  }
-
-  // Group by order_id
-  const orderGroups = [];
-  const orderMap = {};
-  all.forEach(h => {
-    if (!orderMap[h.order_id]) {
-      orderMap[h.order_id] = { order_id: h.order_id, delivery_date: h.delivery_date, created_at: h.created_at, items: [] };
-      orderGroups.push(orderMap[h.order_id]);
-    }
-    orderMap[h.order_id].items.push(h);
-  });
-
-  let html = '<div style="font-size:11px;color:var(--t3);margin-bottom:8px">' + orderGroups.length + ' orders \u00B7 ' + all.length + ' records</div>';
-
-  const visible = orderGroups.slice(0, _shShowCount);
-  const hasMore = orderGroups.length > _shShowCount;
-
-  visible.forEach((grp, idx) => {
-    grp.items.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''));
-    const orderDate = grp.created_at ? grp.created_at.substring(11, 16) : '';
-    const itemCount = grp.items.length;
-    const orderedCount = grp.items.filter(h => h.order_qty > 0).length;
-
-    html += `<div class="section-card" style="margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:2px 0" onclick="BakerySection.toggleShGroup('shGrp-${idx}')">
-        <div>
-          <span style="font-size:13px;font-weight:700;color:var(--acc)">${esc(grp.order_id)}</span>
-          <span style="font-size:11px;color:var(--t3);margin-left:8px">${itemCount} \u0E23\u0E32\u0E22\u0E01\u0E32\u0E23 \u00B7 \u0E2A\u0E31\u0E48\u0E07 ${orderedCount}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:11px;color:var(--t3)">\u0E2A\u0E48\u0E07 ${BK.fmtDateThai(grp.delivery_date)}${orderDate ? ' \u00B7 ' + orderDate : ''}</span>
-          <span id="shArr-${idx}" style="font-size:12px;color:var(--t4)">\u25B8</span>
-        </div>
-      </div>
-      <div id="shGrp-${idx}" style="display:none;margin-top:8px">
-        <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="border-bottom:1.5px solid var(--bd)">
-            <th style="text-align:left;padding:5px 8px;font-weight:600;font-size:11px">Product</th>
-            <th style="text-align:center;padding:5px 4px;font-weight:600;font-size:11px">Quota</th>
-            <th style="text-align:center;padding:5px 4px;font-weight:600;font-size:11px">Stock</th>
-            <th style="text-align:center;padding:5px 4px;font-weight:600;font-size:11px">Order</th>
-          </tr></thead><tbody>`;
-
-    grp.items.forEach(h => {
-      const isZeroBoth = h.stock_on_hand === 0 && h.order_qty === 0;
-      const bg = isZeroBoth ? ' style="background:var(--red-bg)"' : '';
-      const sColor = h.stock_on_hand === 0 ? 'color:var(--red);font-weight:600' : '';
-      const oWeight = h.order_qty > 0 ? 'font-weight:600' : 'color:var(--t4)';
-      html += `<tr${bg}>
-        <td style="padding:4px 8px;text-align:left;border-bottom:0.5px solid var(--bd2)">${esc(h.product_name)}</td>
-        <td style="padding:4px;text-align:center;border-bottom:0.5px solid var(--bd2);color:var(--t3)">${h.quota_qty}</td>
-        <td style="padding:4px;text-align:center;border-bottom:0.5px solid var(--bd2);${sColor}">${h.stock_on_hand}</td>
-        <td style="padding:4px;text-align:center;border-bottom:0.5px solid var(--bd2);${oWeight}">${h.order_qty}</td>
-      </tr>`;
-    });
-
-    html += '</tbody></table></div>';
-    html += `<div style="text-align:right;margin-top:6px"><span style="font-size:11px;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="event.stopPropagation();SPG.go('bakery/order-detail',{id:'${esc(grp.order_id)}'})">\u0E14\u0E39 Order \u2192</span></div>`;
-    html += '</div></div>';
-  });
-
-  if (hasMore) {
-    html += '<div class="load-more" onclick="BakerySection.showMoreSh()">\u0E41\u0E2A\u0E14\u0E07 ' + _shShowCount + ' \u0E08\u0E32\u0E01 ' + orderGroups.length + ' orders \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21 \u2193</div>';
-  }
-
-  el.innerHTML = html;
-}
-
-function toggleShGroup(id) {
-  const body = document.getElementById(id);
-  if (!body) return;
-  const idx = id.replace('shGrp-', '');
-  const arr = document.getElementById('shArr-' + idx);
-  if (body.style.display === 'none') {
-    body.style.display = 'block';
-    if (arr) arr.textContent = '\u25BE';
-  } else {
-    body.style.display = 'none';
-    if (arr) arr.textContent = '\u25B8';
-  }
-}
-
-function setShDate(which, val) {
-  if (which === 'from') { _shDateFrom = val; S.stockHistDateFrom = val; }
-  else { _shDateTo = val; S.stockHistDateTo = val; }
-  BK.loadStockHistory();
-}
-
-function setShDatePreset(p) {
-  const today = BK.todaySydney();
-  if (p === '3day') {
-    const d = BK.sydneyNow(); d.setDate(d.getDate() - 2);
-    _shDateFrom = BK.fmtDate(d);
-  } else if (p === '7day') {
-    const d = BK.sydneyNow(); d.setDate(d.getDate() - 6);
-    _shDateFrom = BK.fmtDate(d);
-  }
-  _shDateTo = today;
-  S.stockHistDateFrom = _shDateFrom;
-  S.stockHistDateTo = _shDateTo;
-  BK.loadStockHistory();
-}
-
-function showMoreSh() { _shShowCount += 10; fillStockHistory(); }
-
-
-// ═══════════════════════════════════════
-// 7. SET QUOTA
+// 6. QUOTA
 // ═══════════════════════════════════════
 const DAYS = ['\u0E08','\u0E2D','\u0E1E','\u0E1E\u0E24','\u0E28','\u0E2A','\u0E2D\u0E32'];
 const DAY_MAP = [1,2,3,4,5,6,0];
@@ -1144,8 +1049,8 @@ BK.renderQuota = function(p) {
   _quotaSearch = '';
   _quotaCatFilter = 'all';
   _quotaSnapshot = {};
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/dashboard')">\u2190</button><div class="toolbar-title">Set Quota</div></div>
-    <div class="content" id="quotaContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+  return SPG.shell(SPG.toolbar('Set Quota') + `
+    <div class="content" style="max-width:900px" id="quotaContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
 };
 
 BK.loadQuota = async function(p) {
@@ -1166,20 +1071,21 @@ function fillQuota() {
   if (!prods.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">\uD83D\uDCCA</div><div class="empty-title">\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32</div></div>'; return; }
 
   const cats = S.categories || [];
-  const catChips = `<div class="chip${_quotaCatFilter === 'all' ? ' active' : ''}" onclick="BakerySection.setQuotaCat('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</div>` +
-    cats.map(c => `<div class="chip${_quotaCatFilter === c.cat_id ? ' active' : ''}" onclick="BakerySection.setQuotaCat('${c.cat_id}')">${esc(c.cat_name)}</div>`).join('');
+  const catChips = `<span class="wf-chip${_quotaCatFilter === 'all' ? ' active' : ''}" onclick="BakerySection.setQuotaCat('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</span>` +
+    cats.map(c => `<span class="wf-chip${_quotaCatFilter === c.cat_id ? ' active' : ''}" onclick="BakerySection.setQuotaCat('${c.cat_id}')">${esc(c.cat_name)}</span>`).join('');
 
-  const saveBtn = '<div style="display:flex;justify-content:center;margin-bottom:12px"><button class="btn btn-primary" style="padding:10px 40px" id="quotaSaveBtnTop" onclick="BakerySection.saveQuota()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>';
+  const saveBtn = '<div style="display:flex;justify-content:center;margin-bottom:12px"><button class="wf-btn-gradient" id="quotaSaveBtnTop" onclick="BakerySection.saveQuota()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>';
 
   el.innerHTML = `<div class="q-wrap">
-    <div style="font-size:11px;color:var(--t3);margin-bottom:8px">\u0E42\u0E04\u0E27\u0E15\u0E32\u0E15\u0E48\u0E2D\u0E27\u0E31\u0E19 \u00B7 ${prods.length} \u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32</div>
-    <input class="search-input" placeholder="\uD83D\uDD0D \u0E04\u0E49\u0E19\u0E2B\u0E32..." value="${esc(_quotaSearch)}" oninput="BakerySection.filterQuota(this.value)" style="max-width:400px;margin-bottom:8px">
+    <div class="wf-filter-bar">
+      <input class="wf-input wf-search" style="border-radius:var(--rd-pill);width:300px;padding:8px 16px" placeholder="\uD83D\uDD0D \u0E04\u0E49\u0E19\u0E2B\u0E32..." value="${esc(_quotaSearch)}" oninput="BakerySection.filterQuota(this.value)">
+    </div>
     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${catChips}</div>
     ${saveBtn}
     <div id="quotaDesk" class="q-desk-only"></div>
     <div id="quotaMob" class="q-mob-only"></div>
     <div style="display:flex;justify-content:center;margin:14px 0">
-      <button class="btn btn-primary" style="padding:10px 40px" id="quotaSaveBtn" onclick="BakerySection.saveQuota()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button>
+      <button class="wf-btn-gradient" id="quotaSaveBtn" onclick="BakerySection.saveQuota()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button>
     </div>
   </div>`;
   renderQuotaTable();
@@ -1215,7 +1121,7 @@ function setQuotaCat(catId) {
   fillQuota();
 }
 
-// ─── Desktop: Table ───
+// ─── Desktop: Table (wireframe style) ───
 function renderQuotaTable() {
   const el = document.getElementById('quotaDesk');
   if (!el) return;
@@ -1225,15 +1131,15 @@ function renderQuotaTable() {
   let rows = prods.map(p => {
     const pq = qm[p.product_id] || {};
     const cells = DAY_MAP.map(dow =>
-      `<td><input type="number" min="0" class="q-inp" id="qi-${p.product_id}-${dow}" value="${pq[dow] || 0}"></td>`
+      `<td style="text-align:center"><input type="number" min="0" class="q-inp" id="qi-${p.product_id}-${dow}" value="${pq[dow] || 0}"></td>`
     ).join('');
-    return `<tr><td class="q-name">${esc(p.product_name)}</td>${cells}</tr>`;
+    return `<tr><td style="font-weight:600">${esc(p.product_name)}</td>${cells}</tr>`;
   }).join('');
 
-  el.innerHTML = `<div class="q-card"><table class="q-tbl">
-    <thead><tr><th>\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32</th>${DAYS.map(d => '<th>' + d + '</th>').join('')}</tr></thead>
+  el.innerHTML = `<table class="wf-table">
+    <thead><tr><th>Product</th>${DAYS.map(d => '<th style="text-align:center">' + d + '</th>').join('')}</tr></thead>
     <tbody>${rows}</tbody>
-  </table></div>`;
+  </table>`;
 }
 
 // ─── Mobile: Accordion ───
@@ -1333,6 +1239,134 @@ async function saveQuota() {
 
 
 // ═══════════════════════════════════════
+// 7. STOCK HISTORY
+// ═══════════════════════════════════════
+let _shDateFrom = '';
+let _shDateTo = '';
+let _shShowCount = 10;
+
+BK.renderStockHistory = function(p) {
+  const y = BK.sydneyNow(); y.setDate(y.getDate() - 1);
+  const t = BK.sydneyNow(); t.setDate(t.getDate() + 1);
+  _shDateFrom = S.stockHistDateFrom || BK.fmtDate(y);
+  _shDateTo = S.stockHistDateTo || BK.fmtDate(t);
+  S.stockHistDateFrom = _shDateFrom;
+  S.stockHistDateTo = _shDateTo;
+  _shShowCount = 10;
+
+  return SPG.shell(SPG.toolbar('Stock History') + `
+    <div class="content" style="max-width:900px">
+      <div class="wf-filter-bar">
+        <input class="wf-input" type="date" value="${_shDateFrom}" style="width:150px" onchange="BakerySection.setShDate('from',this.value)">
+        <span style="color:var(--t3);font-size:12px">to</span>
+        <input class="wf-input" type="date" value="${_shDateTo}" style="width:150px" onchange="BakerySection.setShDate('to',this.value)">
+        <span class="date-link" onclick="BakerySection.setShDatePreset('3day')">3 \u0E27\u0E31\u0E19</span>
+        <span class="date-link" onclick="BakerySection.setShDatePreset('7day')">7 \u0E27\u0E31\u0E19</span>
+      </div>
+      <div id="shStatsRow"></div>
+      <div id="shContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
+    </div>`, 'Bakery');
+};
+
+BK.loadStockHistory = async function(p) {
+  await BK.initBakery();
+  BK.buildBakerySidebar();
+  try {
+    const data = await BK.api('get_stock_history', {
+      date_from: S.stockHistDateFrom || '',
+      date_to: S.stockHistDateTo || '',
+    });
+    S.stockHistory = Array.isArray(data) ? data : (data?.history || []);
+  } catch (e) { console.error('Stock history:', e); }
+  fillStockHistory();
+};
+
+function fillStockHistory() {
+  const el = document.getElementById('shContent');
+  const statsEl = document.getElementById('shStatsRow');
+  if (!el) return;
+  const all = S.stockHistory || [];
+
+  // Stats row
+  if (statsEl) {
+    let totalIn = 0, totalOut = 0;
+    all.forEach(h => {
+      totalIn += h.order_qty || 0;
+      totalOut += h.qty_sent || h.stock_on_hand || 0;
+    });
+    const net = totalIn - totalOut;
+    statsEl.innerHTML = '<div class="stats-row" style="grid-template-columns:repeat(3,1fr)">' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--green)">' + totalIn + '</div><div class="stat-label">Total In</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--orange)">' + totalOut + '</div><div class="stat-label">Total Out</div></div>' +
+      '<div class="stat-card"><div class="stat-num" style="color:var(--blue)">' + (net >= 0 ? '+' : '') + net + '</div><div class="stat-label">Net</div></div>' +
+    '</div>';
+  }
+
+  if (!all.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">\uD83D\uDCC8</div><div class="empty-title">\u0E44\u0E21\u0E48\u0E21\u0E35\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25</div><div class="empty-desc">\u0E25\u0E2D\u0E07\u0E40\u0E1B\u0E25\u0E35\u0E48\u0E22\u0E19\u0E0A\u0E48\u0E27\u0E07\u0E27\u0E31\u0E19</div></div>';
+    return;
+  }
+
+  // Group by order_id
+  const orderGroups = [];
+  const orderMap = {};
+  all.forEach(h => {
+    if (!orderMap[h.order_id]) {
+      orderMap[h.order_id] = { order_id: h.order_id, delivery_date: h.delivery_date, created_at: h.created_at, items: [] };
+      orderGroups.push(orderMap[h.order_id]);
+    }
+    orderMap[h.order_id].items.push(h);
+  });
+
+  // Render as wf-table
+  let rows = '';
+  const visible = orderGroups.slice(0, _shShowCount);
+  visible.forEach(grp => {
+    grp.items.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''));
+    grp.items.forEach(h => {
+      const diff = (h.order_qty || 0) - (h.qty_sent || h.stock_on_hand || 0);
+      const diffStyle = diff === 0 ? 'color:var(--green)' : 'color:var(--red);font-weight:600';
+      rows += '<tr>' +
+        '<td>' + BK.fmtDateAU(h.delivery_date) + '</td>' +
+        '<td>' + esc(h.product_name) + '</td>' +
+        '<td>' + (h.order_qty || 0) + '</td>' +
+        '<td>' + (h.qty_sent || h.stock_on_hand || 0) + '</td>' +
+        '<td style="' + diffStyle + '">' + (diff >= 0 ? diff : diff) + '</td></tr>';
+    });
+  });
+
+  const hasMore = orderGroups.length > _shShowCount;
+  el.innerHTML = '<table class="wf-table">' +
+    '<thead><tr><th>Date</th><th>Product</th><th>Ordered</th><th>Received</th><th>Diff</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>' +
+    (hasMore ? '<div class="load-more" onclick="BakerySection.showMoreSh()">\u0E41\u0E2A\u0E14\u0E07 ' + _shShowCount + ' \u0E08\u0E32\u0E01 ' + orderGroups.length + ' orders \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21 \u2193</div>' : '');
+}
+
+function setShDate(which, val) {
+  if (which === 'from') { _shDateFrom = val; S.stockHistDateFrom = val; }
+  else { _shDateTo = val; S.stockHistDateTo = val; }
+  BK.loadStockHistory();
+}
+
+function setShDatePreset(p) {
+  const today = BK.todaySydney();
+  if (p === '3day') {
+    const d = BK.sydneyNow(); d.setDate(d.getDate() - 2);
+    _shDateFrom = BK.fmtDate(d);
+  } else if (p === '7day') {
+    const d = BK.sydneyNow(); d.setDate(d.getDate() - 6);
+    _shDateFrom = BK.fmtDate(d);
+  }
+  _shDateTo = today;
+  S.stockHistDateFrom = _shDateFrom;
+  S.stockHistDateTo = _shDateTo;
+  BK.loadStockHistory();
+}
+
+function showMoreSh() { _shShowCount += 10; fillStockHistory(); }
+
+
+// ═══════════════════════════════════════
 // 8. WASTE LOG
 // ═══════════════════════════════════════
 let _wasteDateFrom = '';
@@ -1348,16 +1382,16 @@ BK.renderWaste = function(p) {
   _wasteDateTo = _wasteDateTo || BK.fmtDate(t);
   _wasteShowCount = 5;
 
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/dashboard')">\u2190</button><div class="toolbar-title">Waste Log</div></div>
-    <div class="order-date-bar">
-      <span class="date-label">\uD83D\uDCC5 \u0E27\u0E31\u0E19\u0E17\u0E35\u0E48:</span>
-      <input type="date" class="date-inp" value="${_wasteDateFrom}" onchange="BakerySection.setWasteDate('from',this.value)">
-      <span style="color:var(--t4)">\u2192</span>
-      <input type="date" class="date-inp" value="${_wasteDateTo}" onchange="BakerySection.setWasteDate('to',this.value)">
-      <span class="date-link" onclick="BakerySection.setWasteDatePreset('3day')">3 \u0E27\u0E31\u0E19</span>
-      <span class="date-link" onclick="BakerySection.setWasteDatePreset('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</span>
-    </div>
-    <div class="content" id="wasteContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+  return SPG.shell(SPG.toolbar('Waste Log') + `
+    <div class="content" style="max-width:900px">
+      <div class="wf-filter-bar">
+        <input class="wf-input" type="date" value="${_wasteDateFrom}" style="width:150px" onchange="BakerySection.setWasteDate('from',this.value)">
+        <span style="color:var(--t3);font-size:12px">to</span>
+        <input class="wf-input" type="date" value="${_wasteDateTo}" style="width:150px" onchange="BakerySection.setWasteDate('to',this.value)">
+        <button class="wf-btn-gradient" style="margin-left:auto;padding:6px 16px;font-size:12px" onclick="BakerySection.showWasteForm()">+ Record Waste</button>
+      </div>
+      <div id="wasteContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
+    </div>`, 'Bakery');
 };
 
 BK.loadWaste = async function(p) {
@@ -1386,31 +1420,37 @@ function fillWaste() {
   if (_wasteDateTo) filtered = filtered.filter(w => (w.waste_date || '') <= _wasteDateTo);
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div></div><button class="btn btn-primary" onclick="BakerySection.showWasteForm()">+ \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E43\u0E2B\u0E21\u0E48</button></div>
-      <div class="empty"><div class="empty-icon">\u2705</div><div class="empty-title">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23 Waste</div></div>`;
+    el.innerHTML = '<div class="empty"><div class="empty-icon">\u2705</div><div class="empty-title">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23 Waste</div></div>';
     return;
   }
 
   filtered = sortArr(filtered, _wasteSortKey, _wasteSortDir);
-
   const visible = filtered.slice(0, _wasteShowCount);
   const hasMore = filtered.length > _wasteShowCount;
-  const reasonColor = (r) => r === 'Expired' ? 'var(--red)' : r === 'Damaged' ? 'var(--orange)' : 'var(--t2)';
-  const wsb = (k, lbl) => `<span class="sort-btn${_wasteSortKey === k ? ' sort-active' : ''}" onclick="BakerySection.sortWaste('${k}')">${lbl} ${sortIco(_wasteSortKey, k, _wasteSortDir)}</span>`;
 
-  el.innerHTML = `<div class="list-header">
-      <div class="sort-bar">Sort: ${wsb('waste_date','\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48')} ${wsb('product_name','\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32')} ${wsb('quantity','\u0E08\u0E33\u0E19\u0E27\u0E19')} ${wsb('reason','\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38')}</div>
-      <button class="btn btn-primary" onclick="BakerySection.showWasteForm()">+ \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E43\u0E2B\u0E21\u0E48</button>
-    </div>
-    <div class="waste-list">${visible.map(w => `<div class="wcard" style="border-left-color:${reasonColor(w.reason)}">
-      <div class="wcard-hd"><span class="wcard-name">${esc(w.product_name)}</span><span class="wcard-qty">\u2212${w.quantity} ${esc(w.unit)}</span></div>
-      <div class="wcard-meta">${BK.fmtDateAU(w.waste_date)} \u00B7 ${esc(w.reason)} \u00B7 \u0E42\u0E14\u0E22 ${esc(w.recorded_by_name)}</div>
-      <div class="wcard-actions">
-        <span class="wcard-edit" onclick="BakerySection.showWasteEdit('${w.waste_id}')">\u270F\uFE0F \u0E41\u0E01\u0E49\u0E44\u0E02</span>
-        <span class="wcard-del" onclick="BakerySection.confirmDeleteWaste('${w.waste_id}')">\uD83D\uDDD1\uFE0F \u0E25\u0E1A</span>
-      </div>
-    </div>`).join('')}</div>
-    ${hasMore ? `<div class="load-more" onclick="BakerySection.showMoreWaste()">\u0E41\u0E2A\u0E14\u0E07 ${_wasteShowCount} \u0E08\u0E32\u0E01 ${filtered.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : ''}`;
+  const reasonBadge = (r) => {
+    const map = {
+      Expired: 'background:var(--orange-bg);color:var(--orange)',
+      Damaged: 'background:var(--red-bg);color:var(--red)',
+      'Production Error': 'background:var(--blue-bg);color:var(--blue)',
+    };
+    return '<span class="wf-badge" style="' + (map[r] || 'background:var(--bg3);color:var(--t2)') + '">' + esc(r) + '</span>';
+  };
+
+  el.innerHTML = '<table class="wf-table">' +
+    '<thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Reason</th><th>Recorded By</th></tr></thead>' +
+    '<tbody>' + visible.map(w =>
+      '<tr>' +
+        '<td>' + BK.fmtDateAU(w.waste_date) + '</td>' +
+        '<td>' + esc(w.product_name) + '</td>' +
+        '<td style="color:var(--red);font-weight:600">' + w.quantity + '</td>' +
+        '<td>' + reasonBadge(w.reason) + '</td>' +
+        '<td>' + esc(w.recorded_by_name) +
+          ' <span style="font-size:10px;color:var(--acc);cursor:pointer;margin-left:4px" onclick="BakerySection.showWasteEdit(\'' + w.waste_id + '\')">\u270F\uFE0F</span>' +
+          ' <span style="font-size:10px;color:var(--red);cursor:pointer;margin-left:4px" onclick="BakerySection.confirmDeleteWaste(\'' + w.waste_id + '\')">\uD83D\uDDD1\uFE0F</span>' +
+        '</td></tr>'
+    ).join('') + '</tbody></table>' +
+    (hasMore ? `<div class="load-more" onclick="BakerySection.showMoreWaste()">\u0E41\u0E2A\u0E14\u0E07 ${_wasteShowCount} \u0E08\u0E32\u0E01 ${filtered.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : '');
 }
 
 function setWasteDate(which, val) { if (which === 'from') _wasteDateFrom = val; else _wasteDateTo = val; fillWaste(); }
@@ -1432,12 +1472,12 @@ function showWasteForm() {
     <div class="popup-header"><div class="popup-title">\uD83D\uDDD1\uFE0F \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01\u0E02\u0E2D\u0E07\u0E40\u0E2A\u0E35\u0E22</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd2);margin-bottom:6px;font-size:11px"><span style="color:var(--t3)">\u0E1C\u0E39\u0E49\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</span><span style="font-weight:600;color:var(--acc)">${esc(s.display_name)}</span></div>
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd2);margin-bottom:12px;font-size:11px"><span style="color:var(--t3)">\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48</span><span style="font-weight:600;color:var(--acc)">${BK.fmtDateThai(BK.todaySydney())} (auto)</span></div>
-    <div class="fg"><label class="lb">\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 *</label><select class="sel" id="wfProduct"><option value="">\uD83D\uDD0D \u0E40\u0E25\u0E37\u0E2D\u0E01...</option>${opts}</select></div>
-    <div class="fg"><label class="lb">\u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="inp" type="number" id="wfQty" placeholder="0" min="1" style="font-size:16px;font-weight:700"></div>
-    <div class="fg"><label class="lb">\u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="inp" type="date" id="wfProdDate"></div>
-    <div class="fg"><label class="lb">\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38 *</label><select class="sel" id="wfReason"><option value="Expired">Expired</option><option value="Damaged">Damaged</option></select></div>
-    <div class="fg"><label class="lb">\u0E2B\u0E21\u0E32\u0E22\u0E40\u0E2B\u0E15\u0E38</label><input class="inp" id="wfNote" placeholder="\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E15\u0E34\u0E21 (\u0E16\u0E49\u0E32\u0E21\u0E35)"></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="wfSaveBtn" onclick="BakerySection.saveWaste()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 *</label><select class="wf-select" id="wfProduct"><option value="">\uD83D\uDD0D \u0E40\u0E25\u0E37\u0E2D\u0E01...</option>${opts}</select></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="wf-input" type="number" id="wfQty" placeholder="0" min="1" style="font-size:16px;font-weight:700"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="wf-input" type="date" id="wfProdDate"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38 *</label><select class="wf-select" id="wfReason"><option value="Expired">Expired</option><option value="Damaged">Damaged</option></select></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2B\u0E21\u0E32\u0E22\u0E40\u0E2B\u0E15\u0E38</label><input class="wf-input" id="wfNote" placeholder="\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E15\u0E34\u0E21 (\u0E16\u0E49\u0E32\u0E21\u0E35)"></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="wfSaveBtn" onclick="BakerySection.saveWaste()">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
   </div>`);
 }
 
@@ -1485,14 +1525,14 @@ function showWasteEdit(wasteId) {
 
   SPG.showDialog(`<div class="popup-sheet" style="width:380px">
     <div class="popup-header"><div class="popup-title">\u270F\uFE0F \u0E41\u0E01\u0E49\u0E44\u0E02 \u2014 ${esc(w.product_name)}</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>
-    <div class="fg"><label class="lb">\u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="inp" type="number" id="weQty" value="${w.quantity}" min="1" style="font-size:16px;font-weight:700"></div>
-    <div class="fg"><label class="lb">\u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="inp" type="date" id="weProdDate" value="${w.production_date || ''}"></div>
-    <div class="fg"><label class="lb">\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38</label><select class="sel" id="weReason">
+    <div class="wf-form-group"><label class="wf-label">\u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="wf-input" type="number" id="weQty" value="${w.quantity}" min="1" style="font-size:16px;font-weight:700"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="wf-input" type="date" id="weProdDate" value="${w.production_date || ''}"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2A\u0E32\u0E40\u0E2B\u0E15\u0E38</label><select class="wf-select" id="weReason">
       <option value="Expired"${w.reason === 'Expired' ? ' selected' : ''}>Expired</option>
       <option value="Damaged"${w.reason === 'Damaged' ? ' selected' : ''}>Damaged</option>
     </select></div>
-    <div class="fg"><label class="lb">\u0E2B\u0E21\u0E32\u0E22\u0E40\u0E2B\u0E15\u0E38</label><input class="inp" id="weNote" value="${esc(w.note || '')}" placeholder="\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E15\u0E34\u0E21 (\u0E16\u0E49\u0E32\u0E21\u0E35)"></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="weSaveBtn" onclick="BakerySection.saveWasteEdit('${wasteId}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E2B\u0E21\u0E32\u0E22\u0E40\u0E2B\u0E15\u0E38</label><input class="wf-input" id="weNote" value="${esc(w.note || '')}" placeholder="\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E40\u0E15\u0E34\u0E21 (\u0E16\u0E49\u0E32\u0E21\u0E35)"></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="weSaveBtn" onclick="BakerySection.saveWasteEdit('${wasteId}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
   </div>`);
 }
 
@@ -1529,7 +1569,7 @@ function confirmDeleteWaste(wasteId) {
   SPG.showDialog(`<div class="popup-sheet" style="width:320px">
     <div class="popup-title" style="margin-bottom:12px">\uD83D\uDDD1\uFE0F \u0E25\u0E1A\u0E23\u0E32\u0E22\u0E01\u0E32\u0E23\u0E19\u0E35\u0E49?</div>
     <div style="font-size:13px;color:var(--t2);margin-bottom:16px">${esc(wasteId)}</div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48</button><button class="btn btn-danger" style="flex:1" id="wDelBtn" onclick="BakerySection.doDeleteWaste('${wasteId}')">\u0E25\u0E1A\u0E40\u0E25\u0E22</button></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48</button><button class="wf-btn wf-btn-outline" style="flex:1;color:var(--red);border-color:var(--red)" id="wDelBtn" onclick="BakerySection.doDeleteWaste('${wasteId}')">\u0E25\u0E1A\u0E40\u0E25\u0E22</button></div>
   </div>`);
 }
 
@@ -1572,16 +1612,16 @@ BK.renderReturns = function(p) {
   _retDateTo = _retDateTo || BK.fmtDate(t);
   _retShowCount = 5;
 
-  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('bakery/dashboard')">\u2190</button><div class="toolbar-title">Returns</div></div>
-    <div class="order-date-bar">
-      <span class="date-label">\uD83D\uDCC5 \u0E27\u0E31\u0E19\u0E17\u0E35\u0E48:</span>
-      <input type="date" class="date-inp" value="${_retDateFrom}" onchange="BakerySection.setRetDate('from',this.value)">
-      <span style="color:var(--t4)">\u2192</span>
-      <input type="date" class="date-inp" value="${_retDateTo}" onchange="BakerySection.setRetDate('to',this.value)">
-      <span class="date-link" onclick="BakerySection.setRetDatePreset('3day')">3 \u0E27\u0E31\u0E19</span>
-      <span class="date-link" onclick="BakerySection.setRetDatePreset('all')">\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14</span>
-    </div>
-    <div class="content" id="returnsContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+  return SPG.shell(SPG.toolbar('Returns') + `
+    <div class="content" style="max-width:900px">
+      <div class="wf-filter-bar">
+        <input class="wf-input" type="date" value="${_retDateFrom}" style="width:150px" onchange="BakerySection.setRetDate('from',this.value)">
+        <span style="color:var(--t3);font-size:12px">to</span>
+        <input class="wf-input" type="date" value="${_retDateTo}" style="width:150px" onchange="BakerySection.setRetDate('to',this.value)">
+        <button class="wf-btn-gradient" style="margin-left:auto;padding:6px 16px;font-size:12px" onclick="BakerySection.showReturnForm()">+ New Return</button>
+      </div>
+      <div id="returnsContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
+    </div>`, 'Bakery');
 };
 
 BK.loadReturns = async function(p) {
@@ -1609,45 +1649,39 @@ function fillReturns() {
   if (_retDateTo) filtered = filtered.filter(r => (r.created_at || '').substring(0, 10) <= _retDateTo);
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div></div><button class="btn btn-primary" onclick="BakerySection.showReturnForm()">\u2795 \u0E41\u0E08\u0E49\u0E07 Return</button></div>
-      <div class="empty"><div class="empty-icon">\u2705</div><div class="empty-title">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 Return</div></div>`;
+    el.innerHTML = '<div class="empty"><div class="empty-icon">\u2705</div><div class="empty-title">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 Return</div></div>';
     return;
   }
 
   filtered = sortArr(filtered, _retSortKey, _retSortDir);
-
   const visible = filtered.slice(0, _retShowCount);
   const hasMore = filtered.length > _retShowCount;
-  const rsb = (k, lbl) => `<span class="sort-btn${_retSortKey === k ? ' sort-active' : ''}" onclick="BakerySection.sortReturns('${k}')">${lbl} ${sortIco(_retSortKey, k, _retSortDir)}</span>`;
 
-  el.innerHTML = `<div class="list-header">
-      <div class="sort-bar">Sort: ${rsb('created_at','\u0E27\u0E31\u0E19\u0E17\u0E35\u0E48')} ${rsb('product_name','\u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32')} ${rsb('status','Status')}</div>
-      <button class="btn btn-primary" onclick="BakerySection.showReturnForm()">\u2795 \u0E41\u0E08\u0E49\u0E07 Return</button>
-    </div>
-    <div class="ret-list">${visible.map(r => renderReturnCard(r)).join('')}</div>
-    ${hasMore ? `<div class="load-more" onclick="BakerySection.showMoreReturns()">\u0E41\u0E2A\u0E14\u0E07 ${_retShowCount} \u0E08\u0E32\u0E01 ${filtered.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : ''}`;
-}
+  const retStatusBadge = (s) => {
+    const map = {
+      Reported: 'background:var(--orange-bg);color:var(--orange)',
+      Received: 'background:var(--blue-bg);color:var(--blue)',
+      Wasted: 'background:var(--red-bg);color:var(--red)',
+      Reworked: 'background:var(--green-bg);color:var(--green)',
+      Pending: 'background:var(--orange-bg);color:var(--orange)',
+      Accepted: 'background:var(--green-bg);color:var(--green)',
+      Rejected: 'background:var(--red-bg);color:var(--red)',
+    };
+    return '<span class="wf-badge" style="' + (map[s] || 'background:var(--bg3);color:var(--t2)') + '">' + esc(s) + '</span>';
+  };
 
-function renderReturnCard(r) {
-  const resolved = ['Reworked', 'Wasted'].includes(r.status);
-  const stsStyle = {
-    Reported: 'background:#fffbeb;color:#92400e',
-    Received: 'background:#dbeafe;color:#1e40af',
-    Wasted: 'background:#fef2f2;color:#991b1b',
-    Reworked: 'background:#d1fae5;color:#065f46',
-  }[r.status] || 'background:var(--bg3);color:var(--t2)';
-  const borderColor = { Reported: 'var(--orange)', Received: 'var(--blue)', Wasted: 'var(--red)', Reworked: 'var(--green)' }[r.status] || 'var(--bd)';
-  const canEdit = r.status === 'Reported';
-
-  return `<div class="rcard${resolved ? ' rcard-done' : ''}" style="border-left-color:${borderColor}">
-    <div class="rcard-hd"><span class="rcard-id">${esc(r.return_id)}</span><span class="sts" style="${stsStyle}">${r.status}</span></div>
-    <div class="rcard-prod">${esc(r.product_name)} \u00D7${r.quantity}</div>
-    <div class="rcard-meta">${esc(r.issue_type)} \u00B7 ${esc(r.action === 'return_to_bakery' ? '\u0E2A\u0E48\u0E07\u0E04\u0E37\u0E19 BC' : '\u0E17\u0E34\u0E49\u0E07\u0E17\u0E35\u0E48\u0E23\u0E49\u0E32\u0E19')}</div>
-    <div class="rcard-actions">
-      <button class="btn btn-outline" style="padding:3px 10px;font-size:11px" onclick="BakerySection.showReturnDetail('${r.return_id}')">\uD83D\uDC41\uFE0F Detail</button>
-      ${canEdit ? `<button class="btn btn-outline" style="padding:3px 10px;font-size:11px;color:var(--acc);border-color:var(--acc)" onclick="BakerySection.showReturnEdit('${r.return_id}')">\u270F\uFE0F \u0E41\u0E01\u0E49\u0E44\u0E02</button>` : resolved ? '<span style="font-size:10px;color:var(--t4);padding:4px 0">\u2705 BC \u0E14\u0E33\u0E40\u0E19\u0E34\u0E19\u0E01\u0E32\u0E23\u0E41\u0E25\u0E49\u0E27</span>' : '<span style="font-size:10px;color:var(--t4);padding:4px 0">\uD83D\uDD12 BC \u0E23\u0E31\u0E1A\u0E41\u0E25\u0E49\u0E27</span>'}
-    </div>
-  </div>`;
+  el.innerHTML = '<table class="wf-table">' +
+    '<thead><tr><th>Date</th><th>Order ID</th><th>Product</th><th>Qty</th><th>Reason</th><th>Status</th></tr></thead>' +
+    '<tbody>' + visible.map(r =>
+      '<tr onclick="BakerySection.showReturnDetail(\'' + r.return_id + '\')" style="cursor:pointer">' +
+        '<td>' + BK.fmtDateAU((r.created_at || '').substring(0, 10)) + '</td>' +
+        '<td style="color:var(--acc)">' + esc(r.return_id) + '</td>' +
+        '<td>' + esc(r.product_name) + '</td>' +
+        '<td>' + r.quantity + '</td>' +
+        '<td>' + esc(r.issue_type || r.reason || '') + '</td>' +
+        '<td>' + retStatusBadge(r.status) + '</td></tr>'
+    ).join('') + '</tbody></table>' +
+    (hasMore ? `<div class="load-more" onclick="BakerySection.showMoreReturns()">\u0E41\u0E2A\u0E14\u0E07 ${_retShowCount} \u0E08\u0E32\u0E01 ${filtered.length} \u00B7 \u0E42\u0E2B\u0E25\u0E14\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E2D\u0E35\u0E01 5 \u2193</div>` : '');
 }
 
 function setRetDate(which, val) { if (which === 'from') _retDateFrom = val; else _retDateTo = val; fillReturns(); }
@@ -1679,14 +1713,14 @@ function showReturnDetail(returnId) {
 
   const canEdit = r.status === 'Reported';
   SPG.showDialog(`<div class="popup-sheet" style="width:400px">
-    <div class="popup-header"><div class="popup-title">\u21A9\uFE0F ${esc(r.return_id)}</div><span class="sts" style="${stsStyle}">${r.status}</span></div>
+    <div class="popup-header"><div class="popup-title">\u21A9\uFE0F ${esc(r.return_id)}</div><span class="wf-badge" style="${stsStyle}">${r.status}</span></div>
     <div style="font-size:13px;font-weight:600;margin-bottom:4px">${esc(r.product_name)}</div>
     <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.6">${r.quantity} ${esc(r.unit)} \u00B7 ${esc(r.issue_type)}<br>${r.description ? esc(r.description) + '<br>' : ''}${actionLabel}</div>
     <div style="font-size:12px;font-weight:600;margin-bottom:6px">\uD83D\uDCCA Timeline</div>
     <div class="ret-timeline">${timeline}</div>
     <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u2190 \u0E1B\u0E34\u0E14</button>
-      ${canEdit ? `<button class="btn btn-primary" style="flex:1" onclick="SPG.closeDialog();BakerySection.showReturnEdit('${r.return_id}')">\u270F\uFE0F \u0E41\u0E01\u0E49\u0E44\u0E02</button>` : ''}
+      <button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u2190 \u0E1B\u0E34\u0E14</button>
+      ${canEdit ? `<button class="wf-btn-gradient" style="flex:1" onclick="SPG.closeDialog();BakerySection.showReturnEdit('${r.return_id}')">\u270F\uFE0F \u0E41\u0E01\u0E49\u0E44\u0E02</button>` : ''}
     </div>
   </div>`);
 }
@@ -1698,13 +1732,13 @@ function showReturnForm() {
 
   SPG.showDialog(`<div class="popup-sheet">
     <div class="popup-header"><div class="popup-title">\u21A9\uFE0F \u0E41\u0E08\u0E49\u0E07 Return</div><button class="popup-close" onclick="SPG.closeDialog()">\u2715</button></div>
-    <div class="fg"><label class="lb">\u2776 \u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 *</label><select class="sel" id="rfProduct"><option value="">-- \u0E40\u0E25\u0E37\u0E2D\u0E01 --</option>${opts}</select></div>
-    <div class="fg"><label class="lb">\u2777 \u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="inp" type="number" id="rfQty" min="1" style="font-size:16px;font-weight:700"></div>
-    <div class="fg"><label class="lb">\u2778 \u0E1B\u0E31\u0E0D\u0E2B\u0E32 *</label><select class="sel" id="rfIssue"><option value="Quality">Quality</option><option value="Wrong Qty">Wrong Qty</option><option value="Wrong Product">Wrong Product</option><option value="Product Error">Product Error</option></select></div>
-    <div class="fg"><label class="lb">\u2779 \u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14</label><textarea class="inp" id="rfDesc" style="height:60px;resize:none" placeholder="\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22..."></textarea></div>
-    <div class="fg"><label class="lb">\u277A \u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="inp" type="date" id="rfProdDate"></div>
-    <div class="fg"><label class="lb">\u277B \u0E01\u0E32\u0E23\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23 *</label><select class="sel" id="rfAction"><option value="return_to_bakery">\u0E2A\u0E48\u0E07\u0E04\u0E37\u0E19 BC</option><option value="discard_at_store">\u0E17\u0E34\u0E49\u0E07\u0E17\u0E35\u0E48\u0E23\u0E49\u0E32\u0E19</option></select></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="rfSaveBtn" onclick="BakerySection.saveReturn()">\uD83D\uDCE4 \u0E2A\u0E48\u0E07</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u2776 \u0E2A\u0E34\u0E19\u0E04\u0E49\u0E32 *</label><select class="wf-select" id="rfProduct"><option value="">-- \u0E40\u0E25\u0E37\u0E2D\u0E01 --</option>${opts}</select></div>
+    <div class="wf-form-group"><label class="wf-label">\u2777 \u0E08\u0E33\u0E19\u0E27\u0E19 *</label><input class="wf-input" type="number" id="rfQty" min="1" style="font-size:16px;font-weight:700"></div>
+    <div class="wf-form-group"><label class="wf-label">\u2778 \u0E1B\u0E31\u0E0D\u0E2B\u0E32 *</label><select class="wf-select" id="rfIssue"><option value="Quality">Quality</option><option value="Wrong Qty">Wrong Qty</option><option value="Wrong Product">Wrong Product</option><option value="Product Error">Product Error</option></select></div>
+    <div class="wf-form-group"><label class="wf-label">\u2779 \u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14</label><textarea class="wf-input" id="rfDesc" style="height:60px;resize:none" placeholder="\u0E2D\u0E18\u0E34\u0E1A\u0E32\u0E22..."></textarea></div>
+    <div class="wf-form-group"><label class="wf-label">\u277A \u0E27\u0E31\u0E19\u0E1C\u0E25\u0E34\u0E15</label><input class="wf-input" type="date" id="rfProdDate"></div>
+    <div class="wf-form-group"><label class="wf-label">\u277B \u0E01\u0E32\u0E23\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23 *</label><select class="wf-select" id="rfAction"><option value="return_to_bakery">\u0E2A\u0E48\u0E07\u0E04\u0E37\u0E19 BC</option><option value="discard_at_store">\u0E17\u0E34\u0E49\u0E07\u0E17\u0E35\u0E48\u0E23\u0E49\u0E32\u0E19</option></select></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="rfSaveBtn" onclick="BakerySection.saveReturn()">\uD83D\uDCE4 \u0E2A\u0E48\u0E07</button></div>
   </div>`);
 }
 
@@ -1759,15 +1793,15 @@ function showReturnEdit(returnId) {
     <div style="padding:10px 14px;background:var(--bg3);border-radius:var(--rd);margin-bottom:12px;font-size:12px">
       <div style="display:flex;justify-content:space-between"><span style="color:var(--t3)">\u0E40\u0E14\u0E34\u0E21</span><span style="font-weight:700">${r.quantity} ${esc(r.unit)}</span></div>
     </div>
-    <div class="fg"><label class="lb">\u0E08\u0E33\u0E19\u0E27\u0E19\u0E43\u0E2B\u0E21\u0E48</label><input class="inp" type="number" id="reQty" value="${r.quantity}" min="1" style="font-size:16px;font-weight:700;width:120px;text-align:center"></div>
-    <div class="fg"><label class="lb">\u0E1B\u0E31\u0E0D\u0E2B\u0E32</label><select class="sel" id="reIssue">
+    <div class="wf-form-group"><label class="wf-label">\u0E08\u0E33\u0E19\u0E27\u0E19\u0E43\u0E2B\u0E21\u0E48</label><input class="wf-input" type="number" id="reQty" value="${r.quantity}" min="1" style="font-size:16px;font-weight:700;width:120px;text-align:center"></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E1B\u0E31\u0E0D\u0E2B\u0E32</label><select class="wf-select" id="reIssue">
       <option value="Quality"${r.issue_type === 'Quality' ? ' selected' : ''}>Quality</option>
       <option value="Wrong Qty"${r.issue_type === 'Wrong Qty' ? ' selected' : ''}>Wrong Qty</option>
       <option value="Wrong Product"${r.issue_type === 'Wrong Product' ? ' selected' : ''}>Wrong Product</option>
       <option value="Product Error"${r.issue_type === 'Product Error' ? ' selected' : ''}>Product Error</option>
     </select></div>
-    <div class="fg"><label class="lb">\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14</label><textarea class="inp" id="reDesc" style="height:50px;resize:none">${esc(r.description || '')}</textarea></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="btn btn-primary" style="flex:1" id="reSaveBtn" onclick="BakerySection.saveReturnEdit('${r.return_id}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
+    <div class="wf-form-group"><label class="wf-label">\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14</label><textarea class="wf-input" id="reDesc" style="height:50px;resize:none">${esc(r.description || '')}</textarea></div>
+    <div style="display:flex;gap:8px"><button class="wf-btn wf-btn-outline" style="flex:1" onclick="SPG.closeDialog()">\u0E22\u0E01\u0E40\u0E25\u0E34\u0E01</button><button class="wf-btn-gradient" style="flex:1" id="reSaveBtn" onclick="BakerySection.saveReturnEdit('${r.return_id}')">\uD83D\uDCBE \u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01</button></div>
   </div>`);
 }
 
@@ -1800,7 +1834,7 @@ async function saveReturnEdit(returnId) {
 
 
 // ═══════════════════════════════════════
-// 10. STOCK ENTRY (new, no legacy equivalent)
+// 10. STOCK ENTRY (no wireframe — keep current implementation)
 // ═══════════════════════════════════════
 BK.renderStock = function(p) {
   const sp = BK.getStockPoints();
@@ -1811,10 +1845,10 @@ BK.renderStock = function(p) {
           <div style="font-size:13px;font-weight:700">Current Stock Levels</div>
           <div style="font-size:10px;color:var(--t3)">${sp === 2 ? '2-point entry (Point 1 + Point 2)' : 'Single point entry'}</div>
         </div>
-        <button class="btn btn-sm btn-primary" id="bk-stock-save" onclick="BakerySection.saveStockEntry()">Save All</button>
+        <button class="wf-btn-gradient" id="bk-stock-save" onclick="BakerySection.saveStockEntry()">Save All</button>
       </div>
       <div style="margin-bottom:10px">
-        <input class="inp" placeholder="Search products..." id="bk-stock-search" oninput="BakerySection.filterStockList()" style="font-size:12px;padding:8px 12px">
+        <input class="wf-input wf-search" placeholder="Search products..." id="bk-stock-search" oninput="BakerySection.filterStockList()" style="font-size:12px;padding:8px 12px">
       </div>
       <div id="bk-stock-body">${SPG.ui.skeleton(60, 5)}</div>
     </div>`, 'Bakery');
@@ -1864,16 +1898,16 @@ function _fillStock() {
       const v2 = edited?.s2 ?? '';
       const sum = (v1 !== '' || v2 !== '') ? (parseFloat(v1) || 0) + (parseFloat(v2) || 0) : '\u2014';
       inputHtml = `<div style="display:flex;gap:6px;align-items:center">
-        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 1</div><input type="number" step="any" class="inp" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v1}" oninput="BakerySection.onStockEntry('${pid}',1,this.value)"></div>
-        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 2</div><input type="number" step="any" class="inp" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v2}" oninput="BakerySection.onStockEntry('${pid}',2,this.value)"></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 1</div><input type="number" step="any" class="wf-input" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v1}" oninput="BakerySection.onStockEntry('${pid}',1,this.value)"></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Pt 2</div><input type="number" step="any" class="wf-input" style="width:60px;padding:4px;font-size:12px;text-align:center" value="${v2}" oninput="BakerySection.onStockEntry('${pid}',2,this.value)"></div>
         <div style="font-size:11px;color:var(--t3);min-width:40px;text-align:center">= <strong>${sum}</strong></div>
       </div>`;
     } else {
       const v = (typeof edited === 'string') ? edited : (existing != null ? String(existing) : '');
-      inputHtml = `<input type="number" step="any" class="inp" style="width:80px;padding:6px;font-size:12px;text-align:center" value="${v}" placeholder="\u2014" oninput="BakerySection.onStockEntry('${pid}',0,this.value)">`;
+      inputHtml = `<input type="number" step="any" class="wf-input" style="width:80px;padding:6px;font-size:12px;text-align:center" value="${v}" placeholder="\u2014" oninput="BakerySection.onStockEntry('${pid}',0,this.value)">`;
     }
 
-    return `<div class="card" style="padding:10px 14px;margin-bottom:4px">
+    return `<div class="wf-card" style="padding:10px 14px;margin-bottom:4px">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(p.product_name)}</div><div style="font-size:10px;color:var(--t3)">${esc(p.unit || '')}${existing != null ? ' \u00B7 Last: ' + existing : ''}</div></div>
         ${inputHtml}
@@ -1943,6 +1977,9 @@ Object.assign(window.BakerySection, {
 
   // Cart
   removeCartItem,
+  updateCartQty,
+  clearCart,
+  setCartDeliveryDate,
   submitOrder,
 
   // Orders
@@ -1995,7 +2032,6 @@ Object.assign(window.BakerySection, {
   setShDate,
   setShDatePreset,
   showMoreSh,
-  toggleShGroup,
 
   // Stock Entry
   onStockEntry: _onStockEntry,
