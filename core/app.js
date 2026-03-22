@@ -916,7 +916,7 @@
     if (_loadedScripts[name]) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = `sections/${name}.js`;
+      script.src = `sections/${name}`;
       script.onload = () => { _loadedScripts[name] = true; resolve(); };
       script.onerror = () => reject(new Error(`Failed to load section: ${name}`));
       document.head.appendChild(script);
