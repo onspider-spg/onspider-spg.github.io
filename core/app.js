@@ -177,17 +177,14 @@
   }
 
   function buildHash(section, route, params = {}) {
-    // Root routes stay flat
-    if (ROOT_ROUTES[route]) {
-      if (route === 'admin') return `#admin/${params.tab || 'accounts'}`;
-      if (route === 'master') return `#master/${params.tab || 'modules'}`;
-      if (route === 'account-detail' && params.account_id) return `#account-detail/${params.account_id}`;
-      return `#${route}`;
-    }
-    // Section routes
+    // Non-home sections always use prefix: #bakery/dashboard, #sales/daily
     if (section && section !== 'home') {
       return params.id ? `#${section}/${route}/${params.id}` : `#${section}/${route}`;
     }
+    // Home root routes stay flat: #dashboard, #profile, #login
+    if (route === 'admin') return `#admin/${params.tab || 'accounts'}`;
+    if (route === 'master') return `#master/${params.tab || 'modules'}`;
+    if (route === 'account-detail' && params.account_id) return `#account-detail/${params.account_id}`;
     return `#${route}`;
   }
 
