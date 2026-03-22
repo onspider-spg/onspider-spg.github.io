@@ -283,8 +283,8 @@
       }
     }
 
-    // Post-render data loading
-    if (routeConfig.onLoad) setTimeout(() => routeConfig.onLoad(resolvedParams), 30);
+    // Post-render data loading — rAF lets DOM paint first, then fires immediately
+    if (routeConfig.onLoad) requestAnimationFrame(() => routeConfig.onLoad(resolvedParams));
 
     // Scroll reset
     window.scrollTo(0, 0);
