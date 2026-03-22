@@ -655,7 +655,7 @@
     // ── Modules (accordion — expand/collapse) ──
     if (state.modules) {
       let moduleItems = '';
-      const isModuleActive = sectionDefs.some(def => currentSection === def.id);
+      const isModuleActive = MODULE_DEFS.some(def => currentSection === def.id);
       MODULE_DEFS.forEach(def => {
         const mod = state.modules.find(m => MODULE_MAP[m.module_id] === def.id);
         if (mod && !mod.is_accessible) return;
