@@ -15,15 +15,15 @@ const ui = SPG.ui;
 const _busy = {};
 const SECTION = 'Sales Daily';
 
-function backBtn() { return `<button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/dashboard')">←</button>`; }
+function backBtn() { return `<button class="toolbar-back" onclick="SPG.go('sales/dashboard')">←</button>`; }
 
 // Brand filter pills (shared by AccReview + ReportDash)
 function brandPills(selected, onSelect) {
   const brands = [...new Set((S.stores || []).map(s => s.brand).filter(Boolean))].sort();
   if (!brands.length) return '';
   return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-    <button class="pill${!selected ? ' active' : ''}" onclick="${onSelect}('')">ทั้งหมด</button>
-    ${brands.map(b => `<button class="pill${selected === b ? ' active' : ''}" onclick="${onSelect}('${esc(b)}')">${esc(b)}</button>`).join('')}
+    <button class="store-pill${!selected ? ' active' : ''}" onclick="${onSelect}('')">ทั้งหมด</button>
+    ${brands.map(b => `<button class="store-pill${selected === b ? ' active' : ''}" onclick="${onSelect}('${esc(b)}')">${esc(b)}</button>`).join('')}
   </div>`;
 }
 
@@ -40,12 +40,12 @@ function renderAccReview(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Account Review</div></div>
   <div class="content" id="ar-content">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0 10px;font-size:13px;font-weight:600">
-      <button class="btn btn-outline btn-sm" onclick="SDSection.arMonthNav(-1)">‹</button>
+      <button class="dbar-btn" onclick="SDSection.arMonthNav(-1)">‹</button>
       <span id="ar-month-label">📅 ${monthLabel(ar.month)}</span>
-      <button class="btn btn-outline btn-sm" onclick="SDSection.arMonthNav(1)">›</button>
+      <button class="dbar-btn" onclick="SDSection.arMonthNav(1)">›</button>
     </div>
     <div id="ar-brand-pills">${brandPills(ar.brand, 'SDSection.arBrandFilter')}</div>
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--rd);font-size:10px;margin-bottom:8px;background:var(--blue-bg);color:var(--blue)">📋 Editable = ยังแก้ได้ · 🔒 Synced = ส่งไป Finance แล้ว</div>
+    <div class="alert alert-info">📋 Editable = ยังแก้ได้ · 🔒 Synced = ส่งไป Finance แล้ว</div>
     <div id="ar-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">${ui.skeleton(72, 4)}</div>
     <div id="ar-table">${ui.skeleton(200)}</div>
   </div>`, SECTION);
@@ -73,10 +73,10 @@ function fillAccReview() {
   const synced = days.filter(d => d.sync_status === 'synced').length;
 
   document.getElementById('ar-kpi').innerHTML = `
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">💰 Sales</div><div style="font-size:13px;font-weight:800;color:var(--theme)">${fms(totalSale)}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">🧾 Expense</div><div style="font-size:13px;font-weight:800;color:var(--red)">${fms(totalExp)}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">🔒 Synced</div><div style="font-size:13px;font-weight:800;color:var(--green)">${synced}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">✏️ Pending</div><div style="font-size:13px;font-weight:800;color:var(--orange)">${days.length - synced}</div></div>`;
+    <div class="kpi-box"><div class="kpi-label">💰 Sales</div><div class="kpi-val" style="color:var(--theme)">${fms(totalSale)}</div></div>
+    <div class="kpi-box"><div class="kpi-label">🧾 Expense</div><div class="kpi-val" style="color:var(--red)">${fms(totalExp)}</div></div>
+    <div class="kpi-box"><div class="kpi-label">🔒 Synced</div><div class="kpi-val" style="color:var(--green)">${synced}</div></div>
+    <div class="kpi-box"><div class="kpi-label">✏️ Pending</div><div class="kpi-val" style="color:var(--orange)">${days.length - synced}</div></div>`;
 
   const el = document.getElementById('ar-table'); if (!el) return;
   if (!days.length) { el.innerHTML = ui.empty('', 'ยังไม่มีข้อมูลเดือนนี้'); return; }
@@ -122,7 +122,7 @@ let ch = { masters: [], stores: [], visibility: {} };
 function renderChannels(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Channels</div></div>
   <div class="content" id="ch-content">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="sec-title" style="margin:0" id="ch-count">📡 Channel Matrix</div><button class="btn btn-primary btn-sm" onclick="SDSection.chAdd()">+ Add Channel</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="sl" style="margin:0" id="ch-count">📡 Channel Matrix</div><button class="btn btn-primary btn-sm" onclick="SDSection.chAdd()">+ Add Channel</button></div>
     <div style="font-size:10px;color:var(--t3);margin-bottom:8px">✓ = ร้านเห็น channel นี้ · กดเพื่อ toggle</div>
     <div id="ch-table">${ui.skeleton(200)}</div>
   </div>`, SECTION);
@@ -159,10 +159,10 @@ async function chToggle(channelKey, storeId, newState) {
 
 function chAdd() {
   SPG.showDialog(`<div class="popup-sheet" style="width:360px"><div class="popup-header"><div class="popup-title">+ Add Channel</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">Channel Label <span style="color:var(--red)">*</span></label><input class="inp" id="ch-label" placeholder="เช่น Card Eftpos 3"></div>
-    <div class="fg"><label class="lb">Channel Key <span style="color:var(--red)">*</span></label><input class="inp" id="ch-key" placeholder="เช่น eftpos3"></div>
-    <div class="fg"><label class="lb">Dashboard Group</label><select class="inp" id="ch-group"><option value="card_sale">card_sale</option><option value="cash_sale">cash_sale</option><option value="delivery_sale">delivery_sale</option><option value="other">other</option></select></div>
-    <div class="fg"><label class="lb">Finance Sub Category</label><input class="inp" id="ch-fincat" placeholder="Revenue → ..."></div>
+    <div class="fg"><label class="fl">Channel Label <span style="color:var(--red)">*</span></label><input class="fi" id="ch-label" placeholder="เช่น Card Eftpos 3"></div>
+    <div class="fg"><label class="fl">Channel Key <span style="color:var(--red)">*</span></label><input class="fi" id="ch-key" placeholder="เช่น eftpos3"></div>
+    <div class="fg"><label class="fl">Dashboard Group</label><select class="fi" id="ch-group"><option value="card_sale">card_sale</option><option value="cash_sale">cash_sale</option><option value="delivery_sale">delivery_sale</option><option value="other">other</option></select></div>
+    <div class="fg"><label class="fl">Finance Sub Category</label><input class="fi" id="ch-fincat" placeholder="Revenue → ..."></div>
     <button class="btn btn-primary btn-full" id="ch-save" onclick="SDSection.chSaveNew()">💾 Save</button>
   </div>`);
 }
@@ -185,8 +185,8 @@ function renderVendors(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Vendors</div></div>
   <div class="content" id="vn-content">
     ${SD.renderStoreSelector()}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="sec-title" style="margin:0" id="vn-count">🏪 Vendors</div><button class="btn btn-primary btn-sm" onclick="SDSection.vnAdminAdd()">+ Add Vendor</button></div>
-    <input class="inp" style="margin-bottom:8px" placeholder="🔍 Search vendors..." oninput="SDSection.vnSearch(this.value)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="sl" style="margin:0" id="vn-count">🏪 Vendors</div><button class="btn btn-primary btn-sm" onclick="SDSection.vnAdminAdd()">+ Add Vendor</button></div>
+    <input class="fi" style="margin-bottom:8px" placeholder="🔍 Search vendors..." oninput="SDSection.vnSearch(this.value)">
     <div id="vn-table">${ui.skeleton(200)}</div>
   </div>`, SECTION);
 }
@@ -220,7 +220,7 @@ async function vnToggle(vendorId, newState) {
 
 function vnAdminAdd() {
   SPG.showDialog(`<div class="popup-sheet" style="width:320px"><div class="popup-header"><div class="popup-title">+ Add Vendor</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">Vendor Name <span style="color:var(--red)">*</span></label><input class="inp" id="vn-admin-name"></div>
+    <div class="fg"><label class="fl">Vendor Name <span style="color:var(--red)">*</span></label><input class="fi" id="vn-admin-name"></div>
     <button class="btn btn-primary btn-full" id="vn-admin-save" onclick="SDSection.vnAdminSaveNew()">💾 Save</button>
   </div>`);
 }
@@ -241,7 +241,7 @@ let cfg = {};
 function renderConfig(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Config</div></div>
   <div class="content" id="cfg-content">
-    <div class="sec-title" style="margin-top:0">⚙️ Global Config</div>
+    <div class="sl" style="margin-top:0">⚙️ Global Config</div>
     <div style="font-size:10px;color:var(--t3);margin-bottom:10px">ตั้งค่ากลาง — ใช้ร่วมกันทุกร้าน</div>
     <div id="cfg-form">${ui.skeleton(200)}</div>
   </div>`, SECTION);
@@ -258,15 +258,15 @@ function fillConfig() {
   const el = document.getElementById('cfg-form'); if (!el) return;
   el.innerHTML = `<div class="card">
     <div style="font-size:12px;font-weight:700;margin-bottom:10px">💰 Cash & Edit Window</div>
-    <div class="fg"><label class="lb">Cash Tolerance ($)</label><input class="inp" type="number" step="0.01" id="cfg-tol" value="${cfg.cash_mismatch_tolerance || 2}" style="width:100px"></div>
-    <div class="fg"><label class="lb">Edit Window (days)</label><input class="inp" type="number" id="cfg-days" value="${cfg.backdate_limit_days || 3}" style="width:100px"></div>
-    <div class="fg"><label class="lb">Require Photos</label><div style="width:36px;height:20px;border-radius:10px;background:${cfg.require_photos !== false ? 'var(--theme)' : 'var(--bd)'};position:relative;cursor:pointer" id="cfg-photos" onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--theme)':'var(--bd)';this.firstElementChild.style.left=this.dataset.on==='1'?'18px':'2px'" data-on="${cfg.require_photos !== false ? '1' : '0'}"><div style="position:absolute;top:2px;left:${cfg.require_photos !== false ? '18px' : '2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
-    <div class="fg"><label class="lb">Auto-sync after window</label><div style="width:36px;height:20px;border-radius:10px;background:${cfg.auto_sync_after_window !== false ? 'var(--theme)' : 'var(--bd)'};position:relative;cursor:pointer" id="cfg-autosync" onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--theme)':'var(--bd)';this.firstElementChild.style.left=this.dataset.on==='1'?'18px':'2px'" data-on="${cfg.auto_sync_after_window !== false ? '1' : '0'}"><div style="position:absolute;top:2px;left:${cfg.auto_sync_after_window !== false ? '18px' : '2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+    <div class="fg"><label class="fl">Cash Tolerance ($)</label><input class="fi" type="number" step="0.01" id="cfg-tol" value="${cfg.cash_mismatch_tolerance || 2}" style="width:100px"></div>
+    <div class="fg"><label class="fl">Edit Window (days)</label><input class="fi" type="number" id="cfg-days" value="${cfg.backdate_limit_days || 3}" style="width:100px"></div>
+    <div class="fg"><label class="fl">Require Photos</label><div style="width:36px;height:20px;border-radius:10px;background:${cfg.require_photos !== false ? 'var(--theme)' : 'var(--bd)'};position:relative;cursor:pointer" id="cfg-photos" onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--theme)':'var(--bd)';this.firstElementChild.style.left=this.dataset.on==='1'?'18px':'2px'" data-on="${cfg.require_photos !== false ? '1' : '0'}"><div style="position:absolute;top:2px;left:${cfg.require_photos !== false ? '18px' : '2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
+    <div class="fg"><label class="fl">Auto-sync after window</label><div style="width:36px;height:20px;border-radius:10px;background:${cfg.auto_sync_after_window !== false ? 'var(--theme)' : 'var(--bd)'};position:relative;cursor:pointer" id="cfg-autosync" onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.style.background=this.dataset.on==='1'?'var(--theme)':'var(--bd)';this.firstElementChild.style.left=this.dataset.on==='1'?'18px':'2px'" data-on="${cfg.auto_sync_after_window !== false ? '1' : '0'}"><div style="position:absolute;top:2px;left:${cfg.auto_sync_after_window !== false ? '18px' : '2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s"></div></div></div>
   </div>
   <div class="card" style="margin-top:10px">
     <div style="font-size:12px;font-weight:700;margin-bottom:10px">🚨 Anomaly Detection</div>
-    <div class="fg"><label class="lb">Cash Variance Threshold ($)</label><input class="inp" type="number" step="0.01" id="cfg-anomaly-cash" value="${cfg.anomaly_cash_threshold || 5}" style="width:100px"></div>
-    <div class="fg"><label class="lb">Sales Drop Alert (%)</label><input class="inp" type="number" id="cfg-anomaly-drop" value="${cfg.anomaly_sales_drop_pct || 30}" style="width:100px"></div>
+    <div class="fg"><label class="fl">Cash Variance Threshold ($)</label><input class="fi" type="number" step="0.01" id="cfg-anomaly-cash" value="${cfg.anomaly_cash_threshold || 5}" style="width:100px"></div>
+    <div class="fg"><label class="fl">Sales Drop Alert (%)</label><input class="fi" type="number" id="cfg-anomaly-drop" value="${cfg.anomaly_sales_drop_pct || 30}" style="width:100px"></div>
   </div>
   <div style="margin-top:12px"><button class="btn btn-primary btn-full" id="cfg-save" onclick="SDSection.cfgSave()">💾 Save Config</button></div>`;
 }
@@ -344,13 +344,13 @@ function renderAudit(p) {
   const now = SD.todayStr(); const weekAgo = SD.addDays(now, -7);
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Audit Trail</div></div>
   <div class="content" id="au-content">
-    <div class="sec-title" style="margin-top:0">📜 Audit Trail</div>
+    <div class="sl" style="margin-top:0">📜 Audit Trail</div>
     <div class="card">
       <div style="font-size:11px;color:var(--t3);margin-bottom:10px">Select date range and click Load.</div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="lb">Date from</label><input class="inp" type="date" id="au-from" value="${weekAgo}"></div>
-        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="lb">Date to</label><input class="inp" type="date" id="au-to" value="${now}"></div>
-        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="lb">Event Type</label><select class="inp" id="au-type"><option value="">All</option><option value="login">Login</option><option value="sale">Sale</option><option value="expense">Expense</option><option value="invoice">Invoice</option><option value="cash">Cash</option><option value="settings">Settings</option><option value="sync">Sync</option></select></div>
+        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Date from</label><input class="fi" type="date" id="au-from" value="${weekAgo}"></div>
+        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Date to</label><input class="fi" type="date" id="au-to" value="${now}"></div>
+        <div class="fg" style="margin:0;flex:1;min-width:100px"><label class="fl">Event Type</label><select class="fi" id="au-type"><option value="">All</option><option value="login">Login</option><option value="sale">Sale</option><option value="expense">Expense</option><option value="invoice">Invoice</option><option value="cash">Cash</option><option value="settings">Settings</option><option value="sync">Sync</option></select></div>
         <button class="btn btn-primary" onclick="SDSection.auLoad()">Load</button>
       </div>
     </div>
@@ -395,9 +395,9 @@ function renderReportDash(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Report Dashboard</div></div>
   <div class="content" id="rd-content">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:4px 0 10px;font-size:13px;font-weight:600">
-      <button class="btn btn-outline btn-sm" onclick="SDSection.rdMonthNav(-1)">‹</button>
+      <button class="dbar-btn" onclick="SDSection.rdMonthNav(-1)">‹</button>
       <span id="rd-month-label">📊 ${monthLabel(rd.month)}</span>
-      <button class="btn btn-outline btn-sm" onclick="SDSection.rdMonthNav(1)">›</button>
+      <button class="dbar-btn" onclick="SDSection.rdMonthNav(1)">›</button>
     </div>
     <div id="rd-brand-pills">${brandPills(rd.brand, 'SDSection.rdBrandFilter')}</div>
     <div id="rd-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">${ui.skeleton(72, 3)}</div>
@@ -426,13 +426,13 @@ function fillReportDash() {
   const net = totalSales - totalExpense;
 
   document.getElementById('rd-kpi').innerHTML = `
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">💰 Total Sales</div><div style="font-size:13px;font-weight:800;color:var(--theme)">${fms(totalSales)}</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">🧾 Total Expense</div><div style="font-size:13px;font-weight:800;color:var(--red)">${fms(totalExpense)}</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">📈 Net</div><div style="font-size:13px;font-weight:800;color:${net >= 0 ? 'var(--green)' : 'var(--red)'}">${fms(net)}</div></div>`;
+    <div class="kpi-box"><div class="kpi-label">💰 Total Sales</div><div class="kpi-val" style="color:var(--theme)">${fms(totalSales)}</div></div>
+    <div class="kpi-box"><div class="kpi-label">🧾 Total Expense</div><div class="kpi-val" style="color:var(--red)">${fms(totalExpense)}</div></div>
+    <div class="kpi-box"><div class="kpi-label">📈 Net</div><div class="kpi-val" style="color:${net >= 0 ? 'var(--green)' : 'var(--red)'}">${fms(net)}</div></div>`;
 
   const storesEl = document.getElementById('rd-stores'); if (!storesEl) return;
   if (stores.length) {
-    storesEl.innerHTML = `<div class="card"><div class="sec-title" style="margin-top:0">🏪 Store Comparison</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Store</th><th>Sales</th><th>Expense</th><th>Days</th><th>Avg/Day</th></tr></thead>
+    storesEl.innerHTML = `<div class="card"><div class="sl" style="margin-top:0">🏪 Store Comparison</div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Store</th><th>Sales</th><th>Expense</th><th>Days</th><th>Avg/Day</th></tr></thead>
     <tbody>${stores.map(s => `<tr><td style="font-size:10px;font-weight:600">${esc(s.store_name || s.store_id)}</td><td style="font-size:10px;color:var(--theme)">${fms(s.total_sales)}</td><td style="font-size:10px;color:var(--red)">${fms(s.total_expense)}</td><td style="font-size:10px;text-align:center">${s.days_recorded}</td><td style="font-size:10px">${fms(s.avg_sales)}</td></tr>`).join('')}</tbody></table></div></div>`;
   } else { storesEl.innerHTML = ui.empty('', 'ยังไม่มีข้อมูล'); }
 }

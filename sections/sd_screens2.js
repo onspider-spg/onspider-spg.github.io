@@ -41,7 +41,7 @@ function vnPick(id, name) { const inp = document.getElementById(id); if (inp) in
 function vnCreate(dropdownId) {
   SPG.showDialog(`<div class="popup-sheet" style="width:320px">
     <div class="popup-header"><div class="popup-title">➕ สร้าง Vendor ใหม่</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">ชื่อ Vendor <span style="color:var(--red)">*</span></label><input class="inp" id="vn-new-name" placeholder="เช่น Akipan" autofocus></div>
+    <div class="fg"><label class="fl">ชื่อ Vendor <span class="req">*</span></label><input class="fi" id="vn-new-name" placeholder="เช่น Akipan" autofocus></div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn btn-gold" style="flex:1" id="vn-new-save" onclick="SDSection.vnDoCreate('${dropdownId}')">สร้าง</button>
       <button class="btn btn-outline" style="flex:1" onclick="SPG.closeDialog()">ยกเลิก</button>
@@ -83,15 +83,15 @@ function renderS1(params) {
     ? `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;margin-bottom:10px"><div style="flex:1;text-align:center;font-size:13px;font-weight:600;cursor:pointer" id="s1-label" onclick="document.getElementById('s1-edit-picker').showPicker()">📅 ${SD.fmtDate(s1.date)} <span style="font-size:10px;color:var(--theme)">กดเพื่อเปลี่ยนวัน</span></div><input type="date" id="s1-edit-picker" value="${s1.date}" onchange="SDSection.s1EditDate(this.value)" style="position:absolute;opacity:0;width:0;height:0"></div>`
     : SD.dateBar('s1', s1.date, 'SDSection.s1Nav');
 
-  return SPG.shell(`<div class="toolbar"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('${backRoute}')">←</button><div class="toolbar-title">${title}</div></div>
+  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('${backRoute}')">←</button><div class="toolbar-title">${title}</div></div>
   <div class="content" id="s1-content">
     ${SD.renderStoreSelector({ noAll: true })}
     ${dateSec}
     <div id="s1-lock"></div>
-    <div class="sec-title">ช่องทางขาย</div>
+    <div class="sl">ช่องทางขาย</div>
     <div class="card" style="padding:12px">
       <div id="s1-channels">${ui.skeleton(200)}</div>
-      <div style="padding:10px 14px;border-radius:var(--rd);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;margin:8px 0;background:var(--theme-bg);border:1.5px solid var(--theme);color:var(--theme)">
+      <div class="total-bar" style="background:var(--gold-bg,rgba(212,150,10,.06));border:1.5px solid var(--gold,#d4960a);color:var(--gold,#d4960a)">
         <span>ยอดรวมทั้งหมด</span><span style="font-size:18px" id="s1-total">$0.00</span>
       </div>
       <details style="margin-top:8px;border:1px solid var(--bd);border-radius:var(--rd);padding:8px 10px">
@@ -100,10 +100,10 @@ function renderS1(params) {
         <button class="btn btn-outline btn-sm" id="s1-add-dip" style="margin-top:6px;font-size:10px" onclick="SDSection.s1AddDip()">+ เพิ่มรายการ Diff</button>
       </details>
     </div>
-    <div class="sec-title">📸 Photo (mandatory)</div>
+    <div class="sl">📸 Photo (mandatory)</div>
     <div class="card" style="padding:12px">
       <div style="display:flex;gap:8px">
-        <div style="width:70px;height:70px;border:2px dashed var(--bd);border-radius:var(--rd);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--t3);gap:2px" id="s1-photo-card" onclick="SDSection.s1PickPhoto('card')"><div>📸</div><div>Card Summary</div><div style="color:var(--red)">*</div></div>
+        <div class="pbox" id="s1-photo-card" onclick="SDSection.s1PickPhoto('card')"><div>📸</div><div>Card Summary</div><div class="req">*</div></div>
       </div>
       <div id="s1-extra-photos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
       <button class="btn btn-outline btn-sm" style="margin-top:4px;font-size:10px" onclick="SDSection.s1PickPhoto('extra')">+ เพิ่มรูป/ไฟล์</button>
@@ -152,12 +152,12 @@ function fillS1() {
     const v = s1.amounts[ch.channel_key] ?? '';
     const ico = icons[ch.dashboard_group] || '📦';
     const hasDip = dipMap[ch.channel_key] ? '<span style="color:var(--red);font-weight:700"> *</span>' : '';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rd);margin-bottom:4px">
-      <div style="font-size:14px">${ico}</div><div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600">${esc(ch.channel_label)}${hasDip}</div>
-        ${ch.finance_sub_category ? `<div style="font-size:10px;color:var(--t3)">Revenue → ${esc(ch.finance_sub_category)}</div>` : ''}
-      </div><input style="width:80px;padding:6px 8px;border:1px solid var(--bd);border-radius:6px;font-size:13px;font-weight:700;text-align:right;font-family:inherit;background:var(--bg2)" type="number" step="1" min="0" value="${v}" data-key="${ch.channel_key}"
-        class="ch-input" oninput="SDSection.s1Recalc();SDSection.s1MarkDirty()" ${s1.synced ? 'disabled' : ''}></div>`;
+    return `<div class="ch-row">
+      <div class="ch-icon">${ico}</div><div style="flex:1;min-width:0">
+        <div class="ch-name">${esc(ch.channel_label)}${hasDip}</div>
+        ${ch.finance_sub_category ? `<div class="ch-sub">Revenue → ${esc(ch.finance_sub_category)}</div>` : ''}
+      </div><input class="ch-input" type="number" step="1" min="0" value="${v}" data-key="${ch.channel_key}"
+        oninput="SDSection.s1Recalc();SDSection.s1MarkDirty()" ${s1.synced ? 'disabled' : ''}></div>`;
   }).join('');
   s1Recalc();
   s1RenderDips();
@@ -232,7 +232,7 @@ function s1Clear() {
   s1.amounts = {}; s1.photoCard = null; s1.photoCash = null; s1.extraPhotos = []; s1.dips = []; s1._dirty = false;
   fillS1();
   const pc = document.getElementById('s1-photo-card');
-  if (pc) { pc.innerHTML = '<div>📸</div><div>Card Summary</div><div style="color:var(--red)">*</div>'; pc.style.border = ''; }
+  if (pc) { pc.innerHTML = '<div>📸</div><div>Card Summary</div><div class="req">*</div>'; pc.style.border = ''; }
 }
 
 async function s1EditDate(newDate) {
@@ -263,16 +263,16 @@ function s1RenderDips() {
   if (!s1.dips.length) { el.innerHTML = '<div style="font-size:11px;color:var(--t3);padding:4px 0">ไม่มีรายการ Diff</div>'; return; }
   const cardChs = s1.channels.filter(c => c.dashboard_group === 'card_sale');
   el.innerHTML = s1.dips.map((d, i) => {
-    const chSel = d.type === 'card' ? `<select class="inp" style="flex:1;font-size:11px" onchange="SDSection.s1DipUpdate(${i},'channel_key',this.value)"><option value="">-- Channel --</option>${cardChs.map(c => `<option value="${c.channel_key}" ${c.channel_key === d.channel_key ? 'selected' : ''}>${esc(c.channel_label)}</option>`).join('')}</select>` : '<div style="flex:1;font-size:11px;color:var(--t3);padding:6px">Cash</div>';
+    const chSel = d.type === 'card' ? `<select class="fi" style="flex:1;font-size:11px" onchange="SDSection.s1DipUpdate(${i},'channel_key',this.value)"><option value="">-- Channel --</option>${cardChs.map(c => `<option value="${c.channel_key}" ${c.channel_key === d.channel_key ? 'selected' : ''}>${esc(c.channel_label)}</option>`).join('')}</select>` : '<div style="flex:1;font-size:11px;color:var(--t3);padding:6px">Cash</div>';
     return `<div style="border:1px solid var(--bd);border-radius:var(--rd);padding:8px;margin-bottom:6px;background:var(--bg3)">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
-        <select class="inp" style="flex:0 0 80px;font-size:11px" onchange="SDSection.s1DipUpdate(${i},'type',this.value)"><option value="card" ${d.type === 'card' ? 'selected' : ''}>Card</option><option value="cash" ${d.type === 'cash' ? 'selected' : ''}>Cash</option></select>
+        <select class="fi" style="flex:0 0 80px;font-size:11px" onchange="SDSection.s1DipUpdate(${i},'type',this.value)"><option value="card" ${d.type === 'card' ? 'selected' : ''}>Card</option><option value="cash" ${d.type === 'cash' ? 'selected' : ''}>Cash</option></select>
         ${chSel}
         <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red);font-size:10px;padding:2px 6px" onclick="SDSection.s1RemoveDip(${i})" ${s1.synced ? 'disabled' : ''}>🗑</button>
       </div>
       <div style="display:flex;gap:6px">
-        <input class="inp" type="number" step="0.01" value="${d.amount}" placeholder="จำนวน (+/-)" style="flex:1;font-size:11px" oninput="SDSection.s1DipUpdate(${i},'amount',this.value)">
-        <input class="inp" type="text" value="${esc(d.note || '')}" placeholder="หมายเหตุ" style="flex:2;font-size:11px" oninput="SDSection.s1DipUpdate(${i},'note',this.value)">
+        <input class="fi" type="number" step="0.01" value="${d.amount}" placeholder="จำนวน (+/-)" style="flex:1;font-size:11px" oninput="SDSection.s1DipUpdate(${i},'amount',this.value)">
+        <input class="fi" type="text" value="${esc(d.note || '')}" placeholder="หมายเหตุ" style="flex:2;font-size:11px" oninput="SDSection.s1DipUpdate(${i},'note',this.value)">
       </div>
     </div>`;
   }).join('');
@@ -286,17 +286,17 @@ let s2 = { date: '', expenses: [], total: 0, synced: false, extraPhotos: [] };
 
 function renderS2(params) {
   s2.date = params?.date || s2.date || td();
-  return SPG.shell(`<div class="toolbar"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Expense</div></div>
+  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Expense</div></div>
   <div class="content" id="s2-content">
     ${SD.renderStoreSelector({ noAll: true })}
     ${SD.dateBar('s2', s2.date, 'SDSection.s2Nav')}
     <div id="s2-lock"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div class="sec-title" style="margin:0" id="s2-count">Today (0)</div>
+      <div class="sl" style="margin:0" id="s2-count">Today (0)</div>
       <button class="btn btn-primary btn-sm" id="s2-add-btn" onclick="SDSection.s2ShowPopup()">+ Add</button>
     </div>
     <div id="s2-list">${ui.skeleton(100)}</div>
-    <div style="padding:10px 14px;border-radius:var(--rd);display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:13px;margin:8px 0;background:var(--red-bg);border:1.5px solid var(--red);color:var(--red)" id="s2-total"><span>Total</span><span>$0.00</span></div>
+    <div class="total-bar" style="background:var(--rbg,#fef2f2);border:1.5px solid var(--r,#dc2626);color:var(--r,#dc2626)" id="s2-total"><span>Total</span><span>$0.00</span></div>
   </div>`, SECTION);
 }
 
@@ -339,21 +339,21 @@ function s2ShowPopup(editId) {
   s2.extraPhotos = ex?.extra_photos || [];
   SPG.showDialog(`<div class="popup-sheet" style="width:400px;max-height:85dvh;overflow-y:auto">
     <div class="popup-header"><div class="popup-title">${ex ? 'Edit' : '+ Add'} Expense</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">📅 Date</label><input class="inp" type="date" id="s2f-date" value="${ex?.expense_date || s2.date}"></div>
-    <div class="fg"><label class="lb">Vendor <span style="color:var(--red)">*</span></label>${SD.renderVendorInput('s2f-vendor', ex?.vendor_name || '')}</div>
-    <div class="fg"><label class="lb">Doc Number <span style="color:var(--red)">*</span></label><input class="inp" id="s2f-doc" value="${esc(ex?.doc_number || '')}"></div>
-    <div class="fg"><label class="lb">Description <span style="color:var(--red)">*</span></label><input class="inp" id="s2f-desc" value="${esc(ex?.description || '')}"></div>
+    <div class="fg"><label class="fl">📅 Date</label><input class="fi" type="date" id="s2f-date" value="${ex?.expense_date || s2.date}"></div>
+    <div class="fg"><label class="fl">Vendor <span class="req">*</span></label>${SD.renderVendorInput('s2f-vendor', ex?.vendor_name || '')}</div>
+    <div class="fg"><label class="fl">Doc Number <span class="req">*</span></label><input class="fi" id="s2f-doc" value="${esc(ex?.doc_number || '')}"></div>
+    <div class="fg"><label class="fl">Description <span class="req">*</span></label><input class="fi" id="s2f-desc" value="${esc(ex?.description || '')}"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-      <div class="fg"><label class="lb">Amount (ex GST) <span style="color:var(--red)">*</span></label><input class="inp" type="number" step="0.01" id="s2f-amt" value="${ex?.amount_ex_gst || ''}" oninput="SDSection.s2CalcTotal()"></div>
-      <div class="fg"><label class="lb">GST</label><input class="inp" type="number" step="0.01" id="s2f-gst" value="${ex?.gst || '0'}" oninput="SDSection.s2CalcTotal()"></div>
-      <div class="fg"><label class="lb">Total</label><input class="inp" id="s2f-total" readonly style="background:var(--bg3)"></div>
+      <div class="fg"><label class="fl">Amount (ex GST) <span class="req">*</span></label><input class="fi" type="number" step="0.01" id="s2f-amt" value="${ex?.amount_ex_gst || ''}" oninput="SDSection.s2CalcTotal()"></div>
+      <div class="fg"><label class="fl">GST</label><input class="fi" type="number" step="0.01" id="s2f-gst" value="${ex?.gst || '0'}" oninput="SDSection.s2CalcTotal()"></div>
+      <div class="fg"><label class="fl">Total</label><input class="fi" id="s2f-total" readonly style="background:var(--bg3)"></div>
     </div>
-    <div class="fg"><label class="lb">💳 Payment</label><div style="display:flex;gap:4px">
+    <div class="fg"><label class="fl">💳 Payment</label><div style="display:flex;gap:4px">
       <button class="pill ${(!ex || ex?.payment_method === 'cash') ? 'active' : ''}" onclick="SDSection.s2SetPm('cash',this)">Cash</button>
       <button class="pill ${ex?.payment_method === 'card' ? 'active' : ''}" onclick="SDSection.s2SetPm('card',this)">Card</button>
     </div></div>
-    <div class="fg"><label class="lb">📸 Photo <span style="color:var(--red)">*</span></label>
-      <div style="width:60px;height:60px;border:2px dashed var(--bd);border-radius:var(--rd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--t3)" id="s2f-photo-box" onclick="SDSection.s2PickPhoto('main')">${ex?.photo_url ? `<img src="${ex.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">` : '📸'}</div>
+    <div class="fg"><label class="fl">📸 Photo <span class="req">*</span></label>
+      <div class="pbox" style="width:60px;height:60px" id="s2f-photo-box" onclick="SDSection.s2PickPhoto('main')">${ex?.photo_url ? `<img src="${ex.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px">` : '📸'}</div>
     </div>
     <div id="s2f-extra-photos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${SD.renderExtraPhotos(s2.extraPhotos, 's2')}</div>
     <button class="btn btn-outline btn-sm" style="margin-top:4px;font-size:10px" onclick="SDSection.s2PickPhoto('extra')">+ เพิ่มรูป/ไฟล์</button>
@@ -428,10 +428,10 @@ let s3f = { id: null, photoUrl: '', hasCN: false, extraPhotos: [] };
 
 function renderS3List(p) {
   const now = td(); s3.dateTo = s3.dateTo || now; s3.dateFrom = s3.dateFrom || SD.addDays(now, -3);
-  return SPG.shell(`<div class="toolbar"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Invoice</div></div>
+  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Invoice</div></div>
   <div class="content" id="s3-content">
     ${SD.renderStoreSelector({ noAll: true })}
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s3-from" value="${s3.dateFrom}" onchange="SDSection.s3Reload()"><span style="color:var(--t3)">→</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s3-to" value="${s3.dateTo}" onchange="SDSection.s3Reload()"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s3-from" value="${s3.dateFrom}" onchange="SDSection.s3Reload()"><span style="color:var(--t3)">→</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s3-to" value="${s3.dateTo}" onchange="SDSection.s3Reload()"></div>
     <button class="btn btn-primary btn-full" style="margin-bottom:10px;padding:10px" onclick="SPG.go('sales/invoice-form')">+ New Invoice →</button>
     <div id="s3-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">${ui.skeleton(72, 3)}</div>
     <div id="s3-list">${ui.skeleton(100)}</div>
@@ -482,31 +482,31 @@ function s3LoadMore() { s3.offset += 10; loadS3List(false); }
 // S3 Form — abbreviated (same logic, uses SPG.shell + SD.api)
 function renderS3Form(params) {
   s3f.id = params?.id || null; s3f.hasCN = false; s3f.extraPhotos = [];
-  return SPG.shell(`<div class="toolbar"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/invoice')">←</button><div class="toolbar-title">${s3f.id ? 'Edit Invoice' : 'New Invoice'}</div></div>
+  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('sales/invoice')">←</button><div class="toolbar-title">${s3f.id ? 'Edit Invoice' : 'New Invoice'}</div></div>
   <div class="content" id="s3f-content">
     <div id="s3f-lock"></div>
     <div class="card">
-      <div class="fg"><label class="lb">📅 Issue Date <span style="color:var(--red)">*</span></label><input class="inp" type="date" id="s3f-date" value="${td()}" onchange="SDSection.s3fDateChange()"></div>
-      <div class="fg"><label class="lb">Invoice No <span style="color:var(--red)">*</span></label><input class="inp" id="s3f-no" oninput="SDSection.s3fSyncCnNo()"></div>
-      <div class="fg"><label class="lb">Vendor <span style="color:var(--red)">*</span></label>${SD.renderVendorInput('s3f-vendor', '')}</div>
-      <div class="fg"><label class="lb">Description <span style="color:var(--red)">*</span></label><input class="inp" id="s3f-desc"></div>
+      <div class="fg"><label class="fl">📅 Issue Date <span class="req">*</span></label><input class="fi" type="date" id="s3f-date" value="${td()}" onchange="SDSection.s3fDateChange()"></div>
+      <div class="fg"><label class="fl">Invoice No <span class="req">*</span></label><input class="fi" id="s3f-no" oninput="SDSection.s3fSyncCnNo()"></div>
+      <div class="fg"><label class="fl">Vendor <span class="req">*</span></label>${SD.renderVendorInput('s3f-vendor', '')}</div>
+      <div class="fg"><label class="fl">Description <span class="req">*</span></label><input class="fi" id="s3f-desc"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div class="fg"><label class="lb">Amount <span style="color:var(--red)">*</span></label><input class="inp" type="number" step="0.01" id="s3f-amt" oninput="SDSection.s3fCalc()"></div>
-        <div class="fg"><label class="lb">GST</label><input class="inp" type="number" step="0.01" id="s3f-gst" value="0" oninput="SDSection.s3fCalc()"></div>
-        <div class="fg"><label class="lb">Total</label><input class="inp" id="s3f-total" readonly style="background:var(--bg3)"></div>
+        <div class="fg"><label class="fl">Amount <span class="req">*</span></label><input class="fi" type="number" step="0.01" id="s3f-amt" oninput="SDSection.s3fCalc()"></div>
+        <div class="fg"><label class="fl">GST</label><input class="fi" type="number" step="0.01" id="s3f-gst" value="0" oninput="SDSection.s3fCalc()"></div>
+        <div class="fg"><label class="fl">Total</label><input class="fi" id="s3f-total" readonly style="background:var(--bg3)"></div>
       </div>
       <div style="height:1px;background:var(--bd2);margin:10px 0"></div>
       <div style="padding:8px 10px;background:var(--red-bg);border-radius:var(--rd);margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:var(--red)">Invoice = Unpaid เสมอ</span></div>
-      <div class="fg"><label class="lb">Due Date <span style="color:var(--red)">*</span></label><input class="inp" type="date" id="s3f-due" min="${SD.addDays(td(), 1)}"></div>
+      <div class="fg"><label class="fl">Due Date <span class="req">*</span></label><input class="fi" type="date" id="s3f-due" min="${SD.addDays(td(), 1)}"></div>
       <div style="height:1px;background:var(--bd2);margin:10px 0"></div>
-      <div class="fg"><label class="lb">🔄 Credit Note</label><div style="display:flex;gap:4px"><button class="pill active" onclick="SDSection.s3fCnToggle(false,this)">No</button><button class="pill" onclick="SDSection.s3fCnToggle(true,this)">Yes</button></div></div>
+      <div class="fg"><label class="fl">🔄 Credit Note</label><div style="display:flex;gap:4px"><button class="pill active" onclick="SDSection.s3fCnToggle(false,this)">No</button><button class="pill" onclick="SDSection.s3fCnToggle(true,this)">Yes</button></div></div>
       <div id="s3f-cn-fields" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><label class="lb">CN No</label><input class="inp" id="s3f-cn-no" readonly style="background:var(--bg3)"></div><div class="fg"><label class="lb">CR Reason <span style="color:var(--red)">*</span></label><select class="inp" id="s3f-cr-reason"><option value="">-- เลือก --</option><option value="return">สินค้าคืน</option><option value="damaged">ชำรุด</option><option value="discount">ส่วนลด</option><option value="overcharge">คิดเกิน</option></select></div></div>
-        <div class="fg"><label class="lb">CR Description <span style="color:var(--red)">*</span></label><input class="inp" id="s3f-cr-desc"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div class="fg"><label class="lb">CR Amount <span style="color:var(--red)">*</span></label><input class="inp" type="number" step="0.01" id="s3f-cn-amt" style="color:var(--green);font-weight:700" oninput="SDSection.s3fCalc()"></div><div class="fg"><label class="lb">CR GST</label><input class="inp" type="number" step="0.01" id="s3f-cr-gst" oninput="SDSection.s3fCalc()"></div><div class="fg"><label class="lb">CR Total</label><input class="inp" id="s3f-cr-total" readonly style="background:var(--bg3);color:var(--green);font-weight:700"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><label class="fl">CN No</label><input class="fi" id="s3f-cn-no" readonly style="background:var(--bg3)"></div><div class="fg"><label class="fl">CR Reason <span class="req">*</span></label><select class="fi" id="s3f-cr-reason"><option value="">-- เลือก --</option><option value="return">สินค้าคืน</option><option value="damaged">ชำรุด</option><option value="discount">ส่วนลด</option><option value="overcharge">คิดเกิน</option></select></div></div>
+        <div class="fg"><label class="fl">CR Description <span class="req">*</span></label><input class="fi" id="s3f-cr-desc"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div class="fg"><label class="fl">CR Amount <span class="req">*</span></label><input class="fi" type="number" step="0.01" id="s3f-cn-amt" style="color:var(--green);font-weight:700" oninput="SDSection.s3fCalc()"></div><div class="fg"><label class="fl">CR GST</label><input class="fi" type="number" step="0.01" id="s3f-cr-gst" oninput="SDSection.s3fCalc()"></div><div class="fg"><label class="fl">CR Total</label><input class="fi" id="s3f-cr-total" readonly style="background:var(--bg3);color:var(--green);font-weight:700"></div></div>
       </div>
-      <div class="fg"><label class="lb">📸 Photo <span style="color:var(--red)">*</span></label>
-        <div style="width:70px;height:70px;border:2px dashed var(--bd);border-radius:var(--rd);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--t3)" id="s3f-photo-box" onclick="SDSection.s3fPickPhoto('main')"><div>📸</div><div style="font-size:8px">* บังคับ</div></div>
+      <div class="fg"><label class="fl">📸 Photo <span class="req">*</span></label>
+        <div class="pbox" id="s3f-photo-box" onclick="SDSection.s3fPickPhoto('main')"><div>📸</div><div style="font-size:8px">* บังคับ</div></div>
         <div id="s3f-extra-photos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
         <button class="btn btn-outline btn-sm" style="margin-top:4px;font-size:10px" onclick="SDSection.s3fPickPhoto('extra')">+ เพิ่มรูป</button>
         <input type="file" id="s3f-file" accept="" style="display:none" onchange="SDSection.s3fHandlePhoto(event)">
@@ -572,23 +572,23 @@ let s4 = { date: '', cashSale: 0, cashExpend: 0, expected: 0, tolerance: 2, exis
 
 function renderS4(p) {
   s4.date = s4.date || td();
-  return SPG.shell(`<div class="toolbar"><button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Cash On Hand</div></div>
+  return SPG.shell(`<div class="toolbar"><button class="toolbar-back" onclick="SPG.go('sales/dashboard')">←</button><div class="toolbar-title">Cash On Hand</div></div>
   <div class="content" id="s4-content">
     ${SD.renderStoreSelector({ noAll: true })}
     ${SD.dateBar('s4', s4.date, 'SDSection.s4Nav')}
-    <div class="sec-title">🧮 Auto-Calculation</div>
+    <div class="sl">🧮 Auto-Calculation</div>
     <div id="s4-calc">${ui.skeleton(140)}</div>
-    <div class="sec-title">✍️ นับเงินสดจริง</div>
-    <div class="card"><div class="fg"><label class="lb">④ Actual Cash <span style="color:var(--red)">*</span></label><input class="inp" type="number" step="0.01" id="s4-actual" placeholder="0.00" style="font-size:16px;font-weight:700;text-align:right" oninput="SDSection.s4Check()"></div></div>
+    <div class="sl">✍️ นับเงินสดจริง</div>
+    <div class="card"><div class="fg"><label class="fl">④ Actual Cash <span class="req">*</span></label><input class="fi" type="number" step="0.01" id="s4-actual" placeholder="0.00" style="font-size:16px;font-weight:700;text-align:right" oninput="SDSection.s4Check()"></div></div>
     <div id="s4-result"></div>
-    <div id="s4-mismatch" style="display:none"><div class="card" style="padding:10px"><div class="fg" style="margin:0"><label class="lb">เหตุผลเงินไม่ตรง <span style="color:var(--red)">*</span></label><input class="inp" id="s4-reason" placeholder="อธิบายเหตุผล"></div></div></div>
-    <div class="sec-title">📸 ถ่ายรูปเงินสด (บังคับ)</div>
+    <div id="s4-mismatch" style="display:none"><div class="card" style="padding:10px"><div class="fg" style="margin:0"><label class="fl">เหตุผลเงินไม่ตรง <span class="req">*</span></label><input class="fi" id="s4-reason" placeholder="อธิบายเหตุผล"></div></div></div>
+    <div class="sl">📸 ถ่ายรูปเงินสด (บังคับ)</div>
     <div class="card" style="padding:12px">
       <div style="width:100%;height:50px;border:2px dashed var(--bd);border-radius:var(--rd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--t3);gap:8px" id="s4-photo-box" onclick="document.getElementById('s4-file').click()">💵 ถ่ายรูปเงินสดก่อนส่ง <span style="color:var(--red)">*</span></div>
       <input type="file" id="s4-file" accept="" style="display:none" onchange="SDSection.s4HandlePhoto(event)">
       <input type="hidden" id="s4-photo-url">
     </div>
-    <div class="sec-title">🤝 Handover</div>
+    <div class="sl">🤝 Handover</div>
     <div id="s4-handover">${ui.empty('', 'ยังไม่มีข้อมูล')}</div>
     <div style="margin-top:12px"><button class="btn btn-primary btn-full" style="padding:10px" id="s4-submit" onclick="SDSection.s4Submit()">💾 Submit</button></div>
   </div>`, SECTION);

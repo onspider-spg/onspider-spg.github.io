@@ -34,7 +34,7 @@ const LEVEL_OPTS = [
   { key: 'full', label: '⚫ ทั้งจาน' },
 ];
 
-function backBtn() { return `<button style="border:none;background:none;font-size:16px;cursor:pointer;color:var(--t2)" onclick="SPG.go('sales/dashboard')">←</button>`; }
+function backBtn() { return `<button class="toolbar-back" onclick="SPG.go('sales/dashboard')">←</button>`; }
 
 
 // ═══════════════════════════════════════
@@ -47,10 +47,10 @@ function renderS5(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Sale History</div></div>
   <div class="content" id="s5-content">
     ${SD.renderStoreSelector()}
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s5-from" value="${s5.dateFrom}" onchange="SDSection.s5Reload()"><span style="color:var(--t3)">→</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s5-to" value="${s5.dateTo}" onchange="SDSection.s5Reload()"></div>
-    <div id="s5-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">${ui.skeleton(72, 3)}</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s5-from" value="${s5.dateFrom}" onchange="SDSection.s5Reload()"><span style="color:var(--t3)">→</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s5-to" value="${s5.dateTo}" onchange="SDSection.s5Reload()"></div>
+    <div id="s5-kpi" class="kpi-row kpi-3" style="margin-bottom:12px">${ui.skeleton(72, 3)}</div>
     <div id="s5-list">${ui.skeleton(100)}</div>
-    <div id="s5-more" style="display:none;text-align:center;padding:10px"><span style="font-size:11px;color:var(--theme);padding:5px 14px;border:1px solid var(--bd);border-radius:var(--rd);cursor:pointer" onclick="SDSection.s5LoadMore()">โหลดเพิ่ม →</span></div>
+    <div id="s5-more" style="display:none;text-align:center;padding:10px"><span style="font-size:11px;color:var(--acc);padding:5px 14px;border:1px solid var(--bd);border-radius:var(--rd);cursor:pointer" onclick="SDSection.s5LoadMore()">โหลดเพิ่ม →</span></div>
   </div>`, SECTION);
 }
 
@@ -70,9 +70,9 @@ function fillS5() {
   const total = s5.records.reduce((s, r) => s + (r.total_sales || 0), 0);
   const cnt = s5.records.length; const avg = cnt > 0 ? Math.round(total / cnt) : 0;
   document.getElementById('s5-kpi').innerHTML = `
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">Total</div><div style="font-size:14px;font-weight:800;color:var(--theme)">${fms(total)}</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">Recorded</div><div style="font-size:14px;font-weight:800">${cnt}</div></div>
-    <div class="card" style="text-align:center;padding:12px"><div style="font-size:10px;color:var(--t3)">เฉลี่ย/วัน</div><div style="font-size:14px;font-weight:800">${fms(avg)}</div></div>`;
+    <div class="kpi-box"><div class="kpi-label">Total</div><div class="kpi-val" style="color:var(--theme)">${fms(total)}</div></div>
+    <div class="kpi-box"><div class="kpi-label">Recorded</div><div class="kpi-val">${cnt}</div></div>
+    <div class="kpi-box"><div class="kpi-label">เฉลี่ย/วัน</div><div class="kpi-val">${fms(avg)}</div></div>`;
   const el = document.getElementById('s5-list'); if (!el) return;
   if (!s5.records.length) { el.innerHTML = ui.empty('', 'ยังไม่มีข้อมูล'); return; }
   el.innerHTML = s5.records.map(r => {
@@ -82,7 +82,7 @@ function fillS5() {
     return `<div class="card" style="padding:10px;cursor:pointer;margin-bottom:6px;${synced ? 'opacity:.7' : ''}" onclick="SPG.go('sales/daily-hub')">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <div><div style="font-size:12px;font-weight:700">${SD.fmtDate(r.sale_date)}</div><div style="font-size:10px;color:var(--t3)">${esc(r.store_id)} · ${channels.length} ch</div></div>
-        <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--theme)">${fm(r.total_sales)}</div>${synced ? ui.badge('approved') : ui.badge('pending')}</div>
+        <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--theme)">${fm(r.total_sales)}</div>${synced ? '<span class="sts sts-ok">🔒 Synced</span>' : '<span class="sts sts-ok">✏️ Editable</span>'}</div>
       </div>
       ${channels.length ? `<details style="font-size:10px;color:var(--t3)"><summary>▸ Channel breakdown</summary><div style="padding:4px 0">${chText}</div></details>` : ''}
     </div>`;
@@ -103,14 +103,14 @@ function renderS6(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Expense History</div></div>
   <div class="content" id="s6-content">
     ${SD.renderStoreSelector()}
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s6-from" value="${s6.dateFrom}" onchange="SDSection.s6Reload()"><span style="color:var(--t3)">→</span><input class="inp" type="date" style="flex:1;padding:6px 8px" id="s6-to" value="${s6.dateTo}" onchange="SDSection.s6Reload()"></div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;font-size:12px"><span>📅</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s6-from" value="${s6.dateFrom}" onchange="SDSection.s6Reload()"><span style="color:var(--t3)">→</span><input class="fi" type="date" style="flex:1;padding:6px 8px" id="s6-to" value="${s6.dateTo}" onchange="SDSection.s6Reload()"></div>
     <div style="display:flex;gap:4px;margin-bottom:10px">
-      <button class="pill active" onclick="SDSection.s6SetFilter('all',this)">All</button>
-      <button class="pill" onclick="SDSection.s6SetFilter('expense',this)">Expense</button>
-      <button class="pill" onclick="SDSection.s6SetFilter('invoice',this)">Invoice</button>
+      <div class="chip active" onclick="SDSection.s6SetFilter('all',this)">All</div>
+      <div class="chip" onclick="SDSection.s6SetFilter('expense',this)">Expense</div>
+      <div class="chip" onclick="SDSection.s6SetFilter('invoice',this)">Invoice</div>
     </div>
     <div id="s6-list">${ui.skeleton(100)}</div>
-    <div id="s6-more" style="display:none;text-align:center;padding:10px"><span style="font-size:11px;color:var(--theme);padding:5px 14px;border:1px solid var(--bd);border-radius:var(--rd);cursor:pointer" onclick="SDSection.s6LoadMore()">โหลดเพิ่ม →</span></div>
+    <div id="s6-more" style="display:none;text-align:center;padding:10px"><span style="font-size:11px;color:var(--acc);padding:5px 14px;border:1px solid var(--bd);border-radius:var(--rd);cursor:pointer" onclick="SDSection.s6LoadMore()">โหลดเพิ่ม →</span></div>
   </div>`, SECTION);
 }
 
@@ -167,7 +167,7 @@ function showDetail(idx) {
 }
 
 function s6Reload() { s6.dateFrom = document.getElementById('s6-from')?.value || s6.dateFrom; s6.dateTo = document.getElementById('s6-to')?.value || s6.dateTo; loadS6(true); }
-function s6SetFilter(f, el) { s6.filter = f; el.parentElement.querySelectorAll('.pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); loadS6(true); }
+function s6SetFilter(f, el) { s6.filter = f; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); loadS6(true); }
 function s6LoadMore() { s6.offset += 10; loadS6(false); }
 
 
@@ -188,10 +188,10 @@ function renderS8(params) {
       <span id="s8-date-label">📅 ${SD.fmtDate(s8.date)}</span>
       <button class="btn btn-outline btn-sm" onclick="SDSection.s8Nav(1)">›</button>
     </div>
-    <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rd);padding:2px;margin-bottom:10px" id="s8-tabs">
-      <button class="pill active" style="flex:1;text-align:center;border-radius:var(--rd)" data-tab="overview" onclick="SDSection.s8SetTab('overview',this)">📊 ภาพรวม</button>
-      <button class="pill" style="flex:1;text-align:center;border-radius:var(--rd)" data-tab="incidents" onclick="SDSection.s8SetTab('incidents',this)">⚠️ เหตุการณ์</button>
-      <button class="pill" style="flex:1;text-align:center;border-radius:var(--rd)" data-tab="tasks" onclick="SDSection.s8SetTab('tasks',this)">📋 ติดตาม</button>
+    <div class="tab-row" id="s8-tabs">
+      <div class="tab-pill on" style="flex:1" data-tab="overview" onclick="SDSection.s8SetTab('overview',this)">📊 ภาพรวม</div>
+      <div class="tab-pill" style="flex:1" data-tab="incidents" onclick="SDSection.s8SetTab('incidents',this)">⚠️ เหตุการณ์</div>
+      <div class="tab-pill" style="flex:1" data-tab="tasks" onclick="SDSection.s8SetTab('tasks',this)">📋 ติดตาม</div>
     </div>
     <div id="s8-tab-content">${ui.skeleton(200)}</div>
     <div style="display:flex;gap:8px;margin-top:8px;padding-bottom:8px">
@@ -244,7 +244,7 @@ function collectS8Overview() {
 function s8SetTab(tab, el) {
   if (s8.tab === 'overview') collectS8Overview();
   s8.tab = tab;
-  document.querySelectorAll('#s8-tabs .pill').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('#s8-tabs .tab-pill').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
   fillS8Tab();
 }
 
@@ -269,14 +269,14 @@ function fillS8Overview(el) {
   if (cash) {
     const matched = cash.is_matched;
     const clr = matched ? 'var(--green)' : 'var(--red)';
-    cashHtml = `<div class="card" style="padding:12px;border-left:3px solid ${clr}"><div class="sec-title" style="margin-top:0">💵 Cash on Hand</div>
+    cashHtml = `<div class="card" style="padding:12px;border-left:3px solid ${clr}"><div class="sl" style="margin-top:0">💵 Cash on Hand</div>
       <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px"><span>Expected</span><span>${fm(cash.expected_cash || 0)}</span></div>
       <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px"><span>Actual</span><span>${fm(cash.actual_cash || 0)}</span></div>
       <div style="display:flex;justify-content:space-between;padding:4px 0 0;border-top:1px solid var(--bd2);margin-top:4px;font-weight:700;font-size:12px"><span>Diff</span><span style="color:${clr}">${fm(cash.difference || 0)}</span></div>
       <div style="margin-top:6px;padding:6px 10px;background:${matched ? 'var(--green-bg)' : 'var(--red-bg)'};border-radius:var(--rd);text-align:center;font-size:12px;font-weight:600;color:${clr}">${matched ? '✅ เงินตรง' : '🔴 เงินไม่ตรง!'}</div>
     </div>`;
   } else {
-    cashHtml = `<div class="card" style="padding:12px"><div class="sec-title" style="margin-top:0">💵 Cash on Hand</div><div style="font-size:11px;color:var(--t3)">ยังไม่ได้นับเงิน</div></div>`;
+    cashHtml = `<div class="card" style="padding:12px"><div class="sl" style="margin-top:0">💵 Cash on Hand</div><div style="font-size:11px;color:var(--t3)">ยังไม่ได้นับเงิน</div></div>`;
   }
 
   const custPeriods = [
@@ -288,23 +288,23 @@ function fillS8Overview(el) {
   ];
 
   el.innerHTML = `
-    <div class="card" style="padding:12px"><div class="sec-title" style="margin-top:0">💰 ยอดขาย (auto จาก S1)</div>${chHtml}</div>
-    <div class="card" style="padding:12px"><div class="sec-title" style="margin-top:0">🧾 ค่าใช้จ่าย (auto จาก S2)</div>${expHtml}</div>
+    <div class="card" style="padding:12px"><div class="sl" style="margin-top:0">💰 ยอดขาย (auto จาก S1)</div>${chHtml}</div>
+    <div class="card" style="padding:12px"><div class="sl" style="margin-top:0">🧾 ค่าใช้จ่าย (auto จาก S2)</div>${expHtml}</div>
     ${cashHtml}
     <div class="card" style="padding:12px">
-      <div class="sec-title" style="margin-top:0">🌤️ สภาพร้านวันนี้</div>
-      <div class="fg"><label class="lb">อากาศ</label><div style="display:flex;gap:4px;flex-wrap:wrap">${[{k:'sunny',l:'☀️ แดด'},{k:'cloudy',l:'☁️ ครึ้ม'},{k:'rain',l:'🌧️ ฝน'},{k:'heavy_rain',l:'⛈️ ฝนหนัก'}].map(w => `<button class="pill${r.weather === w.k ? ' active' : ''}" onclick="SDSection.s8Pick('weather','${w.k}',this)">${w.l}</button>`).join('')}</div></div>
-      <div class="fg"><label class="lb">Traffic วันนี้</label><div style="display:flex;gap:4px;flex-wrap:wrap">${[{k:'above',l:'📈 ดีกว่าปกติ'},{k:'normal',l:'➡️ ปกติ'},{k:'below',l:'📉 ต่ำกว่าปกติ'}].map(t => `<button class="pill${r.traffic === t.k ? ' active' : ''}" onclick="SDSection.s8Pick('traffic','${t.k}',this)">${t.l}</button>`).join('')}</div></div>
-      <div class="fg"><label class="lb">ระบบ POS</label><div style="display:flex;gap:4px">${[{k:'ok',l:'✅ ปกติ'},{k:'issue',l:'⚠️ มีปัญหา'}].map(p => `<button class="pill${r.pos_status === p.k ? ' active' : ''}" onclick="SDSection.s8Pick('pos_status','${p.k}',this)">${p.l}</button>`).join('')}</div></div>
+      <div class="sl" style="margin-top:0">🌤️ สภาพร้านวันนี้</div>
+      <div class="fg"><label class="fl">อากาศ</label><div style="display:flex;gap:4px;flex-wrap:wrap">${[{k:'sunny',l:'☀️ แดด'},{k:'cloudy',l:'☁️ ครึ้ม'},{k:'rain',l:'🌧️ ฝน'},{k:'heavy_rain',l:'⛈️ ฝนหนัก'}].map(w => `<div class="chip${r.weather === w.k ? ' active' : ''}" onclick="SDSection.s8Pick('weather','${w.k}',this)">${w.l}</div>`).join('')}</div></div>
+      <div class="fg"><label class="fl">Traffic วันนี้</label><div style="display:flex;gap:4px;flex-wrap:wrap">${[{k:'above',l:'📈 ดีกว่าปกติ'},{k:'normal',l:'➡️ ปกติ'},{k:'below',l:'📉 ต่ำกว่าปกติ'}].map(t => `<div class="chip${r.traffic === t.k ? ' active' : ''}" onclick="SDSection.s8Pick('traffic','${t.k}',this)">${t.l}</div>`).join('')}</div></div>
+      <div class="fg"><label class="fl">ระบบ POS</label><div style="display:flex;gap:4px">${[{k:'ok',l:'✅ ปกติ'},{k:'issue',l:'⚠️ มีปัญหา'}].map(p => `<div class="chip${r.pos_status === p.k ? ' active' : ''}" onclick="SDSection.s8Pick('pos_status','${p.k}',this)">${p.l}</div>`).join('')}</div></div>
     </div>
     <div class="card" style="padding:12px">
-      <div class="sec-title" style="margin-top:0">🧑‍🤝‍🧑 กลุ่มลูกค้าตามช่วงเวลา</div>
-      ${custPeriods.map(p => `<div class="fg" style="margin-bottom:6px"><label class="lb">${p.label}</label><textarea class="inp" style="padding:4px 6px;font-size:11px;min-height:28px;resize:vertical" id="s8-cust-${p.key}" placeholder="${p.ph}">${esc(r['customer_' + p.key] || '')}</textarea></div>`).join('')}
+      <div class="sl" style="margin-top:0">🧑‍🤝‍🧑 กลุ่มลูกค้าตามช่วงเวลา</div>
+      ${custPeriods.map(p => `<div class="fg" style="margin-bottom:6px"><label class="fl">${p.label}</label><textarea class="fi" style="padding:4px 6px;font-size:11px;min-height:28px;resize:vertical" id="s8-cust-${p.key}" placeholder="${p.ph}">${esc(r['customer_' + p.key] || '')}</textarea></div>`).join('')}
     </div>
-    <div class="card" style="padding:12px"><div class="sec-title" style="margin-top:0">📝 Overview Note</div><textarea class="inp" id="s8-note" rows="2" placeholder="เช่น ฝนตกหนักช่วงเย็น...">${esc(r.overview_note || '')}</textarea></div>
+    <div class="card" style="padding:12px"><div class="sl" style="margin-top:0">📝 Overview Note</div><textarea class="fi" id="s8-note" rows="2" placeholder="เช่น ฝนตกหนักช่วงเย็น...">${esc(r.overview_note || '')}</textarea></div>
     <div class="card" style="padding:12px">
-      <div class="sec-title" style="margin-top:0">🍞 Waste List</div>
-      <div style="display:flex;gap:4px"><button class="pill${r.has_waste === false ? ' active' : ''}" onclick="SDSection.s8Pick('waste','no',this)">❌ No</button><button class="pill${r.has_waste === true ? ' active' : ''}" onclick="SDSection.s8Pick('waste','yes',this)">✅ Yes</button></div>
+      <div class="sl" style="margin-top:0">🍞 Waste List</div>
+      <div style="display:flex;gap:4px"><div class="chip${r.has_waste === false ? ' active' : ''}" onclick="SDSection.s8Pick('waste','no',this)">❌ No</div><div class="chip${r.has_waste === true ? ' active' : ''}" onclick="SDSection.s8Pick('waste','yes',this)">✅ Yes</div></div>
       <div id="s8-waste-detail"></div>
     </div>`;
 }
@@ -315,18 +315,18 @@ function fillS8Incidents(el) {
     const inc = s8.incidents.find(i => i.category === c.key) || { category: c.key, count: 0, notes: [] };
     const count = inc.count || 0; totalCount += count;
     let notesHtml = '';
-    if (count > 0) { for (let i = 0; i < count; i++) { notesHtml += `<input class="inp" style="font-size:11px;padding:4px 8px;margin-bottom:4px" placeholder="รายการที่ ${i + 1}" value="${esc((inc.notes && inc.notes[i]) || '')}" oninput="SDSection.s8IncNote('${c.key}',${i},this.value)">`; } }
+    if (count > 0) { for (let i = 0; i < count; i++) { notesHtml += `<input class="fi" style="font-size:11px;padding:4px 8px;margin-bottom:4px" placeholder="รายการที่ ${i + 1}" value="${esc((inc.notes && inc.notes[i]) || '')}" oninput="SDSection.s8IncNote('${c.key}',${i},this.value)">`; } }
     return `<div class="card" style="padding:10px;margin-bottom:6px;border-left:3px solid ${count > 0 ? 'var(--orange)' : 'transparent'}">
       <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${c.icon}</span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600">${c.name}</div><div style="font-size:10px;color:var(--t3)">${c.desc}</div></div>
-        <div style="display:flex;align-items:center;gap:6px"><button class="btn btn-outline btn-sm" style="width:28px;height:28px;padding:0" onclick="SDSection.s8IncChange('${c.key}',-1)">−</button><span style="font-size:14px;font-weight:700;min-width:20px;text-align:center" id="s8-inc-${c.key}">${count}</span><button class="btn btn-outline btn-sm" style="width:28px;height:28px;padding:0" onclick="SDSection.s8IncChange('${c.key}',1)">+</button></div>
+        <div style="display:flex;align-items:center;gap:6px"><button class="cnt-btn" onclick="SDSection.s8IncChange('${c.key}',-1)">−</button><span style="font-size:14px;font-weight:700;min-width:20px;text-align:center" id="s8-inc-${c.key}">${count}</span><button class="cnt-btn" onclick="SDSection.s8IncChange('${c.key}',1)">+</button></div>
       </div>
       <div style="margin-top:6px;${count > 0 ? '' : 'display:none'}" id="s8-inc-notes-${c.key}">${notesHtml}</div>
     </div>`;
   }).join('');
 
-  el.innerHTML = `<div class="sec-title" style="margin-top:0">⚠️ เหตุการณ์ — กดจำนวน + ใส่ note</div>${catHtml}
+  el.innerHTML = `<div class="sl" style="margin-top:0">⚠️ เหตุการณ์ — กดจำนวน + ใส่ note</div>${catHtml}
     <div class="card" style="padding:10px"><div style="font-size:11px;font-weight:600;margin-bottom:4px">📊 สรุป</div><div style="font-size:10px;color:var(--t3)">รวม <b id="s8-inc-total">${totalCount}</b> เหตุการณ์</div></div>
-    <div class="sec-title">🍚 อาหารเหลือ</div>
+    <div class="sl">🍚 อาหารเหลือ</div>
     <div id="s8-leftovers">${renderLeftovers()}</div>
     <div style="display:flex;align-items:center;gap:6px;padding:8px 0;cursor:pointer;color:var(--theme);font-size:12px;font-weight:600" onclick="SDSection.s8AddLeftover()">➕ เพิ่มรายการ</div>`;
 }
@@ -334,20 +334,20 @@ function fillS8Incidents(el) {
 function fillS8Tasks(el) {
   const pending = s8.tasks.filter(t => t.status === 'pending');
   el.innerHTML = `
-    <div class="sec-title" style="margin-top:0">🔧 Equipment Repair Report</div>
+    <div class="sl" style="margin-top:0">🔧 Equipment Repair Report</div>
     <div class="card" style="padding:12px;margin-bottom:10px">
-      <div class="fg" style="margin-bottom:6px"><label class="lb">ชื่ออุปกรณ์</label><input class="inp" id="s8-eq-name" placeholder="เช่น เครื่องทำน้ำแข็ง"></div>
-      <div class="fg" style="margin-bottom:6px"><label class="lb">อาการ</label><input class="inp" id="s8-eq-symptom" placeholder="เช่น ไม่ทำความเย็น"></div>
-      <div class="fg" style="margin-bottom:8px"><label class="lb">ความเร่งด่วน</label><select class="inp" id="s8-eq-urgency"><option value="">— เลือก —</option><option value="critical">🔴 ต้องซ่อมทันที</option><option value="high">🟠 ควรซ่อมเร็ว</option><option value="low">🟡 ไม่รีบ</option><option value="dispose">⚫ ทิ้ง</option></select></div>
+      <div class="fg" style="margin-bottom:6px"><label class="fl">ชื่ออุปกรณ์</label><input class="fi" id="s8-eq-name" placeholder="เช่น เครื่องทำน้ำแข็ง"></div>
+      <div class="fg" style="margin-bottom:6px"><label class="fl">อาการ</label><input class="fi" id="s8-eq-symptom" placeholder="เช่น ไม่ทำความเย็น"></div>
+      <div class="fg" style="margin-bottom:8px"><label class="fl">ความเร่งด่วน</label><select class="fi" id="s8-eq-urgency"><option value="">— เลือก —</option><option value="critical">🔴 ต้องซ่อมทันที</option><option value="high">🟠 ควรซ่อมเร็ว</option><option value="low">🟡 ไม่รีบ</option><option value="dispose">⚫ ทิ้ง</option></select></div>
       <button class="btn btn-primary btn-full" onclick="SDSection.s8AddEquipment()">+ แจ้งซ่อม</button>
     </div>
-    <div class="sec-title">📋 เพิ่มงานติดตาม</div>
+    <div class="sl">📋 เพิ่มงานติดตาม</div>
     <div class="card" style="padding:12px;margin-bottom:10px">
-      <input class="inp" id="s8-task-title" placeholder="เช่น โทรสั่ง stock เพิ่ม" style="margin-bottom:6px">
-      <div style="display:flex;gap:8px;margin-bottom:8px"><input class="inp" id="s8-task-assign" placeholder="มอบหมายให้..." style="flex:1"><select class="inp" id="s8-task-pri" style="width:100px"><option value="normal">📋 ปกติ</option><option value="urgent">🚨 ด่วน</option></select></div>
+      <input class="fi" id="s8-task-title" placeholder="เช่น โทรสั่ง stock เพิ่ม" style="margin-bottom:6px">
+      <div style="display:flex;gap:8px;margin-bottom:8px"><input class="fi" id="s8-task-assign" placeholder="มอบหมายให้..." style="flex:1"><select class="fi" id="s8-task-pri" style="width:100px"><option value="normal">📋 ปกติ</option><option value="urgent">🚨 ด่วน</option></select></div>
       <button class="btn btn-primary btn-full" onclick="SDSection.s8AddTask('follow_up')">+ เพิ่มงาน</button>
     </div>
-    <div class="sec-title">⏳ ค้าง (${pending.length})</div>
+    <div class="sl">⏳ ค้าง (${pending.length})</div>
     <div id="s8-pending-list">${pending.length ? pending.map(t => {
       const icons = { equipment: '🔧', follow_up: '📋', suggestion: '💡', action: '🚨' };
       const bc = t.type === 'suggestion' ? 'var(--theme)' : t.type === 'equipment' ? 'var(--orange)' : (t.priority === 'urgent' ? 'var(--red)' : 'var(--orange)');
@@ -361,7 +361,7 @@ function s8Pick(field, val, el) {
   else if (field === 'traffic') _s8Traffic = val;
   else if (field === 'pos_status') _s8PosStatus = val;
   else if (field === 'waste') _s8Waste = val === 'yes';
-  el.parentElement.querySelectorAll('.pill').forEach(c => c.classList.remove('active')); el.classList.add('active');
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active');
 }
 
 function s8IncChange(cat, delta) {
@@ -376,7 +376,7 @@ function s8IncChange(cat, delta) {
   const cntEl = document.getElementById('s8-inc-' + cat); if (cntEl) cntEl.textContent = inc.count;
   if (noteWrap) {
     noteWrap.style.display = inc.count > 0 ? '' : 'none';
-    let html = ''; for (let i = 0; i < inc.count; i++) { html += `<input class="inp" style="font-size:11px;padding:4px 8px;margin-bottom:4px" placeholder="รายการที่ ${i + 1}" value="${esc(inc.notes[i] || '')}" oninput="SDSection.s8IncNote('${cat}',${i},this.value)">`; }
+    let html = ''; for (let i = 0; i < inc.count; i++) { html += `<input class="fi" style="font-size:11px;padding:4px 8px;margin-bottom:4px" placeholder="รายการที่ ${i + 1}" value="${esc(inc.notes[i] || '')}" oninput="SDSection.s8IncNote('${cat}',${i},this.value)">`; }
     noteWrap.innerHTML = html;
   }
   const totalEl = document.getElementById('s8-inc-total');
@@ -389,19 +389,19 @@ function renderLeftovers() {
   if (!s8.leftovers.length) return '<div style="text-align:center;padding:10px;color:var(--t3);font-size:11px">ยังไม่มีรายการ — กด ➕ เพิ่ม</div>';
   return s8.leftovers.map((l, i) => `<div class="card" style="padding:10px;margin-bottom:6px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span>🍞</span><input class="inp" style="flex:1;font-size:12px;padding:4px 6px" value="${esc(l.item_name)}" placeholder="ชื่ออาหาร..." oninput="SDSection.s8LeftUpdate(${i},'item_name',this.value)">
-      <input class="inp" type="number" style="width:44px;font-size:12px;padding:4px 6px;text-align:center" value="${l.quantity}" min="0" oninput="SDSection.s8LeftUpdate(${i},'quantity',this.value)">
+      <span>🍞</span><input class="fi" style="flex:1;font-size:12px;padding:4px 6px" value="${esc(l.item_name)}" placeholder="ชื่ออาหาร..." oninput="SDSection.s8LeftUpdate(${i},'item_name',this.value)">
+      <input class="fi" type="number" style="width:44px;font-size:12px;padding:4px 6px;text-align:center" value="${l.quantity}" min="0" oninput="SDSection.s8LeftUpdate(${i},'quantity',this.value)">
       <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red);width:28px;height:28px;padding:0" onclick="SDSection.s8LeftRemove(${i})">✕</button>
     </div>
-    <div style="display:flex;gap:4px;flex-wrap:wrap">${LEVEL_OPTS.map(lv => `<button class="pill${l.level === lv.key ? ' active' : ''}" onclick="SDSection.s8LeftLevel(${i},'${lv.key}',this)">${lv.label}</button>`).join('')}</div>
-    <input class="inp" style="font-size:11px;padding:4px 6px;margin-top:6px;width:100%" value="${esc(l.note || '')}" placeholder="หมายเหตุ..." oninput="SDSection.s8LeftUpdate(${i},'note',this.value)">
+    <div style="display:flex;gap:4px;flex-wrap:wrap">${LEVEL_OPTS.map(lv => `<div class="chip${l.level === lv.key ? ' active' : ''}" onclick="SDSection.s8LeftLevel(${i},'${lv.key}',this)">${lv.label}</div>`).join('')}</div>
+    <input class="fi" style="font-size:11px;padding:4px 6px;margin-top:6px;width:100%" value="${esc(l.note || '')}" placeholder="หมายเหตุ..." oninput="SDSection.s8LeftUpdate(${i},'note',this.value)">
   </div>`).join('');
 }
 
 function s8LeftUpdate(idx, field, val) { if (s8.leftovers[idx]) s8.leftovers[idx][field] = field === 'quantity' ? parseInt(val) || 1 : val; }
 function s8LeftRemove(idx) { s8.leftovers.splice(idx, 1); document.getElementById('s8-leftovers').innerHTML = renderLeftovers(); }
 function s8AddLeftover() { s8.leftovers.push({ item_name: '', quantity: 1, level: 'half', note: '' }); document.getElementById('s8-leftovers').innerHTML = renderLeftovers(); }
-function s8LeftLevel(idx, level, el) { if (s8.leftovers[idx]) s8.leftovers[idx].level = level; el.parentElement.querySelectorAll('.pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
+function s8LeftLevel(idx, level, el) { if (s8.leftovers[idx]) s8.leftovers[idx].level = level; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); }
 
 async function s8ToggleTask(taskId, newStatus) {
   try { await SD.api('update_task', { task_id: taskId, status: newStatus }); const t = s8.tasks.find(x => x.id === taskId); if (t) { t.status = newStatus; t.completed_at = newStatus === 'done' ? new Date().toISOString() : null; } fillS8Tab(); SPG.toast(newStatus === 'done' ? '✅ เสร็จแล้ว' : '↩ เปิดใหม่', 'success'); }
@@ -478,13 +478,13 @@ function renderTasks(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Tasks</div></div>
   <div class="content" id="tk-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div class="sec-title" style="margin:0" id="tk-count">📋 Tasks (0)</div>
+      <div class="sl" style="margin:0" id="tk-count">📋 Tasks (0)</div>
       <button class="btn btn-primary btn-sm" onclick="SDSection.tkNewTask()">+ New Task</button>
     </div>
     <div style="font-size:9px;font-weight:600;color:var(--t4);text-transform:uppercase;margin-bottom:4px">Type</div>
-    <div style="display:flex;gap:4px;margin-bottom:10px" id="tk-type"><button class="pill active" onclick="SDSection.tkFilter('type','all',this)">All</button><button class="pill" onclick="SDSection.tkFilter('type','equipment',this)">🔧 Equipment</button><button class="pill" onclick="SDSection.tkFilter('type','follow_up',this)">📋 Tasks</button><button class="pill" onclick="SDSection.tkFilter('type','action',this)">💡 Action</button></div>
+    <div style="display:flex;gap:4px;margin-bottom:10px" id="tk-type"><div class="chip active" onclick="SDSection.tkFilter('type','all',this)">All</div><div class="chip" onclick="SDSection.tkFilter('type','equipment',this)">🔧 Equipment</div><div class="chip" onclick="SDSection.tkFilter('type','follow_up',this)">📋 Tasks</div><div class="chip" onclick="SDSection.tkFilter('type','action',this)">💡 Action</div></div>
     <div style="font-size:9px;font-weight:600;color:var(--t4);text-transform:uppercase;margin-bottom:4px">Status</div>
-    <div style="display:flex;gap:4px;margin-bottom:10px" id="tk-status"><button class="pill active" onclick="SDSection.tkFilter('status','all',this)">All</button><button class="pill" onclick="SDSection.tkFilter('status','pending',this)">⏳ Open</button><button class="pill" onclick="SDSection.tkFilter('status','done',this)">✅ Done</button></div>
+    <div style="display:flex;gap:4px;margin-bottom:10px" id="tk-status"><div class="chip active" onclick="SDSection.tkFilter('status','all',this)">All</div><div class="chip" onclick="SDSection.tkFilter('status','pending',this)">⏳ Open</div><div class="chip" onclick="SDSection.tkFilter('status','done',this)">✅ Done</div></div>
     <div id="tk-list">${ui.skeleton(100)}</div>
   </div>`, SECTION);
 }
@@ -517,7 +517,7 @@ function fillTasks() {
 
 function tkFilter(dimension, val, el) {
   if (dimension === 'type') tk.typeFilter = val; else tk.statusFilter = val;
-  el.parentElement.querySelectorAll('.pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); fillTasks();
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); fillTasks();
 }
 
 async function tkToggle(taskId, newStatus) {
@@ -528,11 +528,11 @@ async function tkToggle(taskId, newStatus) {
 function tkNewTask() {
   SPG.showDialog(`<div class="popup-sheet" style="width:360px">
     <div class="popup-header"><div class="popup-title">+ New Task</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">Type</label><select class="inp" id="tknew-type"><option value="follow_up">📋 Follow-up</option><option value="equipment">🔧 Equipment</option><option value="suggestion">💡 Suggestion</option><option value="action">🚨 Action</option></select></div>
-    <div class="fg"><label class="lb">Title <span style="color:var(--red)">*</span></label><input class="inp" id="tknew-title"></div>
-    <div class="fg"><label class="lb">Priority</label><select class="inp" id="tknew-pri"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critical</option></select></div>
-    <div class="fg"><label class="lb">Due Date</label><input class="inp" type="date" id="tknew-due"></div>
-    <div class="fg"><label class="lb">Note</label><textarea class="inp" id="tknew-note" rows="2"></textarea></div>
+    <div class="fg"><label class="fl">Type</label><select class="fi" id="tknew-type"><option value="follow_up">📋 Follow-up</option><option value="equipment">🔧 Equipment</option><option value="suggestion">💡 Suggestion</option><option value="action">🚨 Action</option></select></div>
+    <div class="fg"><label class="fl">Title <span style="color:var(--red)">*</span></label><input class="fi" id="tknew-title"></div>
+    <div class="fg"><label class="fl">Priority</label><select class="fi" id="tknew-pri"><option value="normal">Normal</option><option value="urgent">Urgent</option><option value="critical">Critical</option></select></div>
+    <div class="fg"><label class="fl">Due Date</label><input class="fi" type="date" id="tknew-due"></div>
+    <div class="fg"><label class="fl">Note</label><textarea class="fi" id="tknew-note" rows="2"></textarea></div>
     <button class="btn btn-primary btn-full" id="tknew-save" onclick="SDSection.tkSaveNew()">💾 Save</button>
   </div>`);
 }
@@ -558,8 +558,8 @@ function renderDH(p) {
   return SPG.shell(`<div class="toolbar">${backBtn()}<div class="toolbar-title">Daily Hub</div></div>
   <div class="content" id="dh-content">
     ${SD.renderStoreSelector({ noAll: true })}
-    <div id="dh-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">${ui.skeleton(72, 4)}</div>
-    <div class="sec-title">📋 รายวัน — กดเลือกดู detail</div>
+    <div id="dh-kpi" class="kpi-row kpi-4" style="margin-bottom:12px">${ui.skeleton(72, 4)}</div>
+    <div class="sl">📋 รายวัน — กดเลือกดู detail</div>
     <div style="font-size:10px;color:var(--t3);margin-bottom:6px">แสดงย้อนหลัง 7 วัน</div>
     <div id="dh-days">${ui.skeleton(100)}</div>
     <div id="dh-detail" style="margin-top:12px"></div>
@@ -581,10 +581,10 @@ function fillDH() {
   const reported = dh.days.filter(d => d.has_report).length; const total = dh.days.length;
   const pct = total > 0 ? Math.round(reported / total * 100) : 0;
   document.getElementById('dh-kpi').innerHTML = `
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">📝 รายงาน</div><div style="font-size:16px;font-weight:800">${reported}/${total}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">⚠️ เหตุการณ์</div><div style="font-size:16px;font-weight:800;color:var(--red)">${dh.totalIncidents}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">📋 Tasks ค้าง</div><div style="font-size:16px;font-weight:800;color:var(--theme)">${dh.pendingTasks}</div></div>
-    <div class="card" style="text-align:center;padding:10px"><div style="font-size:10px;color:var(--t3)">✅ Completion</div><div style="font-size:16px;font-weight:800;color:var(--green)">${pct}%</div></div>`;
+    <div class="kpi-box"><div class="kpi-label">📝 รายงาน</div><div class="kpi-val">${reported}/${total}</div></div>
+    <div class="kpi-box"><div class="kpi-label">⚠️ เหตุการณ์</div><div class="kpi-val" style="color:var(--red)">${dh.totalIncidents}</div></div>
+    <div class="kpi-box"><div class="kpi-label">📋 Tasks ค้าง</div><div class="kpi-val" style="color:var(--theme)">${dh.pendingTasks}</div></div>
+    <div class="kpi-box"><div class="kpi-label">✅ Completion</div><div class="kpi-val" style="color:var(--green)">${pct}%</div></div>`;
   const el = document.getElementById('dh-days'); if (!el) return;
   el.innerHTML = dh.days.map(d => {
     const sel = d.date === dh.selectedDate; const synced = d.sync_status === 'synced'; const isToday = d.date === td();
@@ -616,9 +616,9 @@ async function dhSelect(date) {
         <div style="font-size:14px;font-weight:700">📅 ${SD.fmtDate(date)}</div>
         <div>${isEditable ? ui.badge('pending') : ui.badge('approved')}</div>
       </div>
-      <div class="sec-title" style="margin-top:0">💰 ยอดขาย</div><div class="card" style="padding:8px">${chRows}<div style="border-top:1px solid var(--bd2);margin-top:4px;padding-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:12px"><span>Total</span><span style="color:var(--theme)">${fm(totalSales)}</span></div></div>
-      <div class="sec-title">🧾 ค่าใช้จ่าย</div><div class="card" style="padding:8px">${expRows}<div style="border-top:1px solid var(--bd2);margin-top:4px;padding-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:12px"><span>Total</span><span style="color:var(--red)">-${fm(totalExp)}</span></div></div>
-      ${cash ? `<div class="sec-title">💵 Cash</div><div class="card" style="padding:8px;border-left:3px solid ${cashColor}"><div style="display:flex;justify-content:space-between;font-size:11px"><span>Expected</span><span>${fm(cash.expected_cash || 0)}</span></div><div style="display:flex;justify-content:space-between;font-size:11px"><span>Variance</span><span style="color:${cashColor};font-weight:600">${fm(cash.difference || 0)}</span></div></div>` : ''}
+      <div class="sl" style="margin-top:0">💰 ยอดขาย</div><div class="card" style="padding:8px">${chRows}<div style="border-top:1px solid var(--bd2);margin-top:4px;padding-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:12px"><span>Total</span><span style="color:var(--theme)">${fm(totalSales)}</span></div></div>
+      <div class="sl">🧾 ค่าใช้จ่าย</div><div class="card" style="padding:8px">${expRows}<div style="border-top:1px solid var(--bd2);margin-top:4px;padding-top:4px;display:flex;justify-content:space-between;font-weight:700;font-size:12px"><span>Total</span><span style="color:var(--red)">-${fm(totalExp)}</span></div></div>
+      ${cash ? `<div class="sl">💵 Cash</div><div class="card" style="padding:8px;border-left:3px solid ${cashColor}"><div style="display:flex;justify-content:space-between;font-size:11px"><span>Expected</span><span>${fm(cash.expected_cash || 0)}</span></div><div style="display:flex;justify-content:space-between;font-size:11px"><span>Variance</span><span style="color:${cashColor};font-weight:600">${fm(cash.difference || 0)}</span></div></div>` : ''}
       ${isEditable ? `<div style="display:flex;gap:8px;margin-top:10px">
         <button class="btn btn-primary btn-sm" style="flex:1" onclick="SPG.go('sales/daily-sale-edit',{date:'${date}'})">✏️ แก้ยอดขาย</button>
         <button class="btn btn-outline btn-sm" style="flex:1" onclick="SPG.go('sales/expense',{date:'${date}'})">✏️ แก้ค่าใช้จ่าย</button>

@@ -1,12 +1,14 @@
 /**
- * SPG HUB v1.0.0 | 22 MAR 2026 | Siam Palette Group
+ * SPG HUB v2.0.0 | 23 MAR 2026 | Siam Palette Group
  * sections/sd_screens.js — Dashboard (Store + Management view)
+ * Layout: 100% match backup screens_sd.js (CSS classes: .kpi-row, .qb, .sl, .kpi-box)
+ * API: One Union pattern (SD.api, SPG.go, SPG.shell)
+ *
  * T1-T2 → redirect to Executive (no regular dashboard)
  * T3-T4 → Management Dashboard (KPI + admin widgets)
  * T5-T7 → Store Dashboard (KPI + quick buttons)
  *
  * Depends on: sd_core.js (SD global)
- * Design: Blue #2563eb accent, matches Home layout via SPG.shell/toolbar
  */
 
 (() => {
@@ -37,59 +39,51 @@ function renderDashboard(p) {
 }
 
 
-// ─── MANAGEMENT DASHBOARD (T3-T4) ───
+// ─── T1-T4 MANAGEMENT DASHBOARD ───
 function _renderMgmt(s) {
-  return SPG.shell(SPG.toolbar('Dashboard') + `
+  return SPG.shell(`<div class="toolbar"><div class="toolbar-title">Dashboard</div></div>
     <div class="content" id="dash-content">
-      <div style="margin-bottom:16px">
-        <div style="font-size:16px;font-weight:900;letter-spacing:-.5px" class="grad-text">Welcome, ${esc(s.display_name || s.display_label)}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:2px">${esc(s.position_name || s.tier_id)} · Manager · ${esc(s.store_name || s.store_id)} · ${esc(s.dept_id)}</div>
-      </div>
+      <div style="margin-bottom:14px"><div class="welcome-name">Welcome, ${esc(s.display_name || s.display_label)}</div><div class="welcome-meta">${esc(s.position_name || s.tier_id)} · Manager · ${esc(s.store_name || s.store_id)} · ${esc(s.dept_id)}</div></div>
       ${SD.renderStoreSelector()}
-      <div id="dash-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-        ${ui.skeleton(72, 4)}
-      </div>
-      <div id="dash-chart" style="margin-bottom:12px">${ui.skeleton(160)}</div>
-      <div id="dash-cash" style="margin-bottom:12px">${ui.skeleton(80)}</div>
+      <div id="dash-kpi" class="kpi-row kpi-4"><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div></div>
+      <div id="dash-chart" class="skeleton sk-card" style="height:160px"></div>
+      <div id="dash-cash" class="skeleton sk-card" style="height:80px"></div>
       <div id="dash-anomaly"></div>
       <div id="dash-stores"></div>
-      <div class="sec-title">History</div>
-      ${_qCard('📊', 'Sale History', 'ประวัติขาย', 'sale-history')}
-      ${_qCard('📋', 'Expense History', 'ประวัติจ่าย', 'expense-history')}
-      <div class="sec-title">Report</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        ${_qCard('📝', 'Daily Report', '', 'daily-report')}
-        ${_qCard('📊', 'Daily Hub', 'สรุปรายวัน', 'daily-hub')}
-        ${_qCard('📋', 'Tasks', '', 'tasks')}
+      <div class="sl">📊 History</div>
+      ${qb('📊', 'var(--gold-bg,rgba(212,150,10,.06))', 'var(--gold,#d4960a)', 'Sale History', 'ประวัติขาย', 'sale-history')}
+      ${qb('📋', 'var(--rbg,#fef2f2)', 'var(--r,#dc2626)', 'Expense History', 'ประวัติจ่าย', 'expense-history')}
+      <div class="sl">📝 Report</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${qb('📝', 'var(--obg,#fffbeb)', 'var(--o,#d97706)', 'Daily Report', '', 'daily-report')}
+        ${qb('📊', 'var(--bbg,#dbeafe)', 'var(--b,#2563eb)', 'Daily Hub', 'สรุปรายวัน', 'daily-hub')}
+        ${qb('📋', 'var(--acc2)', 'var(--acc)', 'Tasks', '', 'tasks')}
       </div>
-      <div class="sec-title">Admin</div>
-      ${_qCard('📤', 'Account Review', 'Editable / Sync', 'acc-review')}
+      <div class="sl">⚙️ Admin</div>
+      ${qb('📤', 'var(--gbg,#ecfdf5)', 'var(--g,#059669)', 'Account Review', 'Editable / Sync', 'acc-review')}
+      ${qb('📡', 'var(--gold-bg,rgba(212,150,10,.06))', 'var(--gold,#d4960a)', 'Channels', 'ช่องทางขาย', 'channels')}
+      ${qb('🏪', 'var(--bbg,#dbeafe)', 'var(--b,#2563eb)', 'Vendors', 'รายชื่อ vendor', 'vendors')}
     </div>`, 'Sales Daily');
 }
 
 
-// ─── STORE DASHBOARD (T5-T7) ───
+// ─── T5-T7 STORE DASHBOARD ───
 function _renderStore(s) {
-  return SPG.shell(SPG.toolbar('Dashboard') + `
+  return SPG.shell(`<div class="toolbar"><div class="toolbar-title">Dashboard</div></div>
     <div class="content" id="dash-content">
-      <div style="margin-bottom:16px">
-        <div style="font-size:16px;font-weight:900;letter-spacing:-.5px" class="grad-text">Welcome, ${esc(s.display_name || s.display_label)}</div>
-        <div style="font-size:11px;color:var(--t3);margin-top:2px">${esc(s.position_name || s.tier_id)} · Store Staff · ${esc(s.store_name || s.store_id)}</div>
-      </div>
-      <div id="dash-kpi" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        ${ui.skeleton(72, 4)}
-      </div>
-      <div class="sec-title">กรอกข้อมูล</div>
-      ${_qCard('💰', 'กรอกยอดขาย', 'S1 Daily Sale', 'daily-sale')}
-      ${_qCard('🧾', 'ค่าใช้จ่าย', 'S2 Expense', 'expense')}
-      ${_qCard('📄', 'Invoice', 'S3 Invoice', 'invoice')}
-      ${_qCard('💵', 'เงินสดส่งมอบ', 'S4 Cash', 'cash')}
-      <div class="sec-title">History & Report</div>
-      ${_qCard('📊', 'ประวัติขาย', '', 'sale-history')}
-      ${_qCard('📋', 'ประวัติจ่าย', '', 'expense-history')}
-      ${_qCard('📝', 'สรุปรายงาน', 'S8 Daily Report', 'daily-report')}
-      ${_qCard('📋', 'Follow-up Tasks', '', 'tasks')}
-      ${_qCard('📊', 'Daily Hub', 'สรุปรายวัน', 'daily-hub')}
+      <div style="margin-bottom:14px"><div class="welcome-name">Welcome, ${esc(s.display_name || s.display_label)}</div><div class="welcome-meta">${esc(s.position_name || s.tier_id)} · Store Staff · ${esc(s.store_name || s.store_id)}</div></div>
+      <div id="dash-kpi" class="kpi-row kpi-2"><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div><div class="skeleton sk-kpi"></div></div>
+      <div class="sl">กรอกข้อมูล</div>
+      ${qb('💰', 'var(--gold-bg,rgba(212,150,10,.06))', 'var(--gold,#d4960a)', 'กรอกยอดขาย', 'S1 Daily Sale', 'daily-sale', 'var(--gold,#d4960a)')}
+      ${qb('🧾', 'var(--rbg,#fef2f2)', 'var(--r,#dc2626)', 'ค่าใช้จ่าย', 'S2 Expense', 'expense')}
+      ${qb('📄', 'var(--bbg,#dbeafe)', 'var(--b,#2563eb)', 'Invoice', 'S3 Invoice', 'invoice')}
+      ${qb('💵', 'var(--gbg,#ecfdf5)', 'var(--g,#059669)', 'เงินสดส่งมอบ', 'S4 Cash', 'cash')}
+      <div class="sl">History & Report</div>
+      ${qb('📊', 'var(--bg3)', 'var(--t2)', 'ประวัติขาย', '', 'sale-history')}
+      ${qb('📋', 'var(--bg3)', 'var(--t2)', 'ประวัติจ่าย', '', 'expense-history')}
+      ${qb('📝', 'var(--obg,#fffbeb)', 'var(--o,#d97706)', 'สรุปรายงาน', 'S8 Daily Report', 'daily-report')}
+      ${qb('📋', 'var(--acc2)', 'var(--acc)', 'Follow-up Tasks', '', 'tasks')}
+      ${qb('📊', 'var(--bbg,#dbeafe)', 'var(--b,#2563eb)', 'Daily Hub', 'สรุปรายวัน', 'daily-hub')}
     </div>`, 'Sales Daily');
 }
 
@@ -106,8 +100,8 @@ async function loadDashboard(p) {
 
   // Use cached dashboard from init if available
   if (S.dashboard) {
-    _fillKPI(S.dashboard, isMgmt);
-    if (isMgmt) _loadAdminWidgets();
+    fillKPI(S.dashboard, isMgmt);
+    if (isMgmt) loadAdminWidgets();
     return;
   }
 
@@ -116,8 +110,8 @@ async function loadDashboard(p) {
   try {
     const data = await SD.api('get_dashboard', { store_id: SD.getStore() });
     S.dashboard = data;
-    _fillKPI(data, isMgmt);
-    if (isMgmt) _loadAdminWidgets();
+    fillKPI(data, isMgmt);
+    if (isMgmt) loadAdminWidgets();
   } catch (err) {
     SPG.toast('โหลด Dashboard ไม่ได้', 'error');
   } finally { _dashLoading = false; }
@@ -125,7 +119,7 @@ async function loadDashboard(p) {
 
 
 // ─── FILL KPI ───
-function _fillKPI(d, isMgmt) {
+function fillKPI(d, isMgmt) {
   const el = document.getElementById('dash-kpi');
   if (!el || !d) return;
 
@@ -135,25 +129,25 @@ function _fillKPI(d, isMgmt) {
   const alerts = d.alerts || {};
 
   if (isMgmt) {
-    el.style.gridTemplateColumns = 'repeat(4,1fr)';
+    el.className = 'kpi-row kpi-4';
     el.innerHTML = `
-      ${_kpi(fm(today.total_sales || 0), 'Total Today', today.is_recorded ? '⏳ Pending' : '❌ Missing', 'var(--theme)')}
-      ${_kpi(fms(month.total || 0), 'เดือนนี้', (month.days_recorded || 0) + ' วัน')}
-      ${_kpi(fms(month.daily_average || 0), 'เฉลี่ย/วัน', '')}
-      ${_kpi(String(alerts.missing_days || 0), 'Pending Sync', 'days', alerts.missing_days > 0 ? 'var(--orange)' : '')}`;
+      ${kpiBox(fm(today.total_sales || 0), `<span style="color:var(--g,#059669)">●</span> Total Today`, today.is_recorded ? '⏳ Pending' : '❌ Missing', 'border-left:3px solid var(--gold,#d4960a)', 'color:var(--gold,#d4960a)')}
+      ${kpiBox(fms(month.total || 0), 'เดือนนี้', (month.days_recorded || 0) + ' วัน')}
+      ${kpiBox(fms(month.daily_average || 0), 'เฉลี่ย/วัน', '')}
+      ${kpiBox(String(alerts.missing_days || 0), 'Pending Sync', 'days', '', alerts.missing_days > 0 ? 'color:var(--o,#d97706)' : '')}`;
   } else {
-    el.style.gridTemplateColumns = '1fr 1fr';
+    el.className = 'kpi-row kpi-2';
     el.innerHTML = `
-      ${_kpi(fm(today.total_sales || 0), '📊 ยอดวันนี้', today.is_recorded ? '⏳ Pending' : '❌ Missing', 'var(--theme)')}
-      ${_kpi(fms(month.total || 0), '📅 เดือนนี้', (month.days_recorded || 0) + ' วัน')}
-      ${_kpi(fms(month.daily_average || 0), '📈 เฉลี่ย', '')}
-      ${_kpi(fm(yesterday.total_sales || 0), '📉 เมื่อวาน', '')}`;
+      ${kpiBox(fm(today.total_sales || 0), '📊 ยอดวันนี้', today.is_recorded ? '⏳ Pending' : '❌ Missing', 'border-left:3px solid var(--gold,#d4960a)', 'color:var(--gold,#d4960a)')}
+      ${kpiBox(fms(month.total || 0), '📅 เดือนนี้', (month.days_recorded || 0) + ' วัน')}
+      ${kpiBox(fms(month.daily_average || 0), '📈 เฉลี่ย', '')}
+      ${kpiBox(fm(yesterday.total_sales || 0), '📉 เมื่อวาน', '')}`;
   }
 }
 
 
 // ─── ADMIN WIDGETS (T3-T4 management — parallel fetch) ───
-async function _loadAdminWidgets() {
+async function loadAdminWidgets() {
   if (_adminLoading) return;
   _adminLoading = true;
 
@@ -169,17 +163,17 @@ async function _loadAdminWidgets() {
   const chartEl = document.getElementById('dash-chart');
   if (chartEl) {
     if (chartData) {
-      chartEl.innerHTML = `<div class="card">
-        <div class="sec-title" style="margin-top:0">📈 This Week vs Last Week</div>
-        ${_renderLineChart(chartData)}
+      chartEl.className = 'card';
+      chartEl.style.height = 'auto';
+      chartEl.innerHTML = `<div class="sl" style="margin-top:0">📈 This Week vs Last Week</div>
+        ${renderLineChart(chartData)}
         <div style="display:flex;gap:12px;margin-top:6px;font-size:10px;flex-wrap:wrap">
-          <span style="color:var(--green)">━ Revenue TW</span>
-          <span style="color:var(--green);opacity:.4">┄ Revenue LW</span>
-          <span style="color:var(--red)">━ Expense TW</span>
-          <span style="color:var(--red);opacity:.4">┄ Expense LW</span>
-        </div>
-      </div>`;
-    } else { chartEl.innerHTML = ''; }
+          <span style="color:var(--g,#059669)">━ Revenue TW</span>
+          <span style="color:var(--g,#059669);opacity:.4">┄ Revenue LW</span>
+          <span style="color:var(--r,#dc2626)">━ Expense TW</span>
+          <span style="color:var(--r,#dc2626);opacity:.4">┄ Expense LW</span>
+        </div>`;
+    } else { chartEl.innerHTML = ''; chartEl.className = ''; chartEl.style.height = '0'; }
   }
 
   // Cash variance
@@ -189,25 +183,26 @@ async function _loadAdminWidgets() {
       const isAll = SD.getStore() === 'ALL';
       const filtered = isAll ? cashData.days.filter(d => !d.matched) : cashData.days;
       if (filtered.length) {
-        cashEl.innerHTML = `<div class="card">
-          <div class="sec-title" style="margin-top:0">💰 Cash Variance${isAll ? ' (mismatch only)' : ' (7 วัน)'}</div>
+        cashEl.className = 'card';
+        cashEl.style.height = 'auto';
+        cashEl.innerHTML = `<div class="sl" style="margin-top:0">💰 Cash Variance${isAll ? ' (mismatch only)' : ' (7 วัน)'}</div>
           <div style="font-size:11px;line-height:2;color:var(--t2)">${filtered.map(d => {
             const label = isAll ? `${d.store_id} ${d.day_label || d.date}` : (d.day_label || d.date);
-            return d.matched ? `${label}: <span style="color:var(--green)">✓ Match</span>` : `${label}: <span style="color:var(--red)">${fm(d.variance || 0)}</span>`;
-          }).join(' · ')}</div>
-        </div>`;
-      } else { cashEl.innerHTML = ''; }
-    } else { cashEl.innerHTML = ''; }
+            if (d.matched) return `${label}: <span style="color:var(--g,#059669)">✓ Match</span>`;
+            return `${label}: <span style="color:var(--r,#dc2626)">${fm(d.variance || 0)}</span>`;
+          }).join(' · ')}</div>`;
+      } else { cashEl.innerHTML = ''; cashEl.className = ''; cashEl.style.height = '0'; }
+    } else { cashEl.innerHTML = ''; cashEl.className = ''; cashEl.style.height = '0'; }
   }
 
   // Anomalies
   const anomalyEl = document.getElementById('dash-anomaly');
   if (anomalyEl) {
     if (anomalyData?.alerts?.length) {
-      anomalyEl.innerHTML = `<div class="card" style="margin-bottom:12px">
-        <div class="sec-title" style="margin-top:0;color:var(--red)">🔍 ต้องตรวจสอบ</div>
+      anomalyEl.innerHTML = `<div class="card" style="margin-bottom:10px">
+        <div class="sl" style="margin:0;color:var(--r,#dc2626)">🔍 ต้องตรวจสอบ</div>
         <div style="font-size:11px">${anomalyData.alerts.map(a =>
-          `<div style="padding:3px 0;color:${a.severity === 'high' ? 'var(--red)' : 'var(--orange)'}">⚠ ${esc(a.message)}</div>`
+          `<div style="padding:3px 0;color:${a.severity === 'high' ? 'var(--r,#dc2626)' : 'var(--o,#d97706)'}">⚠ ${esc(a.message)}</div>`
         ).join('')}</div>
       </div>`;
     } else { anomalyEl.innerHTML = ''; }
@@ -217,21 +212,18 @@ async function _loadAdminWidgets() {
   const storesEl = document.getElementById('dash-stores');
   if (storesEl) {
     if (storeData?.stores?.length) {
-      storesEl.innerHTML = `<div class="card" style="margin-bottom:12px">
-        <div class="sec-title" style="margin-top:0">🏪 Store Status</div>
-        <div style="overflow-x:auto">
+      storesEl.innerHTML = `<div class="card" style="margin-bottom:10px">
+        <div class="sl" style="margin-top:0">🏪 Store Status</div>
         <table class="tbl"><thead><tr><th>Store</th><th>Status</th><th>Total</th><th>Sync</th></tr></thead>
         <tbody>${storeData.stores.map(st => `<tr>
           <td>${esc(st.store_id)}</td>
-          <td>${st.has_sale ? ui.badge('active') : ui.badge('rejected')}</td>
+          <td>${st.has_sale ? '<span class="sts sts-ok">✓</span>' : '<span class="sts sts-err">✗</span>'}</td>
           <td style="font-weight:600">${st.has_sale ? fm(st.total_sales) : '<span style="color:var(--t4)">—</span>'}</td>
-          <td>${st.sync_status === 'synced' ? ui.badge('approved') : ui.badge('pending')}</td>
+          <td>${st.sync_status === 'synced' ? '<span class="sts sts-ok">Synced</span>' : '<span class="sts sts-pend">Pending</span>'}</td>
         </tr>`).join('')}</tbody></table>
-        </div>
       </div>`;
     } else { storesEl.innerHTML = ''; }
   }
-
   _adminLoading = false;
 }
 
@@ -239,25 +231,24 @@ async function _loadAdminWidgets() {
 // ═══════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════
-function _kpi(value, label, sub, color) {
-  return `<div class="card" style="text-align:center;padding:12px${color ? ';border-left:3px solid ' + color : ''}">
-    <div style="font-size:10px;color:var(--t3)">${label}</div>
-    <div style="font-size:18px;font-weight:800;letter-spacing:-.5px${color ? ';color:' + color : ''}">${value}</div>
-    ${sub ? `<div style="font-size:10px;color:var(--t3)">${sub}</div>` : ''}
+function kpiBox(value, label, sub, boxStyle, valStyle) {
+  return `<div class="kpi-box"${boxStyle ? ` style="${boxStyle}"` : ''}>
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-val"${valStyle ? ` style="${valStyle}"` : ''}>${value}</div>
+    ${sub ? `<div class="kpi-label">${sub}</div>` : ''}
   </div>`;
 }
 
-function _qCard(icon, title, sub, route) {
-  return `<div class="card" style="cursor:pointer;padding:12px;margin-bottom:6px" onclick="SPG.go('sales/${route}')">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span style="font-size:16px">${icon}</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:700">${title}</div>${sub ? `<div style="font-size:10px;color:var(--t3);margin-top:1px">${sub}</div>` : ''}</div>
-      <span style="color:var(--t4);font-size:14px">›</span>
-    </div>
+function qb(icon, bg, col, label, sub, route, borderCol) {
+  const bc = borderCol ? `border-left-color:${borderCol}` : '';
+  return `<div class="qb" style="${bc}" onclick="SPG.go('sales/${route}')">
+    <div class="qb-icon" style="background:${bg};color:${col}">${icon}</div>
+    <div style="flex:1;min-width:0"><div class="qb-label">${label}</div>${sub ? `<div class="qb-sub">${sub}</div>` : ''}</div>
+    <div class="qb-arr">→</div>
   </div>`;
 }
 
-function _renderLineChart(data) {
+function renderLineChart(data) {
   const stw = data.sales_tw || [0,0,0,0,0,0,0];
   const slw = data.sales_lw || [0,0,0,0,0,0,0];
   const etw = data.exp_tw || [0,0,0,0,0,0,0];
@@ -281,7 +272,7 @@ function _renderLineChart(data) {
   }).join('');
   const xLabels = labels.map((l, i) => `<text x="${x(i).toFixed(1)}" y="${H - 1}" text-anchor="middle" fill="#999" font-size="8">${l}</text>`).join('');
 
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:var(--font)">
     ${grid}${xLabels}
     ${line(slw, '#86efac', true)}${line(stw, '#059669', false)}
     ${line(elw, '#fca5a5', true)}${line(etw, '#dc2626', false)}
