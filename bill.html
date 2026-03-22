@@ -247,6 +247,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 .invoice-row .value.mute { color: #8A8AAA; font-weight: 500; }
 .invoice-divider { height: 8px; background: #FAFBFE; margin: 0 -16px; }
 .invoice-section-title { font-size: 11px; font-weight: 700; color: #8A8AAA; text-transform: uppercase; letter-spacing: .5px; padding: 16px 0 8px; }
+
+/* ── Photo Action Sheet ── */
+.photo-action-sheet { position: fixed; inset: 0; z-index: 9995; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; transition: opacity .2s; }
+.photo-action-sheet.show { opacity: 1; }
+.photo-action-sheet .sheet-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(2px); }
+.photo-action-sheet .sheet-content { position: relative; background: #fff; border-radius: 20px 20px 0 0; padding: 8px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px); transform: translateY(100%); transition: transform .25s ease-out; }
+.photo-action-sheet.show .sheet-content { transform: translateY(0); }
+.photo-action-sheet .sheet-title { text-align: center; font-size: 13px; font-weight: 700; color: #8A8AAA; padding: 12px 0 8px; }
+.photo-action-sheet .sheet-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: none; background: #F1F3F9; border-radius: 12px; font-size: 15px; font-weight: 600; color: var(--t1); cursor: pointer; margin-bottom: 8px; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.photo-action-sheet .sheet-btn:active { background: #E8ECF4; }
+.photo-action-sheet .sheet-btn.cancel { background: none; justify-content: center; color: #8A8AAA; font-size: 14px; margin-top: 4px; }
 </style>
 </head>
 <body>

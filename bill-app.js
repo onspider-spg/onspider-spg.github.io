@@ -742,15 +742,50 @@ const BHQ = (() => {
   }
 
   function _triggerPhoto() {
-    // Show option: Camera or File
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      // On mobile, just use camera input which gives options
-      $('cameraInput').click();
-    } else {
-      // On desktop, use file input
-      $('fileInput').click();
-    }
+    // Show action sheet with 3 options
+    const existing = document.querySelector('.photo-action-sheet');
+    if (existing) existing.remove();
+
+    const sheet = document.createElement('div');
+    sheet.className = 'photo-action-sheet';
+    sheet.innerHTML = `
+      <div class="sheet-overlay"></div>
+      <div class="sheet-content">
+        <div class="sheet-title">Add a photo</div>
+        <button class="sheet-btn" data-action="scan">📄 Scan Document</button>
+        <button class="sheet-btn" data-action="camera">📸 Take Photo</button>
+        <button class="sheet-btn" data-action="gallery">🖼️ Choose from Library</button>
+        <button class="sheet-btn cancel">Cancel</button>
+      </div>
+    `;
+    document.body.appendChild(sheet);
+
+    // Animate in
+    requestAnimationFrame(() => sheet.classList.add('show'));
+
+    const close = () => { sheet.classList.remove('show'); setTimeout(() => sheet.remove(), 200); };
+
+    sheet.querySelector('.sheet-overlay').onclick = close;
+    sheet.querySelector('.cancel').onclick = close;
+
+    sheet.querySelectorAll('.sheet-btn[data-action]').forEach(btn => {
+      btn.onclick = () => {
+        close();
+        const action = btn.dataset.action;
+        if (action === 'camera') {
+          // Camera only (no capture attr on fileInput to force camera)
+          $('cameraInput').setAttribute('capture', 'environment');
+          $('cameraInput').click();
+        } else if (action === 'scan') {
+          // On iOS, file input without capture opens document scanner option
+          $('fileInput').click();
+        } else {
+          // Gallery / file picker
+          $('cameraInput').removeAttribute('capture');
+          $('cameraInput').click();
+        }
+      };
+    });
   }
 
   async function handleFileSelect(e) {
