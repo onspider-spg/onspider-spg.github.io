@@ -393,10 +393,23 @@ const BHQ = (() => {
           </button>
         </div>` : ''}
 
-        <div class="capture-card" onclick="BHQ.showCapture()">
+        <div class="capture-card" onclick="BHQ.showSelect()">
           <h3>Capture a receipt</h3>
           <p>${isPersonal ? 'Take or upload a personal receipt' : 'Take or upload a photo of a receipt or bill'}</p>
           <div class="icon">📸</div>
+        </div>
+
+        <div class="action-row">
+          <div class="action-card-sm" onclick="BHQ.showInvoice()">
+            <h4>Invoice</h4>
+            <p>Create invoices on the go</p>
+            <div class="plus">+</div>
+          </div>
+          <div class="action-card-sm" onclick="BHQ.showAlbum()">
+            <h4>Uploads</h4>
+            <p>View all captured receipts</p>
+            <div class="plus">📋</div>
+          </div>
         </div>
 
         <div class="album-header">
@@ -408,6 +421,13 @@ const BHQ = (() => {
             <div class="icon">📋</div>
             <p>Loading...</p>
           </div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="nav-item active"><span class="ico">🏠</span>Home</div>
+          <div class="nav-item" onclick="BHQ.showAlbum()"><span class="ico">🧾</span>Receipts</div>
+          <div class="nav-item" onclick="BHQ.showInvoice()"><span class="ico">💰</span>Invoices</div>
+          <div class="nav-item"><span class="ico">···</span>More</div>
         </div>
       </div>
     `;
@@ -470,47 +490,213 @@ const BHQ = (() => {
     `).join('');
   }
 
+  // ── Select Card Screen (dedicated page) ──
+  async function renderSelectScreen() {
+    const isPersonal = _context === 'personal';
+    const badgeHtml = isPersonal ? '<span class="ctx-badge personal" style="font-size:10px;padding:3px 10px">Personal</span>' : '<span class="ctx-badge biz" style="font-size:10px;padding:3px 10px">Biz</span>';
+
+    app().innerHTML = `
+      <div class="select-screen">
+        <div class="select-topbar">
+          <button class="back" onclick="BHQ.renderHomeScreen()">←</button>
+          <h2>Capture Receipt</h2>
+          ${badgeHtml}
+        </div>
+        <div class="select-body">
+          <div class="heading">Select a card:</div>
+          <div class="sub-text">Which card or account was used for this purchase?</div>
+          <div class="account-list" id="selectAccountList">
+            <div class="empty-state"><p>Loading accounts...</p></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    try {
+      let accounts = [];
+      if (isPersonal) {
+        await loadWpConfig();
+        if (_wpAccounts.length === 0) {
+          const res = await wpApi('get_accounts');
+          _wpAccounts = res.accounts || [];
+        }
+        accounts = _wpAccounts.map(a => ({
+          id: a.id,
+          name: a.name + (a.bank_name ? ' · ' + a.bank_name : ''),
+          desc: a.account_type === 'credit_card' ? 'Credit card' : a.account_type === 'savings' ? 'Savings account' : 'Everyday account',
+          initials: (a.name || '').substring(0, 2).toUpperCase(),
+          color: a.color || '#0d9488',
+        }));
+      } else {
+        if (_accounts.length === 0) {
+          const res = await api('bhq_get_accounts');
+          _accounts = res.accounts || [];
+        }
+        const colors = ['linear-gradient(135deg,#7C3AED,#EC4899)', 'linear-gradient(135deg,#F59E0B,#EC4899)', 'linear-gradient(135deg,#10B981,#06B6D4)', 'linear-gradient(135deg,#3B82F6,#7C3AED)'];
+        accounts = _accounts.map((a, i) => ({
+          id: a.id,
+          name: a.account_name,
+          desc: 'Payment account',
+          initials: (a.account_name || '').substring(0, 2).toUpperCase(),
+          color: colors[i % colors.length],
+        }));
+      }
+
+      const listEl = $('selectAccountList');
+      if (accounts.length === 0) {
+        listEl.innerHTML = '<div class="empty-state"><p>No accounts found</p></div>';
+        return;
+      }
+      listEl.innerHTML = accounts.map(a => `
+        <div class="account-item" data-id="${a.id}">
+          <div class="av" style="background:${a.color}">${esc(a.initials)}</div>
+          <div class="info"><div class="name">${esc(a.name)}</div><div class="desc">${esc(a.desc)}</div></div>
+          <div class="arrow">›</div>
+        </div>
+      `).join('');
+
+      listEl.addEventListener('click', (e) => {
+        const item = e.target.closest('.account-item');
+        if (!item) return;
+        const id = item.dataset.id;
+        const name = item.querySelector('.name')?.textContent || '';
+        renderCaptureScreen(id, name);
+      });
+    } catch (e) {
+      $('selectAccountList').innerHTML = `<div class="empty-state"><p>${esc(e.message)}</p></div>`;
+    }
+  }
+
+  // ── Install Guide Screen ──
+  function renderInstallScreen() {
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|Chrome/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const deviceName = isIOS ? 'iPhone · Safari' : isAndroid ? 'Android · Chrome' : 'Desktop';
+
+    const iosSteps = `
+      <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the Share button</div><div class="s-desc">Tap <span class="key">⬆︎</span> at the bottom of Safari</div></div></div>
+      <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Scroll down and tap</div><div class="s-desc">Find <span class="hl">"Add to Home Screen"</span> in the share menu</div></div></div>
+      <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Tap "Add"</div><div class="s-desc">Confirm the name <span class="key">SPG Assist</span> and tap <span class="hl">Add</span></div></div></div>
+      <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Safari and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>
+    `;
+
+    const androidSteps = `
+      <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the menu</div><div class="s-desc">Tap <span class="key">⋮</span> in the top-right of Chrome</div></div></div>
+      <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Tap "Add to Home screen"</div><div class="s-desc">Find <span class="hl">"Add to Home screen"</span> or <span class="hl">"Install app"</span></div></div></div>
+      <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Confirm</div><div class="s-desc">Tap <span class="hl">Add</span> to install</div></div></div>
+      <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Chrome and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>
+    `;
+
+    app().innerHTML = `
+      <div class="install-screen">
+        <div class="install-header">
+          <div class="inst-logo">SPG</div>
+          <h1>SPG Assist</h1>
+          <p>Install app to get started</p>
+        </div>
+        <div class="install-body">
+          <div class="install-detect">
+            <div class="device-icon">📱</div>
+            <div class="device-info">
+              <div class="name">${deviceName}</div>
+              <div class="detail">Detected automatically</div>
+            </div>
+            <div class="check">✓</div>
+          </div>
+          <div class="install-title">Add to Home Screen</div>
+          <div class="install-steps">${isAndroid ? androidSteps : iosSteps}</div>
+          <div class="install-note">
+            <strong>⚠ Why is this needed?</strong><br>
+            Installing as an app enables full-screen mode, better camera access, and a native app experience. This only needs to be done once.
+          </div>
+        </div>
+        <div class="install-footer">
+          <button class="btn btn-primary" onclick="BHQ.dismissInstall()">I've installed it →</button>
+          <div class="install-skip"><a onclick="BHQ.dismissInstall()">Skip for now</a></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function dismissInstall() {
+    localStorage.setItem('bhq_installed', '1');
+    init();
+  }
+
+  // ── Invoice Screen (placeholder) ──
+  function renderInvoiceScreen() {
+    app().innerHTML = `
+      <div class="invoice-screen">
+        <div class="invoice-topbar">
+          <button class="back" onclick="BHQ.renderHomeScreen()">✕</button>
+          <h2>Create invoice</h2>
+          <div style="width:32px"></div>
+        </div>
+        <div class="invoice-body">
+          <div class="invoice-row"><span class="label">Customer</span><span class="value">Choose ›</span></div>
+          <div class="invoice-divider"></div>
+          <div class="invoice-section-title">Details</div>
+          <div class="invoice-row"><span class="label">Invoice number</span><span class="value mute">INV-00001</span></div>
+          <div class="invoice-row"><span class="label">Issue date</span><span class="value mute">${new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
+          <div class="invoice-row"><span class="label">Due date</span><span class="value mute">—</span></div>
+          <div class="invoice-row"><span class="label">Payment terms</span><span class="value">14 days ›</span></div>
+          <div class="invoice-divider"></div>
+          <div class="invoice-section-title">Products and services</div>
+          <div style="padding:14px 0;text-align:center">
+            <button class="btn btn-outline" style="display:inline-flex;align-items:center;gap:6px;width:auto;padding:10px 18px;font-size:12px;color:var(--acc);border-color:rgba(124,58,237,.2)">+ Add item</button>
+          </div>
+          <div class="invoice-divider"></div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0;font-size:14px"><span style="font-weight:600">Total</span><span style="font-weight:900;font-size:20px">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#8A8AAA;padding-bottom:8px"><span>Tax</span><span>$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;padding:12px 0;border-top:2px solid #F1F3F9"><span>Balance due</span><span>$0.00</span></div>
+          <div style="padding:16px 0;display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-primary">Send</button>
+            <button class="btn btn-outline">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // ── Capture Screen ──
-  function renderCaptureScreen() {
+  let _selectedAccountId = null;
+  let _selectedAccountName = null;
+
+  function renderCaptureScreen(selectedAccountId, selectedAccountName) {
     _currentPhoto = null;
+    if (selectedAccountId) _selectedAccountId = selectedAccountId;
+    if (selectedAccountName) _selectedAccountName = selectedAccountName;
+
+    const acctBadge = _selectedAccountName ? `<span style="padding:4px 12px;border-radius:50px;font-size:10px;font-weight:700;background:rgba(124,58,237,.06);color:var(--acc)">${esc(_selectedAccountName)}</span>` : '<div style="width:32px"></div>';
 
     app().innerHTML = `
       <div class="capture-screen">
         <div class="capture-topbar">
-          <button class="back" onclick="BHQ.renderHomeScreen()">←</button>
+          <button class="back" onclick="BHQ.showSelect()">←</button>
           <h2>Capture Receipt</h2>
-          <div style="width:32px"></div>
+          ${acctBadge}
         </div>
         <div class="capture-body">
-          <div class="account-selector">
-            <label>Payment Account</label>
-            <select id="captureAccount">
-              <option value="">Select account...</option>
-            </select>
-          </div>
-
           <div class="photo-area">
             <div id="photoDropzone" class="photo-dropzone" onclick="BHQ._triggerPhoto()">
               <div class="cam-icon">📷</div>
-              <p>Tap to take photo or upload</p>
-              <div class="hint">Camera · Files · Gallery</div>
+              <p>Tap to scan or upload</p>
+              <div class="hint">Scan Document · Camera · Photo Library</div>
             </div>
             <div id="photoPreview" class="photo-preview hidden"></div>
           </div>
 
           <div class="note-field">
-            <label>Note (optional)</label>
-            <textarea id="captureNote" placeholder="e.g. ซื้อผักให้ ISH" maxlength="200"></textarea>
+            <label>Add notes (optional)</label>
+            <textarea id="captureNote" placeholder="e.g. Bought vegetables for ISH" maxlength="200"></textarea>
             <div class="char-count"><span id="noteCount">0</span>/200</div>
           </div>
 
-          <button class="btn btn-primary" id="saveBtn" disabled>Save Bill</button>
+          <button class="btn btn-primary" id="saveBtn" disabled>Done</button>
         </div>
       </div>
     `;
-
-    // Load accounts
-    loadAccounts();
 
     // Note char count
     $('captureNote').addEventListener('input', () => {
@@ -615,14 +801,13 @@ const BHQ = (() => {
   }
 
   function updateSaveBtn() {
-    const hasAccount = $('captureAccount')?.value;
     const hasPhoto = !!_currentPhoto;
     const btn = $('saveBtn');
-    if (btn) btn.disabled = !(hasAccount && hasPhoto);
+    if (btn) btn.disabled = !hasPhoto;
   }
 
   async function doSaveBill() {
-    const accountId = $('captureAccount').value;
+    const accountId = _selectedAccountId;
     const note = $('captureNote').value.trim();
     if (!accountId || !_currentPhoto) return;
 
@@ -798,22 +983,24 @@ const BHQ = (() => {
     const hasToken = getToken();
     const storedUser = getUser();
     if (storedUser?.tier_id) _tierId = storedUser.tier_id;
+    const hasInstalled = localStorage.getItem('bhq_installed');
 
-    if (hasToken) {
-      // Try to go directly to home (token will be validated on first API call)
-      renderHomeScreen();
-    } else if (hasDevice) {
-      // Has device but no token → show PIN
-      renderPinScreen();
-    } else {
-      // First time → show login
-      renderLoginScreen();
+    // Check if running as PWA (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (!hasInstalled && !isStandalone && !hasDevice) {
+      // First time in browser → show install guide
+      renderInstallScreen();
+      return;
     }
 
-    // Listen for account change to update save button
-    document.addEventListener('change', (e) => {
-      if (e.target.id === 'captureAccount') updateSaveBtn();
-    });
+    if (hasToken) {
+      renderHomeScreen();
+    } else if (hasDevice) {
+      renderPinScreen();
+    } else {
+      renderLoginScreen();
+    }
   }
 
   // Start
@@ -823,10 +1010,13 @@ const BHQ = (() => {
   return {
     init,
     showLogin: renderLoginScreen,
+    showSelect: renderSelectScreen,
     showCapture: renderCaptureScreen,
     showAlbum: renderAlbumScreen,
+    showInvoice: renderInvoiceScreen,
     showBillDetail,
     renderHomeScreen,
+    dismissInstall,
     logout,
     _triggerPhoto,
     _removePhoto,
