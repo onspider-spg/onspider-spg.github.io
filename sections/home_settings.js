@@ -85,7 +85,7 @@ function renderGeneral() {
         <div style="padding:8px 14px;border-radius:var(--rd);background:${getVal('otp_enabled') === 'true' ? 'var(--green-bg)' : 'var(--bg3)'};font-size:12px;color:${getVal('otp_enabled') === 'true' ? 'var(--green)' : 'var(--t3)'}">
           Email OTP: ${getVal('otp_enabled') === 'true' ? '✅ Enabled' : '⏸ Disabled'}
         </div>
-        <div style="padding:8px 14px;border-radius:var(--rd);background:${getVal('line_enabled') === 'true' ? '#06C75520' : 'var(--bg3)'};font-size:12px;color:${getVal('line_enabled') === 'true' ? '#06C755' : 'var(--t3)'}">
+        <div style="padding:8px 14px;border-radius:var(--rd);background:${getVal('line_enabled') === 'true' ? 'var(--line-bg)' : 'var(--bg3)'};font-size:12px;color:${getVal('line_enabled') === 'true' ? 'var(--line)' : 'var(--t3)'}">
           LINE: ${getVal('line_enabled') === 'true' ? '✅ Enabled' : '⏸ Disabled'}
         </div>
       </div>

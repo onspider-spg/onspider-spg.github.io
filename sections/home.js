@@ -419,17 +419,17 @@ function fillDashboard(session, modules) {
 
   // Section definitions with visual config
   const SECTION_COLORS = {
-    'saledaily_report': { bg: '#dbeafe',          color: '#2563eb',       abbr: 'SD', name: 'Sales Daily',   desc: 'Daily sales & reports' },
-    'purchase':         { bg: '#fef3c7',           color: '#d97706',       abbr: 'PO', name: 'Purchase',      desc: 'Orders & receiving' },
-    'bakery_order':     { bg: '#fce7f3',           color: '#db2777',       abbr: 'BC', name: 'Bakery Order',  desc: 'Center to branch orders' },
-    'finance':          { bg: '#ede9fe',           color: '#7c3aed',       abbr: 'FN', name: 'Finance',       desc: 'Transactions & payments' },
-    'operations':       { bg: '#ccfbf1',           color: '#0d9488',       abbr: 'OP', name: 'Operations',    desc: 'Daily ops & checklists' },
-    'hr':               { bg: '#e0e7ff',           color: '#4f46e5',       abbr: 'HR', name: 'HR',            desc: 'People & access' },
-    'foodhub':          { bg: '#dcfce7',           color: '#16a34a',       abbr: 'FH', name: 'Food Hub',      desc: 'Recipes & SOP' },
-    'marketing':        { bg: '#ffe4e6',           color: '#e11d48',       abbr: 'MK', name: 'Marketing',     desc: 'Sales analysis & NPD' },
-    'equipment':        { bg: '#f1f5f9',           color: '#475569',       abbr: 'EQ', name: 'Equipment',     desc: 'Asset & repair tracking' },
-    'bi':               { bg: '#cffafe',           color: '#0891b2',       abbr: 'BI', name: 'BI Dashboard',  desc: 'Cross-module insights' },
-    'crm':              { bg: '#ede9fe',           color: '#8b5cf6',       abbr: 'CR', name: 'CRM',           desc: 'Customer experience' },
+    'saledaily_report': { bg: 'var(--mod-sd-bg)',  color: 'var(--mod-sd)',  abbr: 'SD', name: 'Sales Daily',   desc: 'Daily sales & reports' },
+    'purchase':         { bg: 'var(--mod-po-bg)',  color: 'var(--mod-po)',  abbr: 'PO', name: 'Purchase',      desc: 'Orders & receiving' },
+    'bakery_order':     { bg: 'var(--mod-bc-bg)',  color: 'var(--mod-bc)',  abbr: 'BC', name: 'Bakery Order',  desc: 'Center to branch orders' },
+    'finance':          { bg: 'var(--mod-fn-bg)',  color: 'var(--mod-fn)',  abbr: 'FN', name: 'Finance',       desc: 'Transactions & payments' },
+    'operations':       { bg: 'var(--mod-op-bg)',  color: 'var(--mod-op)',  abbr: 'OP', name: 'Operations',    desc: 'Daily ops & checklists' },
+    'hr':               { bg: 'var(--mod-hr-bg)',  color: 'var(--mod-hr)',  abbr: 'HR', name: 'HR',            desc: 'People & access' },
+    'foodhub':          { bg: 'var(--mod-fh-bg)',  color: 'var(--mod-fh)',  abbr: 'FH', name: 'Food Hub',      desc: 'Recipes & SOP' },
+    'marketing':        { bg: 'var(--mod-mk-bg)',  color: 'var(--mod-mk)',  abbr: 'MK', name: 'Marketing',     desc: 'Sales analysis & NPD' },
+    'equipment':        { bg: 'var(--mod-eq-bg)',  color: 'var(--mod-eq)',  abbr: 'EQ', name: 'Equipment',     desc: 'Asset & repair tracking' },
+    'bi':               { bg: 'var(--mod-bi-bg)',  color: 'var(--mod-bi)',  abbr: 'BI', name: 'BI Dashboard',  desc: 'Cross-module insights' },
+    'crm':              { bg: 'var(--mod-crm-bg)', color: 'var(--mod-crm)', abbr: 'CR', name: 'CRM',           desc: 'Customer experience' },
   };
 
   // Module-to-section mapping
@@ -582,7 +582,7 @@ function renderProfileCard(d) {
         <span style="font-weight:600">${esc(a.store_id)}</span>
         <span style="color:var(--t3)">${esc(a.dept_id || '-')}</span>
         <span style="color:var(--acc)">${esc(a.position_name || '')}</span>
-        ${a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:3px;background:var(--acc2);color:var(--acc)">Primary</span>' : ''}
+        ${a.is_primary ? '<span style="font-size:9px;padding:1px 4px;border-radius:var(--rd-pill);background:var(--acc-bg);color:var(--acc)">Primary</span>' : ''}
       </div>`).join('');
     }
   }, 50);

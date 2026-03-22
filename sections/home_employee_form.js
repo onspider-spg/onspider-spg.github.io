@@ -285,7 +285,7 @@ function renderLINE() {
     <div style="padding:8px 14px;background:var(--orange-bg);border-radius:var(--rd);font-size:11px;color:var(--orange);margin-bottom:16px">
       ⚠️ LINE connection is required before submitting
     </div>
-    <button class="btn btn-primary" style="background:#06C755;border-color:#06C755" onclick="EmpForm.connectLine()">Connect with LINE</button>
+    <button class="btn btn-primary" style="background:var(--line);border-color:var(--line)" onclick="EmpForm.connectLine()">Connect with LINE</button>
   </div>`;
 }
 

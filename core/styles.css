@@ -52,6 +52,21 @@
   --gold-dim: #b8820a;
   --gold-bg: rgba(212,150,10,.06);
   --gold-bg2: rgba(212,150,10,.12);
+  /* LINE */
+  --line: #06C755;
+  --line-bg: rgba(6,199,85,.08);
+  /* Module Colors (section card icons) */
+  --mod-sd-bg: #dbeafe; --mod-sd: #2563eb;
+  --mod-po-bg: #fef3c7; --mod-po: #d97706;
+  --mod-bc-bg: #fce7f3; --mod-bc: #db2777;
+  --mod-fn-bg: #ede9fe; --mod-fn: #7c3aed;
+  --mod-op-bg: #ccfbf1; --mod-op: #0d9488;
+  --mod-hr-bg: #e0e7ff; --mod-hr: #4f46e5;
+  --mod-fh-bg: #dcfce7; --mod-fh: #16a34a;
+  --mod-mk-bg: #ffe4e6; --mod-mk: #e11d48;
+  --mod-eq-bg: #f1f5f9; --mod-eq: #475569;
+  --mod-bi-bg: #cffafe; --mod-bi: #0891b2;
+  --mod-crm-bg: #ede9fe; --mod-crm: #8b5cf6;
   /* Spacing */
   --sp-xs: 4px;
   --sp-sm: 8px;

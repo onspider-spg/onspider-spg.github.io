@@ -35,7 +35,7 @@ async function loadList() {
             <div style="font-size:12px;color:var(--t3);margin-top:4px">${esc(a.body || '').substring(0, 100)}${(a.body || '').length > 100 ? '...' : ''}</div>
           </div>
           <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-            ${a.send_line ? '<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:#06C755;color:#fff">LINE</span>' : ''}
+            ${a.send_line ? '<span style="font-size:9px;padding:2px 6px;border-radius:var(--rd-pill);background:var(--line);color:#fff">LINE</span>' : ''}
             ${SPG.ui.badge(a.status)}
           </div>
         </div>
