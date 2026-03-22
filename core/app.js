@@ -255,6 +255,7 @@
 
     // Find route config
     const routeConfig = sec.routes?.[resolvedRoute];
+    console.log(`[SPG-NAV] go(${route}) → section=${section}, route=${resolvedRoute}, found=${!!routeConfig}, routes=${Object.keys(sec.routes||{}).join(',')}`);
     if (!routeConfig) {
       console.warn(`[SPG] Route not found: ${section}/${resolvedRoute}`);
       return go('dashboard');
