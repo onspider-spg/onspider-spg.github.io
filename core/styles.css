@@ -267,7 +267,7 @@ html, body {
   font-size: 12px; cursor: pointer;
 }
 .notif-item:hover { background: var(--bg3); }
-.notif-item.unread { background: var(--theme-bg); }
+.notif-item.unread { background: rgba(124,58,237,.08); border-left: 3px solid var(--acc); }
 .notif-item-time { font-size: 10px; color: var(--t4); margin-top: 2px; }
 .notif-empty { text-align: center; padding: 20px; color: var(--t3); font-size: 12px; }
 
@@ -1124,7 +1124,7 @@ html, body {
 /* ═══ Notification Items ═══ */
 .notif-item { padding: 10px 14px; border-bottom: 1px solid var(--bd2); cursor: pointer; }
 .notif-item:hover { background: var(--bg2); }
-.notif-item.notif-unread { background: var(--acc2); }
+.notif-item.notif-unread { background: rgba(124,58,237,.08); border-left: 3px solid var(--acc); }
 .notif-title { font-size: 13px; font-weight: 600; }
 .notif-body { font-size: 12px; color: var(--t3); margin-top: 2px; }
 .notif-time { font-size: 10px; color: var(--t4); margin-top: 4px; }

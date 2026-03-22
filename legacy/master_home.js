@@ -35,7 +35,8 @@ async function loadModules() {
 }
 
 function renderModulesTable(ct) {
-  const mods = App.sortData(M.modules || [], 'module_id', 'asc');
+  const ST = App.getSortState?.('modules');
+  const mods = App.sortData(M.modules || [], ST ? ST.key : 'module_id', ST ? ST.dir : 'asc');
   const isSA = App.hasHomePerm('super_admin');
   const dis = isSA ? '' : ' disabled';
   const statusOpts = ['active', 'coming_soon', 'disabled'].map(s => `<option value="${s}">${s.replace(/_/g, ' ')}</option>`).join('');
@@ -54,7 +55,7 @@ function renderModulesTable(ct) {
   ct.innerHTML = `
     <div style="font-size:11px;color:var(--t3);margin-bottom:10px">${hint}</div>
     <div class="card" style="padding:0;overflow-x:auto">
-      <table class="tbl"><thead><tr><th>Module ID</th><th>Name TH</th><th>Name EN</th><th>Status</th><th class="hide-m">URL</th></tr></thead>
+      <table class="tbl"><thead><tr>${App.sortTh('modules','module_id','Module ID')}${App.sortTh('modules','module_name','Name TH')}${App.sortTh('modules','module_name_en','Name EN')}${App.sortTh('modules','status','Status')}<th class="hide-m">URL</th></tr></thead>
       <tbody>${rows}</tbody></table>
     </div>
     <div id="mod-dirty-msg" style="font-size:11px;color:var(--orange);margin-top:8px;display:none">Unsaved changes</div>`;
@@ -312,6 +313,7 @@ function addMasterItem(tab) {
 document.addEventListener('spg-sort', (e) => {
   const ct = document.getElementById('master-content');
   if (!ct) return;
+  if (e.detail.tableId === 'modules' && M._modLoaded) renderModulesTable(ct);
   if (e.detail.tableId === 'stores' && M._stoLoaded) renderStoresTable(ct);
   if (e.detail.tableId === 'depts' && M._depLoaded) renderDeptsTable(ct);
 });

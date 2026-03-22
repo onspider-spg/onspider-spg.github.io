@@ -644,26 +644,27 @@ async function doSaveProfile() {
 function showChangePasswordPopup() {
   SPG.showDialog(`<div class="popup-sheet">
     <div class="popup-header"><div class="popup-title">Change Password</div><button class="popup-close" onclick="SPG.closeDialog()">✕</button></div>
-    <div class="fg"><label class="lb">Current Password *</label><input class="inp" id="pw-current" type="password" placeholder="••••••••"></div>
-    <div class="fg"><label class="lb">New Password * (6–12 characters)</label><input class="inp" id="pw-new" type="password" placeholder="6–12 characters" maxlength="12"></div>
-    <div class="fg"><label class="lb">Confirm New Password *</label><input class="inp" id="pw-confirm" type="password" placeholder="••••••••"></div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:12px;padding:8px 12px;background:var(--bg3);border-radius:var(--rd)">
+      Password must be 6–12 characters, English letters + numbers only (a-z, A-Z, 0-9)
+    </div>
+    <div class="fg"><label class="lb">New Password *</label><input class="inp" id="pw-new" type="password" placeholder="6–12 characters" maxlength="12"></div>
+    <div class="fg"><label class="lb">Confirm New Password *</label><input class="inp" id="pw-confirm" type="password" placeholder="Confirm password"></div>
     <div class="error-msg" id="pw-error"></div>
     <div class="popup-actions"><button class="btn btn-outline" onclick="SPG.closeDialog()">Cancel</button><button class="btn btn-primary" id="btn-pw-save" onclick="HomeSection.doChangePassword()">Change Password</button></div>
   </div>`);
 }
 
 async function doChangePassword() {
-  const current_password = document.getElementById('pw-current')?.value;
   const new_password = document.getElementById('pw-new')?.value;
   const confirm_password = document.getElementById('pw-confirm')?.value;
-  if (!current_password) { SPG.showError('pw-error', 'กรุณากรอกรหัสผ่านปัจจุบัน'); return; }
-  if (!new_password || new_password.length < 6) { SPG.showError('pw-error', 'รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัว'); return; }
-  if (new_password.length > 12) { SPG.showError('pw-error', 'รหัสผ่านใหม่ต้องไม่เกิน 12 ตัว'); return; }
+  if (!new_password || new_password.length < 6) { SPG.showError('pw-error', 'Password ต้องมีอย่างน้อย 6 ตัว'); return; }
+  if (new_password.length > 12) { SPG.showError('pw-error', 'Password ต้องไม่เกิน 12 ตัว'); return; }
+  if (!/^[a-zA-Z0-9]+$/.test(new_password)) { SPG.showError('pw-error', 'ใช้ได้เฉพาะตัวอักษรอังกฤษ (a-z, A-Z) และตัวเลข (0-9) เท่านั้น'); return; }
   if (new_password !== confirm_password) { SPG.showError('pw-error', 'Passwords do not match'); return; }
   const btn = document.getElementById('btn-pw-save');
   btn.disabled = true; btn.textContent = 'Changing...';
   try {
-    await api.changePassword({ current_password, new_password });
+    await api.changePassword({ new_password });
     SPG.closeDialog();
     SPG.toast('Password changed', 'success');
   } catch (e) {
