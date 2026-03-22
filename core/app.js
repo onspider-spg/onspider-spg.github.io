@@ -83,7 +83,12 @@
 
   function registerSection(id, config) {
     _sections[id] = config;
+    // If section provides buildSidebar, store it for use when navigating to this section
+    if (config.buildSidebar) {
+      _sectionSidebars[id] = config.buildSidebar;
+    }
   }
+  const _sectionSidebars = {}; // { sectionId: buildSidebarFn }
 
   // ═══ ROOT ROUTE → SECTION MAPPING ═══
   // These routes don't need a section prefix in the hash
@@ -92,6 +97,15 @@
     'staff-select': 'home', 'store-select': 'home', 'new-staff': 'home',
     'dashboard': 'home', 'profile': 'home',
     'pending-approval': 'home', 'employee-form': 'home', 'line-connect': 'home',
+  };
+
+  // Module shortcut routes: #bakeryorder → bakery/dashboard
+  const MODULE_SHORTCUTS = {
+    'bakeryorder': { section: 'bakery', route: 'dashboard' },
+    'saledaily':   { section: 'sales',  route: 'dashboard' },
+    'finance':     { section: 'finance', route: 'dashboard' },
+    'hr':          { section: 'hr',      route: 'dashboard' },
+    'purchase':    { section: 'purchase', route: 'dashboard' },
   };
 
   // Public routes (no auth required)
@@ -117,6 +131,12 @@
     // Root route?
     if (ROOT_ROUTES[first]) {
       return { section: ROOT_ROUTES[first], route: first, params: parseRouteParams(first, rest) };
+    }
+
+    // Module shortcut? #bakeryorder → bakery/dashboard
+    if (MODULE_SHORTCUTS[first]) {
+      const sc = MODULE_SHORTCUTS[first];
+      return { section: sc.section, route: sc.route, params: {} };
     }
 
     // Section route: #sales/daily → section=sales, route=daily
@@ -252,11 +272,16 @@
     const appEl = document.getElementById('app');
     appEl.innerHTML = routeConfig.render(resolvedParams);
 
-    // Build sidebar for shell pages
+    // Build sidebar for shell pages — use section's sidebar if registered, else Home sidebar
     if (routeConfig.shell !== false) {
       const sidebarEl = appEl.querySelector('.sidebar');
       if (sidebarEl && (resolvedRoute !== 'dashboard' || state._bundleLoaded)) {
-        buildSidebar();
+        const sectionSidebarFn = _sectionSidebars[section];
+        if (sectionSidebarFn) {
+          sectionSidebarFn(); // Module's own sidebar
+        } else {
+          buildSidebar(); // Home sidebar (default)
+        }
       }
     }
 
