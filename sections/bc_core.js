@@ -702,7 +702,6 @@ window.BK = {
 
   // API
   api,
-  apiGet,
 
   // Init
   initBakery,
