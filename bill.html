@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<!-- Bill Upload HQ v1.0 | 22 MAR 2026 | Siam Palette Group -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bill Capture">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<title>Bill Capture — SPG HUB</title>
+<style>
+/* ═══ Design Tokens (matching SPG HUB) ═══ */
+:root {
+  --bg: #ffffff; --bg2: #fafafa; --bg3: #f3f4f6; --bg4: #e5e7eb;
+  --t1: #111111; --t2: #555555; --t3: #999999; --t4: #bbbbbb;
+  --acc: #7c3aed; --acc2: #ede9fe; --acc3: #6d28d9; --acc-light: #f5f3ff;
+  --green: #059669; --red: #dc2626; --orange: #d97706;
+  --radius: 12px; --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--t1); min-height: 100dvh; overflow-x: hidden; }
+.hidden { display: none !important; }
+
+/* ═══ Toast ═══ */
+#toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 9999; padding: 12px 20px; border-radius: var(--radius); font-size: 14px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90vw; text-align: center; }
+#toast.show { opacity: 1; }
+#toast.success { background: #ecfdf5; color: var(--green); border: 1px solid #a7f3d0; }
+#toast.error { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+#toast.info { background: var(--acc2); color: var(--acc3); border: 1px solid #c4b5fd; }
+
+/* ═══ Loader ═══ */
+#loader { position: fixed; inset: 0; background: rgba(255,255,255,.7); backdrop-filter: blur(4px); z-index: 9998; display: flex; align-items: center; justify-content: center; }
+#loader .spinner { width: 36px; height: 36px; border: 3px solid var(--bg4); border-top-color: var(--acc); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══ Screens ═══ */
+.screen { min-height: 100dvh; padding: 0; }
+
+/* ── PIN Screen ── */
+.pin-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 32px 24px; background: linear-gradient(180deg, var(--acc-light) 0%, var(--bg) 40%); }
+.pin-logo { width: 56px; height: 56px; background: var(--acc); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+.pin-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.pin-subtitle { font-size: 14px; color: var(--t3); margin-bottom: 32px; }
+.pin-dots { display: flex; gap: 16px; margin-bottom: 40px; }
+.pin-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--bg4); transition: all .15s; }
+.pin-dot.filled { background: var(--acc); transform: scale(1.1); }
+.pin-dot.error { background: var(--red); animation: shake .4s; }
+@keyframes shake { 0%,100%{ transform: translateX(0); } 25%{ transform: translateX(-6px); } 75%{ transform: translateX(6px); } }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 72px); gap: 16px; }
+.pin-key { width: 72px; height: 72px; border-radius: 50%; border: none; background: var(--bg2); font-size: 28px; font-weight: 500; color: var(--t1); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .1s; -webkit-tap-highlight-color: transparent; user-select: none; }
+.pin-key:active { background: var(--bg4); }
+.pin-key.empty { background: transparent; cursor: default; }
+.pin-key .sub { font-size: 9px; color: var(--t3); letter-spacing: 2px; display: block; margin-top: -2px; }
+.pin-login-link { margin-top: 32px; font-size: 13px; color: var(--acc); cursor: pointer; border: none; background: none; text-decoration: underline; }
+
+/* ── Login Screen ── */
+.login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 32px 24px; }
+.login-card { width: 100%; max-width: 360px; }
+.login-card h2 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.login-card p { font-size: 14px; color: var(--t3); margin-bottom: 24px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px; }
+.field input { width: 100%; padding: 12px 14px; border: 1px solid var(--bg4); border-radius: var(--radius); font-size: 15px; outline: none; transition: border .2s; }
+.field input:focus { border-color: var(--acc); }
+.btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+.btn-primary { background: var(--acc); color: #fff; }
+.btn-primary:active { opacity: .85; }
+.btn-outline { background: none; border: 1px solid var(--bg4); color: var(--t1); margin-top: 8px; }
+
+/* ── Setup PIN Screen ── */
+.setup-pin-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 32px 24px; background: linear-gradient(180deg, var(--acc-light) 0%, var(--bg) 40%); }
+
+/* ── Home Screen (after auth) ── */
+.home-screen { padding: 0; min-height: 100dvh; background: var(--bg2); }
+.home-header { background: linear-gradient(135deg, var(--acc) 0%, var(--acc3) 100%); color: #fff; padding: 48px 24px 28px; border-radius: 0 0 24px 24px; }
+.home-greeting { font-size: 14px; opacity: .85; }
+.home-name { font-size: 24px; font-weight: 700; margin-top: 4px; }
+.home-actions { display: flex; justify-content: flex-end; margin-top: -40px; padding: 0 16px; position: relative; z-index: 1; }
+.home-logout { background: rgba(255,255,255,.2); border: none; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; backdrop-filter: blur(4px); }
+
+/* Capture Card */
+.capture-card { margin: -12px 16px 16px; background: #fff; border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-lg); cursor: pointer; transition: transform .15s; position: relative; overflow: hidden; }
+.capture-card:active { transform: scale(.98); }
+.capture-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.capture-card p { font-size: 13px; color: var(--t3); }
+.capture-card .icon { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 40px; opacity: .15; }
+
+/* Album Section */
+.album-header { padding: 20px 16px 8px; display: flex; justify-content: space-between; align-items: center; }
+.album-header h3 { font-size: 16px; font-weight: 600; }
+.album-header a { font-size: 13px; color: var(--acc); text-decoration: none; cursor: pointer; }
+.bill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 0 16px 100px; }
+.bill-thumb { aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; background: var(--bg3); cursor: pointer; position: relative; }
+.bill-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bill-thumb .meta { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,.6)); color: #fff; padding: 16px 6px 6px; font-size: 10px; }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 48px 24px; color: var(--t3); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+.empty-state p { font-size: 14px; }
+
+/* ── Capture Flow ── */
+.capture-screen { min-height: 100dvh; background: var(--bg); }
+.capture-topbar { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--bg3); }
+.capture-topbar .back { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: var(--t1); }
+.capture-topbar h2 { flex: 1; text-align: center; font-size: 17px; font-weight: 600; }
+.capture-body { padding: 20px 16px; }
+
+/* Account Selector */
+.account-selector { margin-bottom: 20px; }
+.account-selector label { font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px; display: block; }
+.account-selector select { width: 100%; padding: 12px 14px; border: 1px solid var(--bg4); border-radius: var(--radius); font-size: 15px; background: var(--bg); outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 4 3.5-4z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+
+/* Photo Upload Area */
+.photo-area { margin-bottom: 20px; }
+.photo-dropzone { border: 2px dashed var(--bg4); border-radius: var(--radius-lg); padding: 32px; text-align: center; cursor: pointer; transition: all .2s; background: var(--bg2); }
+.photo-dropzone:active { border-color: var(--acc); background: var(--acc-light); }
+.photo-dropzone .cam-icon { font-size: 40px; margin-bottom: 8px; }
+.photo-dropzone p { font-size: 14px; color: var(--t2); }
+.photo-dropzone .hint { font-size: 12px; color: var(--t4); margin-top: 4px; }
+
+/* Photo Preview */
+.photo-preview { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg3); }
+.photo-preview img { width: 100%; max-height: 400px; object-fit: contain; display: block; }
+.photo-preview .remove { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.5); color: #fff; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.photo-preview .retry { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,.5); color: #fff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; }
+
+/* Note Field */
+.note-field { margin-bottom: 24px; }
+.note-field label { font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px; display: block; }
+.note-field textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--bg4); border-radius: var(--radius); font-size: 14px; resize: none; height: 72px; outline: none; font-family: inherit; }
+.note-field textarea:focus { border-color: var(--acc); }
+.note-field .char-count { text-align: right; font-size: 11px; color: var(--t4); margin-top: 4px; }
+
+/* ── Success Screen ── */
+.success-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100dvh; padding: 32px 24px; text-align: center; background: linear-gradient(180deg, var(--acc-light) 0%, var(--bg) 60%); }
+.success-icon { font-size: 64px; margin-bottom: 20px; }
+.success-screen h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.success-screen p { font-size: 14px; color: var(--t3); margin-bottom: 32px; }
+.success-screen .btn { max-width: 280px; }
+
+/* ── Lightbox ── */
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 9990; display: flex; align-items: center; justify-content: center; }
+.lightbox img { max-width: 95vw; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+.lightbox .close { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.2); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.lightbox .info { position: absolute; bottom: 24px; left: 24px; right: 24px; color: #fff; font-size: 13px; background: rgba(0,0,0,.4); padding: 12px 16px; border-radius: var(--radius); backdrop-filter: blur(8px); }
+
+/* ── Album Full View ── */
+.album-screen { min-height: 100dvh; background: var(--bg2); padding-bottom: 100px; }
+.album-topbar { display: flex; align-items: center; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--bg3); position: sticky; top: 0; z-index: 10; }
+.album-topbar .back { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 8px; color: var(--t1); }
+.album-topbar h2 { flex: 1; text-align: center; font-size: 17px; font-weight: 600; }
+.album-filters { padding: 12px 16px; display: flex; gap: 8px; overflow-x: auto; }
+.filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; border: 1px solid var(--bg4); background: #fff; cursor: pointer; white-space: nowrap; color: var(--t2); }
+.filter-chip.active { background: var(--acc); color: #fff; border-color: var(--acc); }
+
+/* ── v2: Context Toggle (Biz / Personal) ── */
+.context-toggle { display: flex; margin: 12px 16px; background: var(--bg3); border-radius: 10px; padding: 3px; }
+.ctx-btn { flex: 1; padding: 10px 0; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .25s; background: transparent; color: var(--t3); font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ctx-btn.active { background: #fff; color: var(--t1); box-shadow: var(--shadow); }
+.ctx-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.ctx-badge { display: inline-flex; padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; margin-left: 4px; vertical-align: middle; }
+.ctx-badge.biz { background: rgba(124,58,237,.1); color: var(--acc); }
+.ctx-badge.personal { background: rgba(13,148,136,.1); color: #0d9488; }
+.success-dest { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+.success-dest.biz { background: rgba(124,58,237,.08); color: var(--acc); }
+.success-dest.personal { background: rgba(13,148,136,.08); color: #0d9488; }
+</style>
+</head>
+<body>
+  <div id="toast"></div>
+  <div id="loader" class="hidden"><div class="spinner"></div></div>
+  <div id="app"></div>
+
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+
+  <script src="bill-app.js"></script>
+</body>
+</html>
