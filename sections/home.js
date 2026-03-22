@@ -303,15 +303,17 @@ function renderStoreSelect() {
   const acc = api.getAccountTemp();
   if (!acc || !acc._storeSelect) return renderLogin();
   const assignments = acc.assignments || [];
-  const cards = assignments.map(a => {
-    return `<div class="staff-card" onclick="HomeSection.doSelectStore('${esc(a.store_id)}')" style="cursor:pointer">
-      <div class="staff-avatar" style="background:var(--acc2);color:var(--acc);font-size:14px">${esc((a.store_id || '?').substring(0, 2))}</div>
-      <div>
-        <div class="staff-name">${esc(a.store_id)}</div>
-        <div class="staff-hint">${esc(a.position_name || '')}${a.dept_id ? ' · ' + esc(a.dept_id) : ''}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const cards = assignments.length > 0
+    ? assignments.map(a => {
+      return `<div class="staff-card" onclick="HomeSection.doSelectStore('${esc(a.store_id)}')" style="cursor:pointer">
+        <div class="staff-avatar" style="background:var(--acc2);color:var(--acc);font-size:14px">${esc((a.store_id || '?').substring(0, 2))}</div>
+        <div>
+          <div class="staff-name">${esc(a.store_id)}</div>
+          <div class="staff-hint">${esc(a.position_name || '')}${a.dept_id ? ' · ' + esc(a.dept_id) : ''}</div>
+        </div>
+      </div>`;
+    }).join('')
+    : `<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">ไม่พบสาขาที่กำหนด กรุณาติดต่อ Admin</div>`;
 
   return shellLogin(`
     <div class="login-header">
@@ -392,21 +394,8 @@ async function loadDashboard() {
     } catch {}
   }
 
-  // Profile completion alert
-  if (!st.profileComplete) {
-    setTimeout(() => {
-      SPG.showDialog(`<div class="popup-sheet" style="width:360px">
-        <div class="popup-header"><div class="popup-title">⚠️ Employee Form Incomplete</div></div>
-        <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">
-          กรุณากรอกข้อมูลพนักงานให้ครบถ้วนก่อนเริ่มใช้งาน<br>
-          <span style="color:var(--t3);font-size:11px">Please complete your employee details before using the system.</span>
-        </div>
-        <div class="popup-actions">
-          <button class="btn btn-primary" onclick="SPG.closeDialog();SPG.go('profile')">Go to Profile</button>
-        </div>
-      </div>`);
-    }, 500);
-  }
+  // Profile completion alert — handled globally in app.js go() guard (→ employee-form)
+  // Removed duplicate popup here to avoid double-dialog conflict
 }
 
 function fillDashboard(session, modules) {
@@ -493,9 +482,9 @@ function launchSection(sectionId, externalUrl) {
     return;
   }
 
-  // Not yet migrated → launch external URL with token
-  const sep = externalUrl.includes('?') ? '&' : '?';
-  location.href = `${externalUrl}${sep}token=${s.token}&store_id=${encodeURIComponent(s.store_id || '')}`;
+  // All modules are now migrated — external URL fallback removed for security
+  // (previously sent token via URL query string → visible in browser history/logs)
+  SPG.toast('Module not available', 'error');
 }
 
 
@@ -608,8 +597,7 @@ async function doSaveProfile() {
     SPG.state.profile.display_name = display_name;
     SPG.state.profile.phone = phone;
     renderProfileCard(SPG.state.profile);
-    const s = api.getSession();
-    if (s) { s.display_name = display_name; localStorage.setItem('spg_session', JSON.stringify(s)); }
+    api.updateSession({ display_name });
     if (SPG.state.session) SPG.state.session.display_name = display_name;
     const tbName = document.querySelector('.topbar-user .hide-m');
     if (tbName) tbName.textContent = display_name;

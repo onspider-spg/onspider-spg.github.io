@@ -336,8 +336,10 @@
       }
 
       // Start notification polling (every 90s — count only, lightweight)
+      // Skips when tab is hidden to avoid wasting API calls
       if (!state._notifPolling) {
         state._notifPolling = setInterval(async () => {
+          if (document.hidden) return; // Skip when tab is backgrounded
           if (!SPG.api.getToken()) return; // Don't poll if logged out
           try {
             const nd = await SPG.api.getNotifications({ limit: 1 });

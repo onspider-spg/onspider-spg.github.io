@@ -166,6 +166,15 @@ SPG.api = (() => {
     clearToken();
   }
 
+  // Update specific session fields (keeps _sesCache + localStorage in sync)
+  function updateSession(fields) {
+    const s = getSession();
+    if (!s) return;
+    Object.assign(s, fields);
+    // _sesCache is the same reference as s — already updated
+    localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+  }
+
   function saveAccountTemp(data) { localStorage.setItem(ACCOUNT_KEY, JSON.stringify(data)); }
   function getAccountTemp() { try { return JSON.parse(localStorage.getItem(ACCOUNT_KEY)); } catch { return null; } }
 
@@ -178,7 +187,7 @@ SPG.api = (() => {
     post,
     registerEndpoint,
     getToken, setToken, clearToken,
-    saveSession, getSession, clearSession,
+    saveSession, getSession, clearSession, updateSession,
     saveAccountTemp, getAccountTemp,
     tb,
 
