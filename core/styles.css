@@ -658,7 +658,7 @@ html, body {
   transition: border-color .2s, box-shadow .2s, transform .2s;
   box-shadow: var(--sh);
 }
-.sec-card:hover { border-color: rgba(124,58,237,.15); box-shadow: var(--sh2); transform: translateY(-1px); }
+.sec-card:hover { border-color: var(--acc); box-shadow: 0 4px 16px rgba(124,58,237,.15); transform: translateY(-2px); background: var(--bg); }
 .sec-card.disabled { opacity: .5; cursor: default; }
 .sec-card.disabled:hover { border-color: var(--bd2); box-shadow: none; }
 .sec-icon {

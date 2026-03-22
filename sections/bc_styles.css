@@ -7,7 +7,7 @@
 /* ═══ BROWSE PRODUCTS ═══ */
 .browse-resume { display:flex;align-items:center;gap:6px;padding:6px var(--sp-lg);font-size:var(--fs-sm);background:#fffbeb;border-bottom:1px solid #fde68a; }
 .browse-resume-text { flex:1;font-weight:600;color:#92400e; }
-.browse-header { flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--bd2); }
+.browse-header { flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--bd2);padding:0 var(--sp-lg); }
 .date-pills { display:flex;align-items:center;gap:6px;padding:8px var(--sp-lg);font-size:var(--fs-sm);position:relative; }
 .date-label { color:var(--t3);font-size:11px;white-space:nowrap; }
 .date-display { color:var(--acc);font-weight:600;font-size:11px;margin-left:auto;white-space:nowrap; }
