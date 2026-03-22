@@ -21,6 +21,7 @@ SPG.api = (() => {
     equipment: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/equipment',
     bi: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/bi',
     crm: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/crm',
+    billhq: 'https://ahvzblrfzhtrjhvbzdhg.supabase.co/functions/v1/billhq',
   };
 
   // Register additional endpoints from sections
@@ -211,5 +212,12 @@ SPG.api = (() => {
     // Settings (Admin)
     adminGetSettings: () => homePost('admin_get_settings', tb()),
     adminUpdateSetting: (key, value) => homePost('admin_update_setting', tb({ setting_key: key, setting_value: value })),
+
+    // Bill HQ (used by Finance for attachment picker)
+    bhqGetBills: (f = {}) => post('billhq', 'bhq_fin_get_uploads', tb(f)),
+    bhqLinkBill: (attachment_id, transaction_id) => post('billhq', 'bhq_fin_link', tb({ attachment_id, transaction_id })),
+    bhqUnlinkBill: (attachment_id) => post('billhq', 'bhq_fin_unlink', tb({ attachment_id })),
+    bhqAdminGetAccounts: () => post('billhq', 'bhq_admin_get_accounts', tb()),
+    bhqAdminSaveAccount: (data) => post('billhq', 'bhq_admin_save_account', tb(data)),
   };
 })();
