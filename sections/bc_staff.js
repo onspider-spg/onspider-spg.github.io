@@ -139,7 +139,7 @@ function _fillAccept() {
   html += `<div class="sec-title">Order Items</div>
     <div style="overflow-x:auto">
       <table class="tbl" id="bk-accept-items">
-        <thead><tr>${SPG.ui.sortTh('bk-accept-items','product_name','Product')}${SPG.ui.sortTh('bk-accept-items','qty_ordered','Qty','right')}<th>Unit</th><th>Urgent</th></tr></thead>
+        <thead><tr>${SPG.ui.sortTh('bk-accept-items','product_name','Product')}${SPG.ui.sortTh('bk-accept-items','qty_ordered','Qty',' style="text-align:right"')}<th>Unit</th><th>Urgent</th></tr></thead>
         <tbody>${sorted_acc.map(i => `<tr>
           <td style="font-weight:600;font-size:12px">${esc(i.product_name)}</td>
           <td style="text-align:right">${i.qty_ordered}</td>
@@ -213,12 +213,12 @@ function _fillFulfil() {
   html += `<div class="sec-title">Fulfilment</div>
     <div style="overflow-x:auto">
       <table class="tbl" id="bk-fulfil-items">
-        <thead><tr>${SPG.ui.sortTh('bk-fulfil-items','product_name','Product')}${SPG.ui.sortTh('bk-fulfil-items','qty_ordered','Ordered','right')}${SPG.ui.sortTh('bk-fulfil-items','qty_sent','Qty Sent','center')}</tr></thead>
+        <thead><tr>${SPG.ui.sortTh('bk-fulfil-items','product_name','Product')}${SPG.ui.sortTh('bk-fulfil-items','qty_ordered','Ordered',' style="text-align:right"')}${SPG.ui.sortTh('bk-fulfil-items','qty_sent','Qty Sent',' style="text-align:center"')}</tr></thead>
         <tbody>${sorted_ful.map(i => `<tr>
           <td style="font-weight:600;font-size:12px">${esc(i.product_name)}<div style="font-size:10px;color:var(--t3)">${esc(i.unit || '')}</div></td>
           <td style="text-align:right;font-size:13px;font-weight:700">${i.qty_ordered}</td>
           <td style="text-align:center">
-            <input type="number" class="inp" id="bc-qs-${esc(i.product_id)}" style="width:70px;padding:4px;text-align:center;font-size:12px" value="${i.qty_sent != null ? i.qty_sent : i.qty_ordered}" min="0" data-pid="${esc(i.product_id)}">
+            <input type="number" class="inp" id="bc-qs-${i.product_id}" style="width:70px;padding:4px;text-align:center;font-size:12px" value="${i.qty_sent != null ? i.qty_sent : i.qty_ordered}" min="0" data-pid="${i.product_id}">
           </td>
         </tr>`).join('')}</tbody>
       </table>
@@ -280,7 +280,7 @@ function _fillPrint() {
 
   el.innerHTML = `<div style="overflow-x:auto">
     <table class="tbl" id="bk-print-sheet" style="font-size:12px">
-      <thead><tr>${SPG.ui.sortTh('bk-print-sheet','product_name','Product')}${SPG.ui.sortTh('bk-print-sheet','qty_ordered','Qty Ordered','right')}<th style="text-align:right">Qty Fulfilled</th><th>Status</th></tr></thead>
+      <thead><tr>${SPG.ui.sortTh('bk-print-sheet','product_name','Product')}${SPG.ui.sortTh('bk-print-sheet','qty_ordered','Qty Ordered',' style="text-align:right"')}<th style="text-align:right">Qty Fulfilled</th><th>Status</th></tr></thead>
       <tbody>${sorted_pr.map(i => {
         const fulfilled = i.qty_fulfilled != null ? i.qty_fulfilled : (i.qty_sent || 0);
         const ordered = i.qty_ordered || i.total_qty || 0;
@@ -396,7 +396,7 @@ function _fillProducts() {
 
   el.innerHTML = `<div style="overflow-x:auto">
     <table class="tbl" id="bk-products" style="font-size:11px">
-      <thead><tr>${SPG.ui.sortTh('bk-products','product_name','Product')}${SPG.ui.sortTh('bk-products','category_name','Category')}${SPG.ui.sortTh('bk-products','price','Price','right')}<th>Unit</th><th style="text-align:center">Active</th><th></th></tr></thead>
+      <thead><tr>${SPG.ui.sortTh('bk-products','product_name','Product')}${SPG.ui.sortTh('bk-products','category_name','Category')}${SPG.ui.sortTh('bk-products','price','Price',' style="text-align:right"')}<th>Unit</th><th style="text-align:center">Active</th><th></th></tr></thead>
       <tbody>${sorted_prod.map(p => `<tr>
         <td style="font-weight:600">${esc(p.product_name)}</td>
         <td style="color:var(--t3)">${esc(p.category_name || p.cat_id || '—')}</td>

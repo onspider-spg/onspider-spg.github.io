@@ -149,7 +149,7 @@ BK.renderBrowse = function(p) {
         <input type="date" id="bk-date" value="${dd}" min="${BK.todaySydney()}" style="font-size:11px;padding:4px 8px;border:1px solid var(--bd);border-radius:var(--rd);background:var(--bg)" onchange="BakerySection.changeDate(this.value)">
       </div>
       <div style="margin-bottom:10px">
-        <input class="inp" placeholder="Search products..." value="${esc(S.productSearch)}" oninput="S_productSearch(this.value)" style="font-size:12px;padding:8px 12px">
+        <input class="inp" placeholder="Search products..." value="${esc(S.productSearch)}" oninput="BakerySection.setProductSearch(this.value)" style="font-size:12px;padding:8px 12px">
       </div>
       <div id="bk-cat-chips" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;overflow-x:auto"></div>
       <div id="bk-product-list">${SPG.ui.skeleton(80, 4)}</div>
@@ -159,11 +159,11 @@ BK.renderBrowse = function(p) {
     </div>`, 'Bakery');
 };
 
-// Expose search setter for inline oninput
-window.S_productSearch = function(val) {
+// Search setter — exposed via BakerySection
+function _setProductSearch(val) {
   S.productSearch = val;
   _dFilterProducts();
-};
+}
 
 BK.loadBrowse = async function(p) {
   await BK.initBakery();
@@ -183,7 +183,11 @@ BK.loadBrowse = async function(p) {
     try {
       const qd = await BK.api('get_quotas', { day: String(dow) });
       const flat = {};
-      for (const pid in qd) { flat[pid] = qd[pid]?.[dow] ?? 0; }
+      for (const pid in qd) {
+        // qd[pid] can be flat number or nested {0:x,1:y,...} — handle both
+        const val = qd[pid];
+        flat[pid] = (typeof val === 'object' && val !== null) ? (val[dow] ?? 0) : (val ?? 0);
+      }
       S.quotas = flat;
       S._quotasDay = dow;
     } catch (e) { console.error('Quota load:', e); }
@@ -488,7 +492,7 @@ function _fillOrderDetail() {
   html += `<div class="sec-title">Items</div>
     <div style="overflow-x:auto">
       <table class="tbl" id="bk-order-items">
-        <thead><tr>${SPG.ui.sortTh('bk-order-items','product_name','Product')}${SPG.ui.sortTh('bk-order-items','qty_ordered','Ordered',{align:'right'})}${SPG.ui.sortTh('bk-order-items','qty_sent','Sent',{align:'right'})}<th>Status</th></tr></thead>
+        <thead><tr>${SPG.ui.sortTh('bk-order-items','product_name','Product')}${SPG.ui.sortTh('bk-order-items','qty_ordered','Ordered',' style="text-align:right"')}${SPG.ui.sortTh('bk-order-items','qty_sent','Sent',' style="text-align:right"')}<th>Status</th></tr></thead>
         <tbody>${sortedItems.map(i => `<tr>
           <td style="font-weight:600;font-size:12px">${esc(i.product_name)}</td>
           <td style="text-align:right">${i.qty_ordered}</td>
@@ -719,10 +723,10 @@ function _fillStockHistory() {
   if (!el) return;
   if (!S.stockHistory.length) { el.innerHTML = SPG.ui.empty('📈', 'No stock history', 'Records will appear after orders'); return; }
 
-  const st1 = SPG.ui.getSortState('bk-stock-hist');
+  const st1 = SPG.ui.getSortState('bk-sh-tbl');
   const sortedHist = st1 ? SPG.ui.sortData(S.stockHistory, st1.key, st1.dir) : S.stockHistory;
-  el.innerHTML = `<div style="overflow-x:auto"><table class="tbl" id="bk-stock-hist" style="font-size:11px">
-    <thead><tr>${SPG.ui.sortTh('bk-stock-hist','date','Date')}${SPG.ui.sortTh('bk-stock-hist','product_name','Product')}${SPG.ui.sortTh('bk-stock-hist','stock_on_hand','Stock',{align:'right'})}<th>Order</th></tr></thead>
+  el.innerHTML = `<div style="overflow-x:auto"><table class="tbl" id="bk-sh-tbl" style="font-size:11px">
+    <thead><tr>${SPG.ui.sortTh('bk-sh-tbl','date','Date')}${SPG.ui.sortTh('bk-sh-tbl','product_name','Product')}${SPG.ui.sortTh('bk-sh-tbl','stock_on_hand','Stock')}<th>Order</th></tr></thead>
     <tbody>${sortedHist.map(h => `<tr>
       <td>${BK.fmtDateAU(h.created_at || h.date)}</td>
       <td style="font-weight:600">${esc(h.product_name || h.product_id)}</td>
@@ -992,6 +996,7 @@ Object.assign(window.BakerySection, {
   filterCat,
   onStock1,
   onStock2,
+  setProductSearch: _setProductSearch,
 
   // Cart
   removeCartItem,
@@ -1025,7 +1030,7 @@ Object.assign(window.BakerySection, {
 document.addEventListener('spg-sort', (e) => {
   const id = e.detail.tableId;
   if (id === 'bk-order-items') _fillOrderDetail();
-  if (id === 'bk-stock-hist') _fillStockHistory();
+  if (id === 'bk-sh-tbl') _fillStockHistory();
 });
 
 })();

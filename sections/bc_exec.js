@@ -307,9 +307,9 @@ function _fillExecCommand(data) {
       <table id="exec-cmd-score-tbl" style="width:100%;font-size:11px;border-collapse:collapse">
         <thead><tr style="background:var(--bg2)">
           ${SPG.ui.sortTh('exec-cmd-score-tbl','store','Store')}
-          ${SPG.ui.sortTh('exec-cmd-score-tbl','fulfilPct','Fulfil%',{align:'right'})}
-          ${SPG.ui.sortTh('exec-cmd-score-tbl','wastePct','Waste%',{align:'right'})}
-          ${SPG.ui.sortTh('exec-cmd-score-tbl','score','Score',{align:'right'})}
+          ${SPG.ui.sortTh('exec-cmd-score-tbl','fulfilPct','Fulfil%',' style="text-align:right"')}
+          ${SPG.ui.sortTh('exec-cmd-score-tbl','wastePct','Waste%',' style="text-align:right"')}
+          ${SPG.ui.sortTh('exec-cmd-score-tbl','score','Score',' style="text-align:right"')}
           <th style="padding:8px 10px;text-align:center;font-weight:600">Grade</th>
         </tr></thead>
         <tbody>${data.storeScores.map(s => `<tr style="border-top:1px solid var(--border)">
@@ -758,9 +758,9 @@ function _fillExecWaste(data) {
         <thead><tr style="background:var(--bg2)">
           ${SPG.ui.sortTh('exec-waste-staff-tbl','name','Staff')}
           <th style="padding:8px 6px;text-align:left;font-weight:600">Role</th>
-          ${SPG.ui.sortTh('exec-waste-staff-tbl','shifts','Shifts',{align:'right'})}
-          ${SPG.ui.sortTh('exec-waste-staff-tbl','wasteLogs','Waste Logs',{align:'right'})}
-          ${SPG.ui.sortTh('exec-waste-staff-tbl','wastePerShift','Waste/Shift',{align:'right'})}
+          ${SPG.ui.sortTh('exec-waste-staff-tbl','shifts','Shifts',' style="text-align:right"')}
+          ${SPG.ui.sortTh('exec-waste-staff-tbl','wasteLogs','Waste Logs',' style="text-align:right"')}
+          ${SPG.ui.sortTh('exec-waste-staff-tbl','wastePerShift','Waste/Shift',' style="text-align:right"')}
           <th style="padding:8px 6px;text-align:right;font-weight:600">Over-orders</th>
           <th style="padding:8px 10px;text-align:center;font-weight:600">Assessment</th>
         </tr></thead>
