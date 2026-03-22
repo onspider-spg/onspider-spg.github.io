@@ -494,8 +494,109 @@ async function initBakery() {
 
 
 // ═══════════════════════════════════════
-// SIDEBAR (matches Home exactly — text-only, accordion)
+// SIDEBAR — 3 Roles (exact match wireframe v4 SIDEBARS)
+// Store: Orders + Records
+// BC Staff: Production + Manage + Orders + Reports
+// Management T1/T2: Executive + Store + BC + Records + Reports + Admin (SEES ALL)
 // ═══════════════════════════════════════
+
+// Sidebar definitions per role (from wireframe v4)
+const SIDEBARS = {
+  store: [
+    { type: 'item', route: 'dashboard', label: 'Dashboard' },
+    { type: 'divider' },
+    { type: 'group', label: 'Orders', open: true, items: [
+      { route: 'browse', label: 'Create Order', onclick: 'BakerySection.goToBrowse()' },
+      { route: 'orders', label: 'My Orders' },
+      { route: 'cart', label: 'Cart' },
+    ]},
+    { type: 'group', label: 'Records', items: [
+      { route: 'quota', label: 'Quota' },
+      { route: 'stock-history', label: 'Stock History' },
+      { route: 'waste', label: 'Waste Log' },
+      { route: 'returns', label: 'Returns' },
+    ]},
+    { type: 'divider' },
+    { type: 'modules' },
+  ],
+  bc: [
+    { type: 'item', route: 'bc-dashboard', label: 'Dashboard' },
+    { type: 'divider' },
+    { type: 'group', label: 'Production', open: true, items: [
+      { route: 'accept', label: 'Incoming Orders' },
+      { route: 'fulfil', label: 'Fulfil Orders' },
+      { route: 'print', label: 'Print Centre' },
+    ]},
+    { type: 'group', label: 'Manage', items: [
+      { route: 'products', label: 'Products' },
+      { route: 'visibility', label: 'Product Visibility' },
+      { route: 'quota', label: 'Quota' },
+    ]},
+    { type: 'group', label: 'Orders', items: [
+      { route: 'orders', label: 'View Orders' },
+      { route: 'waste', label: 'Waste Log' },
+      { route: 'bc-returns', label: 'Incoming Returns' },
+      { route: 'stock-history', label: 'Stock' },
+    ]},
+    { type: 'divider' },
+    { type: 'section', label: 'Reports' },
+    { type: 'group', label: 'Reports', items: [
+      { route: 'waste-dashboard', label: 'Waste Dashboard' },
+      { route: 'top-products', label: 'Top Products' },
+      { route: 'audit', label: 'Audit Trail' },
+    ]},
+    { type: 'divider' },
+    { type: 'modules' },
+  ],
+  management: [
+    { type: 'item', route: 'exec-command', label: 'Executive Dashboard' },
+    { type: 'divider' },
+    { type: 'group', label: 'Executive', open: true, items: [
+      { route: 'exec-product', label: 'Product Efficiency' },
+      { route: 'exec-store', label: 'Store Performance' },
+      { route: 'exec-demand', label: 'Demand & Quota' },
+      { route: 'exec-waste', label: 'Waste Intelligence' },
+      { route: 'exec-quality', label: 'Quality & Returns' },
+    ]},
+    { type: 'divider' },
+    { type: 'group', label: 'Store', items: [
+      { route: 'browse', label: 'Create Order', onclick: 'BakerySection.goToBrowse()' },
+      { route: 'orders', label: 'My Orders' },
+      { route: 'cart', label: 'Cart' },
+      { route: 'quota', label: 'Quota' },
+      { route: 'stock-history', label: 'Stock History' },
+    ]},
+    { type: 'group', label: 'BC', items: [
+      { route: 'accept', label: 'Incoming Orders' },
+      { route: 'fulfil', label: 'Fulfil Orders' },
+      { route: 'print', label: 'Print Centre' },
+      { route: 'products', label: 'Products' },
+      { route: 'visibility', label: 'Product Visibility' },
+    ]},
+    { type: 'group', label: 'Records', items: [
+      { route: 'waste', label: 'Waste Log' },
+      { route: 'returns', label: 'Returns (Store)' },
+      { route: 'bc-returns', label: 'Returns (BC)' },
+    ]},
+    { type: 'divider' },
+    { type: 'section', label: 'Reports' },
+    { type: 'group', label: 'Reports', items: [
+      { route: 'waste-dashboard', label: 'Waste Dashboard' },
+      { route: 'top-products', label: 'Top Products' },
+      { route: 'cutoff', label: 'Cutoff Violations' },
+      { route: 'audit', label: 'Audit Trail' },
+    ]},
+    { type: 'section', label: 'Admin' },
+    { type: 'group', label: 'Admin', items: [
+      { route: 'access', label: 'User Access' },
+      { route: 'dept-mapping', label: 'Dept Mapping' },
+      { route: 'config', label: 'System Config' },
+    ]},
+    { type: 'divider' },
+    { type: 'modules' },
+  ],
+};
+
 function buildBakerySidebar() {
   const sd = document.querySelector('.sidebar');
   if (!sd) return;
@@ -503,109 +604,55 @@ function buildBakerySidebar() {
   const s = SPG.api.getSession();
   if (!s) return;
 
-  const isBC = S.role === 'bc' || S.sidebarRole === 'management';
-  const isStore = S.role === 'store' || S.sidebarRole === 'management';
-  const isMgmt = S.sidebarRole === 'management';
+  // Pick sidebar definition based on role
+  const role = S.sidebarRole || S.role || 'store';
+  const def = SIDEBARS[role] || SIDEBARS.store;
   const cur = SPG.currentRoute;
 
   let html = '';
-
-  // ── Dashboard ──
-  html += sdItem('dashboard', 'Dashboard', cur);
-
-  html += '<div class="sd-divider"></div>';
-
-  // ── Store section ──
-  if (isStore && S.role === 'store') {
-    let orderItems = '';
-    if (hasPerm('fn_create_order')) orderItems += sdSub('browse', 'Create Order', cur, "BakerySection.goToBrowse()");
-    if (hasPerm('fn_view_own_orders')) orderItems += sdSub('orders', 'View Orders', cur);
-    if (hasPerm('fn_create_order')) orderItems += sdSub('quota', 'Set Quota', cur);
-    if (hasPerm('fn_create_order')) orderItems += sdSub('stock-history', 'Stock History', cur);
-    if (orderItems) html += sdAccordion('orders', 'Orders', orderItems, cur);
-
-    let recordItems = '';
-    if (hasPerm('fn_view_waste')) recordItems += sdSub('waste', 'Waste Log', cur);
-    if (hasPerm('fn_view_returns')) recordItems += sdSub('returns', 'Returns', cur);
-    if (recordItems) html += sdAccordion('records', 'Records', recordItems, cur);
-  }
-
-  // ── BC Staff section ──
-  if (isBC && S.role === 'bc') {
-    let bcOrderItems = '';
-    bcOrderItems += sdSub('orders', 'View Orders', cur);
-    bcOrderItems += sdSub('print', 'Print Centre', cur);
-    html += sdAccordion('orders', 'Orders', bcOrderItems, cur);
-
-    let bcRecordItems = '';
-    bcRecordItems += sdSub('waste', 'Waste Log', cur);
-    bcRecordItems += sdSub('bc-returns', 'Incoming Returns', cur);
-    html += sdAccordion('records', 'Records', bcRecordItems, cur);
-
-    // ── Executive (management only) ──
-    if (isMgmt) {
-      let execItems = '';
-      execItems += sdSub('exec-command', 'Command Centre', cur);
-      execItems += sdSub('exec-product', 'Product Efficiency', cur);
-      execItems += sdSub('exec-store', 'Store Performance', cur);
-      execItems += sdSub('exec-demand', 'Demand & Quota', cur);
-      execItems += sdSub('exec-waste', 'Waste Intelligence', cur);
-      execItems += sdSub('exec-quality', 'Quality & Returns', cur);
-      html += sdAccordion('executive', 'Executive', execItems, cur);
-    }
-
-    // ── Reports (position level ≤ 3) ──
-    const pl = s.position_id ? (s.position_level || 99) : parseInt((s.tier_id || 'T9').replace('T', ''));
-    if (pl <= 3) {
-      let reportItems = '';
-      if (hasPerm('fn_view_waste')) reportItems += sdSub('waste-dashboard', 'Waste Dashboard', cur);
-      if (isMgmt || hasPerm('fn_view_all_orders')) reportItems += sdSub('top-products', 'Top Products', cur);
-      if (isMgmt) reportItems += sdSub('cutoff', 'Cutoff Violations', cur);
-      if (hasPerm('fn_view_audit_log')) reportItems += sdSub('audit', 'Audit Trail', cur);
-      if (reportItems) html += sdAccordion('reports', 'Reports', reportItems, cur);
-    }
-
-    // ── Admin (perm-gated) ──
-    let adminItems = '';
-    if (hasPerm('fn_manage_products')) adminItems += sdSub('products', 'Manage Products', cur);
-    if (hasPerm('fn_manage_visibility')) adminItems += sdSub('visibility', 'Product Visibility', cur);
-    if (hasPerm('fn_manage_permissions')) adminItems += sdSub('access', 'User Access', cur);
-    if (hasPerm('fn_manage_dept_mapping')) adminItems += sdSub('dept-mapping', 'Dept Mapping', cur);
-    if (hasPerm('fn_manage_config')) adminItems += sdSub('config', 'System Config', cur);
-    if (adminItems) {
+  def.forEach(item => {
+    if (item.type === 'item') {
+      const active = cur === item.route ? ' active' : '';
+      const onclick = item.onclick || `SPG.go('bakery/${item.route}')`;
+      html += `<div class="sd-item${active}" onclick="${onclick}">${item.label}</div>`;
+    } else if (item.type === 'divider') {
       html += '<div class="sd-divider"></div>';
-      html += '<div class="sd-section">Admin</div>';
-      html += sdAccordion('admin', 'Settings', adminItems, cur);
-    }
-  }
-
-  // ── Modules group (other modules — NOT Bakery) ──
-  html += '<div class="sd-divider"></div>';
-  const modules = SPG.state.modules;
-  if (modules) {
-    let modItems = '';
-    const MODULE_DEFS = [
-      { id: 'sales', label: 'Sales Daily', key: 'saledaily_report' },
-      { id: 'finance', label: 'Finance', key: 'finance' },
-      { id: 'hr', label: 'HR', key: 'hr' },
-      { id: 'purchase', label: 'Purchase', key: 'purchase' },
-    ];
-    const MODULE_MAP = { 'saledaily_report': 'sales', 'finance': 'finance', 'hr': 'hr', 'purchase': 'purchase' };
-
-    MODULE_DEFS.forEach(def => {
-      const mod = modules.find(m => MODULE_MAP[m.module_id] === def.id);
-      if (mod && !mod.is_accessible) return;
-      const isActive = mod && mod.status === 'active';
-      if (isActive) {
-        modItems += `<div class="sd-sub-item" onclick="SPG.go('${def.id}/dashboard')">${def.label}</div>`;
-      } else if (mod) {
-        modItems += `<div class="sd-sub-item" style="opacity:.35;cursor:default">${def.label}</div>`;
+    } else if (item.type === 'section') {
+      html += `<div class="sd-section">${item.label}</div>`;
+    } else if (item.type === 'group') {
+      const hasActive = item.items.some(sub => cur === sub.route);
+      const open = item.open || hasActive ? ' open' : '';
+      html += `<div class="sd-group${open}" data-group="${item.label.toLowerCase()}">`;
+      html += `<div class="sd-group-head">${item.label}<span class="sd-group-arr">›</span></div>`;
+      html += '<div class="sd-sub">';
+      item.items.forEach(sub => {
+        const active = cur === sub.route ? ' active' : '';
+        const onclick = sub.onclick || `SPG.go('bakery/${sub.route}')`;
+        html += `<div class="sd-sub-item${active}" onclick="${onclick}">${sub.label}</div>`;
+      });
+      html += '</div></div>';
+    } else if (item.type === 'modules') {
+      // Other modules (not Bakery)
+      const modules = SPG.state.modules;
+      if (modules) {
+        let modItems = '';
+        const modMap = { 'saledaily_report': { id: 'sales', label: 'Sales Daily' }, 'finance': { id: 'finance', label: 'Finance' }, 'hr': { id: 'hr', label: 'HR' }, 'purchase': { id: 'purchase', label: 'Purchase' } };
+        Object.entries(modMap).forEach(([key, def]) => {
+          const mod = modules.find(m => m.module_id === key);
+          if (mod && mod.is_accessible && mod.status === 'active') {
+            modItems += `<div class="sd-sub-item" onclick="SPG.go('${def.id}/dashboard')">${def.label}</div>`;
+          } else if (mod) {
+            modItems += `<div class="sd-sub-item" style="opacity:.35;cursor:default">${def.label}</div>`;
+          }
+        });
+        if (modItems) {
+          html += `<div class="sd-group" data-group="modules"><div class="sd-group-head">Modules<span class="sd-group-arr">›</span></div><div class="sd-sub">${modItems}</div></div>`;
+        }
       }
-    });
-    if (modItems) html += sdAccordion('modules', 'Modules', modItems, cur);
-  }
+    }
+  });
 
-  // ── Footer ──
+  // Footer
   html += `<div class="sd-footer">
     <div class="sd-version">BC v1.0</div>
     <a href="#" onclick="SPG.go('dashboard');return false">← Home</a>
@@ -614,33 +661,8 @@ function buildBakerySidebar() {
 
   sd.innerHTML = html;
   if (SPG.state.sidebarCollapsed) sd.classList.add('closed');
-
-  // Auto-expand current accordion
-  sd.querySelectorAll('.sd-group').forEach(sg => {
-    if (sg.querySelector('.sd-sub-item.active')) sg.classList.add('open');
-  });
-  // Mobile sidebar: core app.js openSidebar() now auto-copies from desktop .sidebar
 }
 
-
-
-function sdItem(route, label, cur) {
-  const active = cur === route ? ' active' : '';
-  return `<div class="sd-item${active}" onclick="SPG.go('bakery/${route}')">${label}</div>`;
-}
-
-function sdAccordion(id, label, items, cur) {
-  return `<div class="sd-group" data-group="${id}">
-    <div class="sd-group-head">${label}<span class="sd-group-arr">›</span></div>
-    <div class="sd-sub">${items}</div>
-  </div>`;
-}
-
-function sdSub(route, label, cur, customOnclick) {
-  const active = cur === route ? ' active' : '';
-  const onclick = customOnclick || `SPG.go('bakery/${route}')`;
-  return `<div class="sd-sub-item${active}" onclick="${onclick}">${label}</div>`;
-}
 
 
 // ═══════════════════════════════════════
