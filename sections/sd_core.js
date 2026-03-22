@@ -497,19 +497,7 @@ function buildSDSidebar() {
     if (sg.querySelector('.sd-sub-item.active')) {
       sg.classList.add('open');
     }
-    // Others stay closed (no .open class = max-height:0)
   });
-
-  // Ensure accordion click handler is set up (event delegation — safe to call multiple times)
-  if (!window._sdAccordionSetup) {
-    window._sdAccordionSetup = true;
-    document.addEventListener('click', (e) => {
-      const head = e.target.closest('.sd-group-head');
-      if (!head) return;
-      const sg = head.closest('.sd-group');
-      if (sg) sg.classList.toggle('open');
-    });
-  }
 }
 
 // Sidebar helpers (same pattern as Bakery bc_core.js)
@@ -520,7 +508,7 @@ function sdItem(route, label, cur) {
 
 function sdAccordion(id, label, items) {
   return `<div class="sd-group" data-group="${id}">
-    <div class="sd-group-head">${label}<span class="sd-group-arr">›</span></div>
+    <div class="sd-group-head" onclick="event.stopPropagation();this.closest('.sd-group').classList.toggle('open')">${label}<span class="sd-group-arr">›</span></div>
     <div class="sd-sub">${items}</div>
   </div>`;
 }
