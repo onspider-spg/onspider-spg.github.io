@@ -6,6 +6,43 @@
 
 window.SPG = window.SPG || {};
 
+// ═══ SESSION DIAGNOSTIC (temporary — remove after bug is found) ═══
+// Intercept localStorage operations to catch anything that deletes session data
+(() => {
+  const _origRemove = localStorage.removeItem.bind(localStorage);
+  const _origClear = localStorage.clear.bind(localStorage);
+  const _origSet = localStorage.setItem.bind(localStorage);
+  const _watched = ['spg_session', 'spg_token', 'spg_account'];
+
+  localStorage.removeItem = function(key) {
+    if (_watched.includes(key)) {
+      console.warn(`%c[SPG-DIAG] localStorage.removeItem('${key}')`, 'color:#e11d48;font-weight:bold', '\n→ Called from:', new Error().stack);
+    }
+    return _origRemove(key);
+  };
+  localStorage.clear = function() {
+    console.warn('%c[SPG-DIAG] localStorage.clear() — ALL session data will be lost!', 'color:#e11d48;font-weight:bold;font-size:14px', '\n→ Called from:', new Error().stack);
+    return _origClear();
+  };
+  localStorage.setItem = function(key, value) {
+    if (key === 'spg_session') {
+      try {
+        const parsed = JSON.parse(value);
+        if (!parsed.token || !parsed.expires_at) {
+          console.warn('%c[SPG-DIAG] saveSession with MISSING data!', 'color:#e11d48;font-weight:bold',
+            '\n→ token:', parsed.token, '\n→ expires_at:', parsed.expires_at,
+            '\n→ Called from:', new Error().stack);
+        } else {
+          const ex = new Date(parsed.expires_at);
+          const hrs = ((ex - Date.now()) / 3600000).toFixed(1);
+          console.log(`%c[SPG-DIAG] Session saved — expires in ${hrs}h (${parsed.expires_at})`, 'color:#16a34a;font-weight:bold');
+        }
+      } catch {}
+    }
+    return _origSet(key, value);
+  };
+})();
+
 SPG.api = (() => {
   // ═══ ENDPOINTS (each section registers its own) ═══
   const ENDPOINTS = {
@@ -90,18 +127,39 @@ SPG.api = (() => {
     if (_sesCache) return _sesCache;
     try {
       const raw = localStorage.getItem(SESSION_KEY);
-      if (!raw) return null;
+      if (!raw) {
+        console.warn('%c[SPG-DIAG] getSession() → null (no data in localStorage)', 'color:#e11d48;font-weight:bold',
+          '\n→ All localStorage keys:', Object.keys(localStorage),
+          '\n→ Origin:', location.origin,
+          '\n→ Called from:', new Error().stack);
+        return null;
+      }
       const data = JSON.parse(raw);
       if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        const hrs = ((Date.now() - new Date(data.expires_at)) / 3600000).toFixed(1);
+        console.warn(`%c[SPG-DIAG] getSession() → EXPIRED (${hrs}h ago)`, 'color:#d97706;font-weight:bold',
+          '\n→ expires_at:', data.expires_at,
+          '\n→ now:', new Date().toISOString(),
+          '\n→ token:', data.token?.substring(0, 12) + '...');
         clearSession();
         return null;
       }
+      const hrs = ((new Date(data.expires_at) - Date.now()) / 3600000).toFixed(1);
+      console.log(`%c[SPG-DIAG] getSession() → OK (${hrs}h remaining)`, 'color:#16a34a',
+        '| token:', data.token?.substring(0, 12) + '...');
       _sesCache = data;
       return data;
-    } catch { return null; }
+    } catch (e) {
+      console.error('%c[SPG-DIAG] getSession() → PARSE ERROR', 'color:#e11d48;font-weight:bold', e,
+        '\n→ raw:', localStorage.getItem(SESSION_KEY)?.substring(0, 100));
+      return null;
+    }
   }
 
   function clearSession() {
+    console.warn('%c[SPG-DIAG] clearSession() called!', 'color:#e11d48;font-weight:bold;font-size:13px',
+      '\n→ Had token:', _sesCache?.token?.substring(0, 12) || localStorage.getItem(TOKEN_KEY)?.substring(0, 12) || '(none)',
+      '\n→ Called from:', new Error().stack);
     _sesCache = null;
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(ACCOUNT_KEY);
