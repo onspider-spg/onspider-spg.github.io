@@ -148,9 +148,9 @@ const BHQ = (() => {
 
     app().innerHTML = `
       <div class="pin-screen">
-        <div class="pin-logo">B</div>
+        <div class="pin-logo">SPG</div>
         <div class="pin-title">Enter PIN</div>
-        <div class="pin-subtitle">${user ? esc(user.display_name) : 'Bill Capture'}</div>
+        <div class="pin-subtitle">${user ? esc(user.display_name) : 'SPG Assist'}</div>
         <div class="pin-dots" id="pinDots">
           ${[0,1,2,3].map(i => `<div class="pin-dot" data-i="${i}"></div>`).join('')}
         </div>
@@ -218,8 +218,9 @@ const BHQ = (() => {
     app().innerHTML = `
       <div class="login-screen">
         <div class="login-card">
-          <div class="pin-logo" style="margin: 0 auto 24px;">B</div>
-          <h2>Bill Capture</h2>
+          <div class="pin-logo" style="margin: 0 auto 24px;">SPG</div>
+          <h2>SPG Assist</h2>
+          <div class="mgmt-badge">🔒 Management Team Only</div>
           <p>Login to set up your PIN</p>
           <div class="field">
             <label>Username</label>
@@ -273,7 +274,7 @@ const BHQ = (() => {
 
     app().innerHTML = `
       <div class="setup-pin-screen">
-        <div class="pin-logo">B</div>
+        <div class="pin-logo">SPG</div>
         <div class="pin-title" id="setupTitle">${isReset ? 'Reset your PIN' : 'Create a PIN'}</div>
         <div class="pin-subtitle" id="setupSubtitle">Enter a 4 digit passcode</div>
         <div class="pin-dots" id="setupDots">
