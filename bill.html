@@ -250,7 +250,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro
 .invoice-section-title { font-size: 11px; font-weight: 700; color: #8A8AAA; text-transform: uppercase; letter-spacing: .5px; padding: 16px 0 8px; }
 
 /* ── Photo Action Sheet ── */
-.photo-action-sheet { position: fixed; inset: 0; z-index: 9995; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; transition: opacity .2s; }
+.photo-action-sheet { position: fixed; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; z-index: 9995; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; transition: opacity .2s; }
 .photo-action-sheet.show { opacity: 1; }
 .photo-action-sheet .sheet-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(2px); }
 .photo-action-sheet .sheet-content { position: relative; background: #fff; border-radius: 20px 20px 0 0; padding: 8px 16px; padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 16px); transform: translateY(100%); transition: transform .25s ease-out; }

@@ -570,24 +570,47 @@ const BHQ = (() => {
 
   // ── Install Guide Screen ──
   function renderInstallScreen() {
-    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    const isSafari = /Safari/.test(navigator.userAgent) && !/CriOS|Chrome/.test(navigator.userAgent);
-    const isAndroid = /Android/.test(navigator.userAgent);
-    const deviceName = isIOS ? 'iPhone · Safari' : isAndroid ? 'Android · Chrome' : 'Desktop';
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isAndroid = /Android/.test(ua);
+    const isSafari = isIOS && /Safari/.test(ua) && !/CriOS|Chrome|FxiOS|EdgiOS/.test(ua);
+    const isIOSChrome = isIOS && /CriOS/.test(ua);
 
-    const iosSteps = `
-      <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the Share button</div><div class="s-desc">Tap <span class="key">⬆︎</span> at the bottom of Safari</div></div></div>
-      <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Scroll down and tap</div><div class="s-desc">Find <span class="hl">"Add to Home Screen"</span> in the share menu</div></div></div>
-      <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Tap "Add"</div><div class="s-desc">Confirm the name <span class="key">SPG Assist</span> and tap <span class="hl">Add</span></div></div></div>
-      <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Safari and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>
-    `;
-
-    const androidSteps = `
-      <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the menu</div><div class="s-desc">Tap <span class="key">⋮</span> in the top-right of Chrome</div></div></div>
-      <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Tap "Add to Home screen"</div><div class="s-desc">Find <span class="hl">"Add to Home screen"</span> or <span class="hl">"Install app"</span></div></div></div>
-      <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Confirm</div><div class="s-desc">Tap <span class="hl">Add</span> to install</div></div></div>
-      <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Chrome and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>
-    `;
+    // Detect platform for display + instructions
+    let platform, deviceIcon, steps;
+    if (isIOS && isSafari) {
+      platform = 'iPhone · Safari';
+      deviceIcon = '📱';
+      steps = `
+        <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the Share button</div><div class="s-desc">Tap <span class="key">⬆︎</span> at the bottom of Safari</div></div></div>
+        <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Scroll down and tap</div><div class="s-desc">Find <span class="hl">"Add to Home Screen"</span> in the share menu</div></div></div>
+        <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Tap "Add"</div><div class="s-desc">Confirm the name <span class="key">SPG Assist</span> and tap <span class="hl">Add</span></div></div></div>
+        <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Safari and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>`;
+    } else if (isIOSChrome) {
+      platform = 'iPhone · Chrome';
+      deviceIcon = '📱';
+      steps = `
+        <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Open in Safari</div><div class="s-desc">Chrome on iPhone doesn't support installing apps. Copy this link and open it in <span class="hl">Safari</span></div></div></div>
+        <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Tap the Share button</div><div class="s-desc">In Safari, tap <span class="key">⬆︎</span> at the bottom</div></div></div>
+        <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Add to Home Screen</div><div class="s-desc">Find <span class="hl">"Add to Home Screen"</span> and tap <span class="hl">Add</span></div></div></div>
+        <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>`;
+    } else if (isAndroid) {
+      platform = 'Android · Chrome';
+      deviceIcon = '📱';
+      steps = `
+        <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Tap the menu</div><div class="s-desc">Tap <span class="key">⋮</span> in the top-right of Chrome</div></div></div>
+        <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Tap "Add to Home screen"</div><div class="s-desc">Find <span class="hl">"Add to Home screen"</span> or <span class="hl">"Install app"</span></div></div></div>
+        <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Confirm</div><div class="s-desc">Tap <span class="hl">Add</span> to install</div></div></div>
+        <div class="install-step"><div class="step-num">4</div><div class="step-content"><div class="s-title">Open from Home Screen</div><div class="s-desc">Close Chrome and open <span class="key">SPG Assist</span> from your Home Screen</div></div></div>`;
+    } else {
+      // Desktop or unknown
+      platform = 'Desktop';
+      deviceIcon = '💻';
+      steps = `
+        <div class="install-step"><div class="step-num">1</div><div class="step-content"><div class="s-title">Open on your phone</div><div class="s-desc">Visit <span class="hl">spghub.app/bill.html</span> on your iPhone or Android phone</div></div></div>
+        <div class="install-step"><div class="step-num">2</div><div class="step-content"><div class="s-title">Install the app</div><div class="s-desc">Follow the on-screen instructions to add to your Home Screen</div></div></div>
+        <div class="install-step"><div class="step-num">3</div><div class="step-content"><div class="s-title">Use anytime</div><div class="s-desc">Open <span class="key">SPG Assist</span> from your Home Screen to capture receipts on the go</div></div></div>`;
+    }
 
     app().innerHTML = `
       <div class="install-screen">
@@ -598,15 +621,15 @@ const BHQ = (() => {
         </div>
         <div class="install-body">
           <div class="install-detect">
-            <div class="device-icon">📱</div>
+            <div class="device-icon">${deviceIcon}</div>
             <div class="device-info">
-              <div class="name">${deviceName}</div>
+              <div class="name">${platform}</div>
               <div class="detail">Detected automatically</div>
             </div>
             <div class="check">✓</div>
           </div>
-          <div class="install-title">Add to Home Screen</div>
-          <div class="install-steps">${isAndroid ? androidSteps : iosSteps}</div>
+          <div class="install-title">${platform === 'Desktop' ? 'Use on Mobile' : 'Add to Home Screen'}</div>
+          <div class="install-steps">${steps}</div>
           <div class="install-note">
             <strong>⚠ Why is this needed?</strong><br>
             Installing as an app enables full-screen mode, better camera access, and a native app experience. This only needs to be done once.
