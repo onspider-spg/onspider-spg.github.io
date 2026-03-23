@@ -29,10 +29,10 @@ function renderDashboard(p) {
   const s = SPG.api.getSession();
   if (!s) return SPG.shell('<div class="content">Loading...</div>', 'Sales Daily');
 
-  // T1-T2 → Executive Dashboard
+  // T1-T2 → render Executive Command Centre directly (no redirect flash)
   if (SD.isOwner()) {
-    setTimeout(() => SPG.go('sales/exec-cmd'), 0);
-    return SPG.shell('<div class="content" style="display:flex;align-items:center;justify-content:center;color:var(--t3)">Redirecting...</div>', 'Sales Daily');
+    SPG.updateHash('exec-cmd');
+    return SD.renderExecCmd(p);
   }
 
   return SD.isMgmt() ? _renderMgmt(s) : _renderStore(s);
@@ -94,7 +94,8 @@ async function loadDashboard(p) {
   if (!S.initLoaded) return;
   SD.buildSDSidebar();
 
-  if (SD.isOwner()) return; // T1-T2 redirected
+  // T1-T2 → load Executive Command Centre data directly
+  if (SD.isOwner()) { SD.loadExecCmd(p); return; }
 
   const isMgmt = SD.isMgmt();
 

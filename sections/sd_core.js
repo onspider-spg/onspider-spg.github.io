@@ -132,7 +132,9 @@ function fmtMoneyShort(n) {
 // ═══════════════════════════════════════
 function getTierLevel() {
   const s = SPG.api.getSession();
-  return s?.position_id ? (s.position_level || 99) : parseInt((s?.tier_id || 'T9').replace('T', ''));
+  if (s?.position_id && s.position_level != null) return s.position_level;
+  const tid = parseInt((s?.tier_id || 'T9').replace('T', ''));
+  return isNaN(tid) ? 99 : tid;
 }
 
 function isOwner() { return getTierLevel() <= 2; }   // T1-T2
@@ -435,7 +437,7 @@ function getInitials(name) {
 // ROUTE REGISTRATION
 // ═══════════════════════════════════════
 SPG.section('sales', {
-  defaultRoute: isOwner() ? 'exec-cmd' : 'dashboard',
+  defaultRoute: 'dashboard',
   buildSidebar: buildSDSidebar,
   routes: {
     // ── Dashboard (sd_screens.js) ──
