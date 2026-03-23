@@ -128,7 +128,7 @@ BK.fillDeptMapping = function() {
     </tr>`;
   }).join('');
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     <table class="wf-table">
       <thead><tr><th>Department</th><th>Module Role</th><th>Section Scope</th><th>Active</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -223,7 +223,7 @@ BK.fillVisibility = function() {
   filtered.sort((a, b) => (a.product_name || '').localeCompare(b.product_name || ''));
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="max-width:900px">${secChips}<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">ไม่พบสินค้า</div></div></div>`;
+    el.innerHTML = `<div style="max-width:1000px">${secChips}<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">ไม่พบสินค้า</div></div></div>`;
     return;
   }
 
@@ -254,7 +254,7 @@ BK.fillVisibility = function() {
     return `<tr><td style="font-weight:500">${esc(p.product_name)}</td>${cells}</tr>`;
   }).join('');
 
-  el.innerHTML = `<div style="max-width:900px">${secChips}
+  el.innerHTML = `<div style="max-width:1000px">${secChips}
     <table class="wf-table">
       <thead><tr><th>Product</th>${thCols}</tr></thead>
       <tbody>${rows}</tbody>
@@ -380,7 +380,7 @@ BK.fillAccess = function() {
 
   const thTierHeaders = tiers.map(t => `<th style="text-align:center">${esc(t)}</th>`).join('');
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     ${filterBar}
     <div style="overflow-x:auto">
     <table class="wf-table" style="font-size:11px">
@@ -489,7 +489,7 @@ BK.fillWasteDashboard = function() {
     ${topBars || '<div style="color:var(--t3);font-size:11px">No data</div>'}
   </div>`;
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     ${filterBar}
     ${statsRow}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
@@ -594,11 +594,11 @@ BK.fillTopProducts = function() {
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">${catCards}</div>` : '';
 
   if (!orderedBars && !storeBars && !byCat.length) {
-    el.innerHTML = `<div style="max-width:900px">${filterBar}<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">ไม่มีข้อมูลในช่วงนี้</div></div></div>`;
+    el.innerHTML = `<div style="max-width:1000px">${filterBar}<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">ไม่มีข้อมูลในช่วงนี้</div></div></div>`;
     return;
   }
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     ${filterBar}
     ${twoCol}
     ${catBlock}
@@ -682,7 +682,7 @@ BK.fillCutoff = function() {
   </div>`;
 
   if (!list.length) {
-    el.innerHTML = `<div style="max-width:900px">${filterBar}<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">ไม่มี Cutoff Violation</div><div class="empty-desc">ในช่วงเวลาที่เลือก</div></div></div>`;
+    el.innerHTML = `<div style="max-width:1000px">${filterBar}<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">ไม่มี Cutoff Violation</div><div class="empty-desc">ในช่วงเวลาที่เลือก</div></div></div>`;
     return;
   }
 
@@ -702,7 +702,7 @@ BK.fillCutoff = function() {
     </tr>`;
   }).join('');
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     ${filterBar}
     <table class="wf-table">
       <thead><tr><th>Order ID</th><th>Store</th><th>Submitted</th><th>Cutoff</th><th>Late By</th><th>Status</th></tr></thead>
@@ -802,7 +802,7 @@ BK.fillAudit = function() {
   if (_auFilter !== 'all') filtered = all.filter(a => a.action_type === _auFilter);
 
   if (!filtered.length) {
-    el.innerHTML = `<div style="max-width:900px">${filterBar}<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">ไม่มี Audit Log</div></div></div>`;
+    el.innerHTML = `<div style="max-width:1000px">${filterBar}<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">ไม่มี Audit Log</div></div></div>`;
     return;
   }
 
@@ -831,7 +831,7 @@ BK.fillAudit = function() {
     </tr>`;
   }).join('');
 
-  el.innerHTML = `<div style="max-width:900px">
+  el.innerHTML = `<div style="max-width:1000px">
     ${filterBar}
     <table class="wf-table">
       <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Detail</th></tr></thead>

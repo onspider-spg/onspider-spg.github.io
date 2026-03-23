@@ -75,18 +75,18 @@
 .cart-stock { color:var(--blue); }
 
 /* ═══ WIREFRAME COMPONENTS (shared across BC pages) ═══ */
-.welcome-card { background:var(--bg);border:1px solid var(--bd);border-radius:var(--rd-lg);padding:var(--sp-md) var(--sp-lg);margin-bottom:var(--sp-md);max-width:900px;display:flex;align-items:center;gap:14px; }
+.welcome-card { background:var(--bg);border:1px solid var(--bd);border-radius:var(--rd-lg);padding:var(--sp-md) var(--sp-lg);margin-bottom:var(--sp-md);max-width:1000px;display:flex;align-items:center;gap:14px; }
 .welcome-avatar { width:48px;height:48px;border-radius:50%;background:var(--acc2);color:var(--acc);font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
 .welcome-name { font-size:16px;font-weight:700; }
 .welcome-meta { font-size:12px;color:var(--t3); }
 .welcome-badge { font-size:10px;padding:2px 10px;border-radius:var(--rd-pill);font-weight:600;margin-top:2px;display:inline-block; }
 
-.stats-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-sm);max-width:900px;margin-bottom:var(--sp-md); }
+.stats-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-sm);max-width:1000px;margin-bottom:var(--sp-md); }
 .stat-card { background:var(--bg);border:1px solid var(--bd2);border-radius:var(--rd);padding:12px var(--sp-md);text-align:center; }
 .stat-num { font-size:20px;font-weight:800; }
 .stat-label { font-size:10px;color:var(--t3);font-weight:500;margin-top:2px; }
 
-.quick-actions { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:900px;margin-bottom:var(--sp-md); }
+.quick-actions { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:1000px;margin-bottom:var(--sp-md); }
 .quick-btn { padding:10px 8px;border:1px solid var(--bd2);border-radius:var(--rd);background:var(--bg);cursor:pointer;text-align:center;font-size:11px;font-weight:600;color:var(--t2);transition:all .15s; }
 .quick-btn:hover { border-color:var(--acc);color:var(--acc); }
 .quick-btn-icon { font-size:18px;margin-bottom:4px; }

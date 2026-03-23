@@ -58,7 +58,7 @@ BK.renderDashboard = function(p) {
   const roleBadge = S.deptMapping?.module_role || S.role || '';
 
   return SPG.shell(SPG.toolbar('Dashboard') + `
-    <div class="content" style="max-width:900px" id="mainContent">
+    <div class="content" id="mainContent">
       <div class="welcome-card">
         <div class="welcome-avatar">${initial}</div>
         <div>
@@ -133,7 +133,7 @@ function fillDashboard() {
     tblEl.innerHTML = '<div style="font-size:12px;color:var(--t3);text-align:center;padding:16px">\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35 Order</div>';
     return;
   }
-  tblEl.innerHTML = '<table class="wf-table" style="max-width:900px;margin-bottom:16px">' +
+  tblEl.innerHTML = '<table class="wf-table" style="max-width:1000px;margin-bottom:16px">' +
     '<thead><tr><th>Order ID</th><th>Date</th><th>Items</th><th>Status</th></tr></thead>' +
     '<tbody>' + recent.map(o => {
       const itemCount = o.items ? o.items.length : (o.item_count || 0);
@@ -520,7 +520,7 @@ BK.renderCart = function(p) {
     : 'Submit Order';
 
   return SPG.shell(SPG.toolbar('Cart (' + items.length + ')') + `
-    <div class="content" style="max-width:900px" id="cartContent">
+    <div class="content" id="cartContent">
       ${editBar}
       <div class="wf-card">
         <div class="wf-section-title" style="margin-top:0">Cart Items</div>
@@ -708,7 +708,7 @@ BK.renderOrders = function(p) {
 
   const isBC = S.role === 'bc';
   return SPG.shell(SPG.toolbar('My Orders') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar">
         <select class="wf-select" onchange="BakerySection.setOrderDatePreset(this.value)">
           <option value="3day">3 \u0E27\u0E31\u0E19</option>
@@ -828,12 +828,21 @@ function fillOrders() {
 function setOrderSection(sec) { _orderSectionFilter = sec; _orderShowCount = 5; fillOrders(); }
 function setOrderFilter(f) { _orderFilter = f; _orderShowCount = 5; fillOrders(); }
 function sortOrders(key) { if (_orderSortKey === key) _orderSortDir *= -1; else { _orderSortKey = key; _orderSortDir = key === 'delivery_date' ? -1 : 1; } fillOrders(); }
-function setOrderDate(which, val) { if (which === 'from') _orderDateFrom = val; else _orderDateTo = val; fillOrders(); }
+function setOrderDate(which, val) { if (which === 'from') _orderDateFrom = val; else _orderDateTo = val; _refetchOrders(); }
 function setOrderDatePreset(p) {
   const today = BK.todaySydney();
   if (p === 'today') { _orderDateFrom = today; _orderDateTo = today; }
   else if (p === '3day') { const y = BK.sydneyNow(); y.setDate(y.getDate() - 1); const t = BK.sydneyNow(); t.setDate(t.getDate() + 1); _orderDateFrom = BK.fmtDate(y); _orderDateTo = BK.fmtDate(t); }
   else { _orderDateFrom = ''; _orderDateTo = ''; }
+  _refetchOrders();
+}
+async function _refetchOrders() {
+  const el = document.getElementById('ordersContent');
+  if (el) el.innerHTML = '<div class="skel skel-card"></div>';
+  try {
+    const data = await BK.api('get_orders', { date_from: _orderDateFrom, date_to: _orderDateTo, limit: '200' });
+    S.orders = Array.isArray(data) ? data : (data?.orders || []);
+  } catch (e) { SPG.toast(e.message || 'Failed to load orders', 'error'); }
   fillOrders();
 }
 function showMoreOrders() { _orderShowCount += 5; fillOrders(); }
@@ -844,7 +853,7 @@ function showMoreOrders() { _orderShowCount += 5; fillOrders(); }
 // ═══════════════════════════════════════
 BK.renderOrderDetail = function(params) {
   return SPG.shell(SPG.toolbar('Order Detail') + `
-    <div class="content" style="max-width:900px" id="detailContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+    <div class="content" id="detailContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
 };
 
 BK.loadOrderDetail = async function(p) {
@@ -1050,7 +1059,7 @@ BK.renderQuota = function(p) {
   _quotaCatFilter = 'all';
   _quotaSnapshot = {};
   return SPG.shell(SPG.toolbar('Set Quota') + `
-    <div class="content" style="max-width:900px" id="quotaContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+    <div class="content" id="quotaContent"><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
 };
 
 BK.loadQuota = async function(p) {
@@ -1255,7 +1264,7 @@ BK.renderStockHistory = function(p) {
   _shShowCount = 10;
 
   return SPG.shell(SPG.toolbar('Stock History') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar">
         <input class="wf-input" type="date" value="${_shDateFrom}" style="width:150px" onchange="BakerySection.setShDate('from',this.value)">
         <span style="color:var(--t3);font-size:12px">to</span>
@@ -1383,7 +1392,7 @@ BK.renderWaste = function(p) {
   _wasteShowCount = 5;
 
   return SPG.shell(SPG.toolbar('Waste Log') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar">
         <input class="wf-input" type="date" value="${_wasteDateFrom}" style="width:150px" onchange="BakerySection.setWasteDate('from',this.value)">
         <span style="color:var(--t3);font-size:12px">to</span>
@@ -1613,7 +1622,7 @@ BK.renderReturns = function(p) {
   _retShowCount = 5;
 
   return SPG.shell(SPG.toolbar('Returns') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar">
         <input class="wf-input" type="date" value="${_retDateFrom}" style="width:150px" onchange="BakerySection.setRetDate('from',this.value)">
         <span style="color:var(--t3);font-size:12px">to</span>

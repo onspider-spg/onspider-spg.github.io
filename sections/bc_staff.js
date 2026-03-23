@@ -22,7 +22,7 @@ BK.renderBcDashboard = function(p) {
   if (!s) return SPG.shell('<div class="content">Loading...</div>', 'Bakery');
 
   return SPG.shell(SPG.toolbar('BC Dashboard') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="welcome-card">
         <div class="welcome-avatar">BC</div>
         <div>
@@ -126,7 +126,7 @@ let _acceptTab = 'Pending';
 BK.renderAccept = function(p) {
   _acceptTab = 'Pending';
   return SPG.shell(SPG.toolbar('Incoming Orders') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div style="margin-bottom:12px" id="acceptChips"></div>
       <div id="acceptContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
     </div>`, 'Bakery');
@@ -270,7 +270,7 @@ let _fulfilState = {}; // { item_id: { status, qty_sent, note } }
 BK.renderFulfil = function(p) {
   _fulfilState = {};
   return SPG.shell(SPG.toolbar('Fulfilment') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar" id="fulfilSelect"></div>
       <div id="fulfilContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>
     </div>`, 'Bakery');
@@ -473,7 +473,7 @@ BK.renderPrint = function(p) {
   _printDate = BK.todaySydney();
   _slipStore = '';
   return SPG.shell(SPG.toolbar('Print Centre') + `
-    <div class="content" style="max-width:900px" id="printContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
+    <div class="content" id="printContent"><div class="skel skel-card"></div><div class="skel skel-card"></div></div>`, 'Bakery');
 };
 
 BK.loadPrint = async function(p) {
@@ -792,7 +792,7 @@ BK.renderBcReturns = function(p) {
   _bcRetFilter = 'all';
   _bcRetShowCount = 20;
   return SPG.shell(SPG.toolbar('Incoming Returns') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar" style="margin-bottom:8px">
         <span style="font-size:12px;font-weight:600">\uD83D\uDCC5 Date:</span>
         <input class="wf-input" type="date" value="${_bcRetDateFrom}" style="width:140px" onchange="BakerySection.setBCRetDate('from',this.value)">
@@ -1011,7 +1011,7 @@ let _prodSectionFilter = 'all';
 BK.renderProducts = function(p) {
   _prodTab = 'active'; _prodSearch = ''; _prodSectionFilter = 'all';
   return SPG.shell(SPG.toolbar('Manage Products') + `
-    <div class="content" style="max-width:900px">
+    <div class="content">
       <div class="wf-filter-bar" id="prodFilterBar">
         <input class="wf-search" placeholder="Search products..." id="prodSearchInp" oninput="BakerySection.filterProds(this.value)">
         <button class="wf-btn-gradient" style="margin-left:auto;padding:6px 16px;font-size:12px" onclick="SPG.go('bakery/prod-edit',{id:'new'})">+ Add Product</button>
